@@ -251,6 +251,8 @@ pub(crate) struct Checker<'a, 'arena> {
     top_level: HashSet<(u32, u32)>,
     piped: HashSet<Span>,
     rebound: HashMap<Span, bind_scope::Binding>,
+    /// The Pest test case the file's test and hook closures are bound to, with the Pest extension on.
+    pest_test_case: Option<String>,
     label: String,
     trait_context: Option<TraitContext>,
     trait_uses: Vec<driver::TraitUse>,
@@ -283,6 +285,7 @@ pub(crate) struct Checker<'a, 'arena> {
     level: u8,
     switches: driver::Switches,
     larastan: Option<&'a Larastan>,
+    pest: Option<&'a crate::Pest>,
     type_coverage: Option<&'a TypeCoverage>,
     larastan_state: larastan::State,
     internal: Option<&'a internal::Names>,

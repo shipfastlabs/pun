@@ -1,0 +1,12 @@
+{
+  "errors": [
+    {"file": "tests/Feature/BoundTest.php", "line": 7, "identifier": "phpstan.dumpType", "message": "Dumped type: Tests\\Box"},
+    {"file": "tests/Feature/BoundTest.php", "line": 11, "identifier": "phpstan.dumpType", "message": "Dumped type: Tests\\TestCase"},
+    {"file": "tests/Feature/BoundTest.php", "line": 12, "identifier": "phpstan.dumpType", "message": "Dumped type: Tests\\Box"},
+    {"file": "tests/Feature/BoundTest.php", "line": 13, "identifier": "phpstan.dumpType", "message": "Dumped type: string"},
+    {"file": "tests/Feature/BoundTest.php", "line": 14, "identifier": "phpstan.dumpType", "message": "Dumped type: string"},
+    {"file": "tests/Feature/BoundTest.php", "line": 15, "identifier": "phpstan.dumpType", "message": "Dumped type: mixed"},
+    {"file": "tests/Unit/UnboundTest.php", "line": 4, "identifier": "phpstan.dumpType", "message": "Dumped type: PHPUnit\\Framework\\TestCase"},
+    {"file": "tests/Unit/UnboundTest.php", "line": 5, "identifier": "method.notFound", "message": "Call to an undefined method PHPUnit\\Framework\\TestCase::brand()."}
+  ]
+}

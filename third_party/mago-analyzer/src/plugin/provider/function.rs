@@ -133,4 +133,15 @@ pub trait FunctionReturnTypeProvider: Provider {
     ) -> Option<TUnion> {
         None
     }
+
+    /// PHPStan's `FunctionParameterClosureThisExtension`: the type `$this` has inside an inline closure passed as the
+    /// `parameter` (`$name`), instead of its `@param-closure-this` type.
+    fn get_parameter_closure_this_type(
+        &self,
+        _context: &ProviderContext<'_, '_, '_>,
+        _invocation: &InvocationInfo<'_, '_, '_>,
+        _parameter: &[u8],
+    ) -> Option<TUnion> {
+        None
+    }
 }

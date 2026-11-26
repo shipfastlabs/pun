@@ -82,6 +82,10 @@ impl Analyse {
             let paths = paths.into_iter().map(Value::str);
             p.set(Key::from(name), Value::Array(Array::list(paths)));
         }
+        // pest-plugin-phpstan has no parameters; Pun's own `pest.closureThis` turns its extension on
+        if self.ecosystems.contains(&&crate::extensions::PEST) {
+            set(p, "pest.closureThis", Value::Bool(true));
+        }
         // phpstan-mockery's extension.neon sets `mockery.convertUnionToIntersectionType: true`
         if self.ecosystems.contains(&&crate::extensions::MOCKERY) {
             set(

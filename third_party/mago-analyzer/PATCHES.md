@@ -4445,3 +4445,12 @@ joins it with an isset-success scope that is never. `statement/loop/assignment_m
 also walks an assignment nested in the right side (`$r[] = $seen[$k] ??= $v`), so the loop analysis sees its target
 assigned. Without both, `$first[$key] ??= $box` in a loop typed the array's values as `mixed`
 (shipfastlabs/pun#113). `crates/pun-analyse/tests/coalesce_offset_values.rs` covers it against PHPStan 2.3.5.
+## Closure-this type from a function provider
+
+`plugin/provider/function.rs` adds `FunctionReturnTypeProvider::get_parameter_closure_this_type()` (`None` by default),
+PHPStan's `FunctionParameterClosureThisExtension`; `plugin/registry.rs` asks the function providers for it with
+`get_function_parameter_closure_this_type()`; and `plugin/context.rs` exposes `ProviderContext::source_file()`.
+`invocation/analyzer.rs`, where a closure argument's `$this` is bound: a provided type wins over the parameter's
+`@param-closure-this`, and also scopes the closure to its class, since the closure is bound to an instance of it. Pun's
+Pest extension types `$this` in `test()`, `it()`, `describe()` and the hooks as the test case `tests/Pest.php` binds
+(shipfastlabs/pun#97). `crates/pun-analyse/tests/pest.rs` covers it against PHPStan 2.2.14 with pest-plugin-phpstan.

@@ -71,6 +71,12 @@ impl<'codebase, 'artifacts, 'block> ProviderContext<'codebase, 'artifacts, 'bloc
         self.codebase
     }
 
+    /// The file being analysed.
+    #[inline]
+    pub fn source_file(&self) -> &'codebase File {
+        self.source_file
+    }
+
     #[inline]
     pub fn get_expression_type<T>(&self, expr: &T) -> Option<&TUnion>
     where
