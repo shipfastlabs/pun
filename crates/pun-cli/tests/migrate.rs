@@ -508,6 +508,59 @@ fn phpstan_without_a_level_runs_no_rules() {
     assert!(err.starts_with("x No rules detected\n"), "{err}");
 }
 
+/// phpat is built in: its include is not reported, and the classes the config tags `phpat.test` and its
+/// `parameters.phpat` carry to `[extensions] phpat`, where `pun analyse` runs them.
+#[test]
+fn phpstan_phpat_tests_carry_over() {
+    let neon = "includes:\n    - vendor/phpat/phpat/extension.neon\nparameters:\n    level: 0\n    paths: [src]\n    phpat:\n        show_rule_names: true\nservices:\n    -\n        class: Arch\\LayerTest\n        tags:\n            - phpat.test\n";
+    let d = project(
+        "phpstan-phpat",
+        &[
+            ("phpstan.neon", neon),
+            // phpat 0.12.5's extension.neon, cut to its parameters and one rule
+            (
+                "vendor/phpat/phpat/extension.neon",
+                "parameters:\n\tphpat:\n\t\tignore_doc_comments: false\n\t\tignore_built_in_classes: false\n\t\tshow_rule_names: false\n\nservices:\n\t-\n\t\tclass: PHPat\\Rule\\Assertion\\Declaration\\IsFinal\\IsFinalRule\n\t\ttags:\n\t\t\t- phpstan.rules.rule\n\nparametersSchema:\n\tphpat: structure([\n\t\tignore_doc_comments: bool(),\n\t\tignore_built_in_classes: bool(),\n\t\tshow_rule_names: bool(),\n\t])\n",
+            ),
+            (
+                "composer.lock",
+                r#"{"packages":[],"packages-dev":[{"name":"phpat/phpat","version":"0.12.5"}]}"#,
+            ),
+            (
+                "composer.json",
+                r#"{"autoload-dev":{"psr-4":{"Arch\\":"arch/"}}}"#,
+            ),
+            (
+                "arch/LayerTest.php",
+                "<?php\n\nnamespace Arch;\n\nuse PHPat\\Selector\\Selector;\nuse PHPat\\Test\\PHPat;\n\nfinal class LayerTest\n{\n    public function testFinal()\n    {\n        return PHPat::rule()->classes(Selector::all())->shouldBeFinal();\n    }\n}\n",
+            ),
+            ("src/A.php", "<?php\n\nnamespace App;\n\nclass A\n{\n}\n"),
+        ],
+    );
+    let (out, _, code) = pun(&d, &["migrate", "--yes"]);
+    assert_eq!(code, Some(0), "{out}");
+    assert!(!out.contains("phpat"), "{out}");
+    let toml = read(&d, "pun.toml");
+    assert!(
+        toml.contains(
+            "[extensions]\nphpat = { tests = [\"Arch\\\\LayerTest\"], show-rule-names = true }\n"
+        ),
+        "{toml}"
+    );
+    let (out, _, code) = pun(&d, &["analyse", "--error-format=raw"]);
+    assert_eq!(
+        (out.as_str(), code),
+        (
+            format!(
+                "{}:5:testFinal: App\\A should be final\n",
+                d.join("src/A.php").canonicalize().unwrap().display()
+            )
+            .as_str(),
+            Some(1)
+        )
+    );
+}
+
 #[test]
 fn phpstan_without_vendor_is_left() {
     for (name, prefix) in [("no-vendor", ""), ("no-vendor-dot", "./")] {

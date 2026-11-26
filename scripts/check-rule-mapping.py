@@ -46,7 +46,7 @@ CODEMOD_PREFIXES = ("rename-", "replace-", "remove-", "change-", "wrap-")
 # Decided names that read the group word as part of a term (format.md §8).
 REPEATS_GROUP = {"format/whitespace/no-blank-line-whitespace"}
 GONE = ("aliases", "tier", "severity", "group", "later")
-PHPSTAN_FAMILY = ("phpstan", "phpstan-strict-rules", "phpstan-deprecation-rules", "larastan")
+PHPSTAN_FAMILY = ("phpstan", "phpstan-strict-rules", "phpstan-deprecation-rules", "larastan", "phpat")
 # [analyse] switches (PHPStan levels 7-10) are settings, not rules.
 SWITCH = re.compile(r"\[analyse\] [a-z-]+ = true")
 INVENTORY = DEFAULT.parent / "upstream"
@@ -402,7 +402,7 @@ def check_emitted(data, identifiers):
     [upstream.phpstan*] key, else a `%s` pattern), so `pun analyse` reports it instead of dropping it. The ignore
     errors and parse errors have rules of their own."""
     up = data["upstream"]
-    sections = [up.get(t, {}) for t in ("phpstan", "larastan", "phpstan-strict-rules", "phpstan-deprecation-rules")]
+    sections = [up.get(t, {}) for t in ("phpstan", "larastan", "phpstan-strict-rules", "phpstan-deprecation-rules", "phpat")]
     patterns = [(re.compile(re.escape(k).replace("%s", "[A-Za-z0-9_]+")), e)
                 for t in sections for k, e in t.items() if "%s" in k]
     errors = []

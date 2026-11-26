@@ -481,6 +481,14 @@ pub struct Analyse {
     pub switches: Vec<&'static str>,
     pub ecosystems: Vec<&'static ExtensionMeta>,
     pub larastan: bool,
+    /// phpat's settings, when the `phpat` extension is on.
+    pub phpat: Option<extensions::Phpat>,
+    /// `php-rules` (prototype): neon files whose PHPStan rule classes a PHP worker runs.
+    pub php_rules: Vec<String>,
+    /// `php-rules-workers`: how many PHP workers run the `php-rules`; `None` is the number of cores, at most 8.
+    pub php_rules_workers: Option<u16>,
+    /// `php-rules-paths`: the paths the `php-rules` run on, relative to the project; empty is all of `paths`.
+    pub php_rules_paths: Vec<String>,
     pub rules: Vec<AnalyseRule>,
     pub bleeding_edge: bool,
     /// PHPStan's `reportUnmatchedIgnoredErrors`: `false` reports no unmatched ignore comment and makes
@@ -555,6 +563,12 @@ pub(crate) struct AnalyseToml {
     scan: Vec<String>,
     #[serde(default)]
     bootstrap: Vec<String>,
+    #[serde(default, rename = "php-rules")]
+    php_rules: Vec<String>,
+    #[serde(rename = "php-rules-workers")]
+    php_rules_workers: Option<std::num::NonZeroU16>,
+    #[serde(default, rename = "php-rules-paths")]
+    php_rules_paths: Vec<String>,
     #[serde(default)]
     ignore: Vec<Ignore>,
     #[serde(default)]
@@ -598,6 +612,8 @@ pub(crate) struct Gates<'a> {
     pub php: PhpVersion,
     pub composer: &'a Composer,
     pub switches: BTreeMap<&'static str, extensions::Switch>,
+    /// `[extensions] phpat`'s settings, when it is a table.
+    pub phpat: Option<extensions::Phpat>,
 }
 
 impl Gates<'_> {
@@ -1011,11 +1027,16 @@ pub(crate) fn analyse(
         stubs: t.stubs,
         scan: t.scan,
         bootstrap: t.bootstrap,
+        php_rules: t.php_rules,
+        php_rules_workers: t.php_rules_workers.map(std::num::NonZeroU16::get),
+        php_rules_paths: t.php_rules_paths,
         ignore,
         larastan: ecosystems.contains(&&extensions::LARAVEL)
             && crate::phpstan_parameters::larastan_supports(
                 gates.locked(&extensions::LARAVEL).and_then(|l| l.semver),
             ),
+        phpat: (ecosystems.contains(&&extensions::PHPAT))
+            .then(|| gates.phpat.clone().unwrap_or_default()),
         ecosystems,
         rules: (on.into_iter())
             .map(|(id, options)| AnalyseRule { id, options })
@@ -1059,7 +1080,7 @@ pub fn phpstan_level_rules(level: u8, bleeding_edge: bool) -> BTreeSet<String> {
         let in_level = match package {
             Some("phpstan") => (e.get("level").and_then(toml::Value::as_integer))
                 .is_none_or(|l| l <= i64::from(level)),
-            Some("larastan") => true,
+            Some("larastan" | "phpat") => true,
             _ => false,
         };
         let gated = (e.get("gated_by").and_then(toml::Value::as_str))

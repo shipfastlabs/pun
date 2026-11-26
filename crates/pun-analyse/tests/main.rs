@@ -146,6 +146,7 @@ mod parameter_native_clamp;
 mod params_branch_contracts;
 mod parent_defaults;
 mod parser;
+mod phpat;
 mod phpdoc_unions;
 mod pipe_rule;
 mod project;

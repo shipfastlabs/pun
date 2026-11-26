@@ -540,6 +540,7 @@ fn upgrade_gates() {
             php: crate::PhpVersion::FLOOR,
             composer,
             switches: [("laravel", crate::extensions::Switch::On)].into(),
+            phpat: None,
         };
         g.allows(group, &g.ecosystems(|_| false))
     };
@@ -616,6 +617,10 @@ fn analyse() {
             switches: vec![],
             ecosystems: vec![],
             larastan: false,
+            phpat: None,
+            php_rules: vec![],
+            php_rules_workers: None,
+            php_rules_paths: vec![],
             rules: a.rules.clone(),
             bleeding_edge: false,
             report_unmatched: true,
@@ -837,7 +842,8 @@ fn extensions() {
             "carbon": "off",
             "mockery": "off",
             "disallowed-calls": "off",
-            "type-coverage": "off"
+            "type-coverage": "off",
+            "phpat": "off"
         })
     );
     // Left out of [extensions], an extension is off even with its package locked.
@@ -849,7 +855,7 @@ fn extensions() {
     let e = |toml: &str| format!("{:#}", load_(&[("pun.toml", toml)]).unwrap_err());
     assert!(
         e("[extensions]\nsymfony = \"on\"\n").ends_with(
-            "pun.toml: [extensions] `symfony` is not an extension: expected `laravel`, `pest`, `phpunit`, `carbon`, `mockery`, `disallowed-calls`, `type-coverage`"
+            "pun.toml: [extensions] `symfony` is not an extension: expected `laravel`, `pest`, `phpunit`, `carbon`, `mockery`, `disallowed-calls`, `type-coverage`, `phpat`"
         )
     );
     assert!(
@@ -2067,6 +2073,98 @@ fn analyse_parameters() {
     );
 }
 
+/// `[analyse] php-rules` reaches pun-analyse as `punPhpRules`, absolute, with `punPhpRulesNative`, the rule classes
+/// Pun ports (which the workers skip), and not at all without the key.
+#[test]
+fn php_rules_parameter() {
+    use pun_phpstan::Value as V;
+    let rules = |toml: &str| {
+        let d = dir(&[("pun.toml", toml)]);
+        let a = load(&d, &Options::default()).unwrap().analyse;
+        let want = V::Array(pun_phpstan::Array::list([V::str(
+            d.join("tests/rules.neon").to_string_lossy().into_owned(),
+        )]));
+        (a.parameters(&d).get_str("punPhpRules").cloned()).map(|p| p == want)
+    };
+    let on = "[analyse]\npreset = \"phpstan/level_0\"\nphp-rules = [\"tests/rules.neon\"]\n";
+    assert_eq!(rules(on), Some(true));
+    // `php-rules-workers` reaches it as `punPhpRulesWorkers`; 0 is a config error
+    let workers = |n: &str| {
+        let d = dir(&[("pun.toml", &format!("{on}php-rules-workers = {n}\n"))]);
+        (load(&d, &Options::default()).map(|c| {
+            c.analyse
+                .parameters(&d)
+                .get_str("punPhpRulesWorkers")
+                .cloned()
+        }))
+        .map_err(|e| e.to_string())
+    };
+    assert_eq!(workers("3"), Ok(Some(V::Int(3))));
+    assert!(workers("0").is_err());
+    assert_eq!(rules("[analyse]\npreset = \"phpstan/level_0\"\n"), None);
+    // the workers skip PHPStan's, Larastan's and phpat's ported rule classes, and run phpstan-phpunit's and an unported
+    // core rule's
+    let d = dir(&[("pun.toml", on)]);
+    let params = load(&d, &Options::default())
+        .unwrap()
+        .analyse
+        .parameters(&d);
+    let Some(V::Array(native)) = params.get_str("punPhpRulesNative") else {
+        panic!("no punPhpRulesNative");
+    };
+    let native: Vec<_> = native.values().filter_map(V::as_str).collect();
+    for class in [
+        "PHPStan\\Rules\\Methods\\CallMethodsRule",
+        "PHPStan\\Rules\\BooleansInConditions\\BooleanInBooleanAndRule",
+        "Larastan\\Larastan\\Rules\\NoEnvCallsOutsideOfConfigRule",
+        "PHPat\\Rule\\Assertion\\Declaration\\IsAbstract\\AbstractRule",
+    ] {
+        assert!(native.contains(&class), "{class}");
+    }
+    for class in [
+        "PHPStan\\Rules\\PHPUnit\\AssertSameBooleanExpectedRule",
+        "PHPStan\\Rules\\Api\\ApiMethodCallRule",
+    ] {
+        assert!(!native.contains(&class), "{class}");
+    }
+}
+
+/// `[analyse] php-rules-paths` reaches pun-analyse as `punPhpRulesPaths`, absolute; a path outside the project, or
+/// the key without `php-rules`, is a config error.
+#[test]
+fn php_rules_paths_parameter() {
+    use pun_phpstan::Value as V;
+    let d = dir(&[]);
+    let root = d.join("project");
+    std::fs::create_dir_all(root.join("app")).unwrap();
+    std::fs::create_dir_all(d.join("outside")).unwrap();
+    let at = root.join("pun.toml").display().to_string();
+    let load_with = |toml: &str| {
+        std::fs::write(root.join("pun.toml"), toml).unwrap();
+        load(&root, &Options::default()).map_err(|e| e.to_string())
+    };
+    let on = "[analyse]\npreset = \"phpstan/level_0\"\nphp-rules = [\"phpstan.neon\"]\n";
+    let a = load_with(&format!("{on}php-rules-paths = [\"app\"]\n"))
+        .unwrap()
+        .analyse;
+    let want = V::Array(pun_phpstan::Array::list([V::str(
+        root.join("app").to_string_lossy().into_owned(),
+    )]));
+    assert_eq!(a.parameters(&root).get_str("punPhpRulesPaths"), Some(&want));
+    assert_eq!(
+        load_with(&format!("{on}php-rules-paths = [\"../outside\"]\n")).err(),
+        Some(format!(
+            "{at}: [analyse] php-rules-paths: \"../outside\" is outside the project"
+        ))
+    );
+    assert_eq!(
+        load_with("[analyse]\nphp-rules-paths = [\"app\"]\n").err(),
+        Some(format!(
+            "{at}: [analyse] php-rules-paths: name the neon files in php-rules too"
+        ))
+    );
+}
+
 #[test]
 fn variable_parameters() {
     use pun_phpstan::Value as V;
@@ -2278,5 +2376,65 @@ fn rule_docs_url_has_no_dots() {
     assert_eq!(
         crate::rule_docs_url("format/arrays/syntax"),
         "https://punphp.com/docs/rules/format/arrays/syntax"
+    );
+}
+
+/// `[extensions] phpat` takes a table of phpat's settings, which turns it on: they reach pun-analyse as
+/// `parameters.phpat` with the test classes. A plain `"on"` runs no test.
+#[test]
+fn phpat_settings() {
+    let phpat = |toml: &str| -> Result<Option<(Vec<String>, bool, bool)>, String> {
+        let root = dir(&[("pun.toml", toml)]);
+        let analyse = load(&root, &Options::default())
+            .map_err(|e| format!("{e:#}"))?
+            .analyse;
+        let parameters = analyse.parameters(&root);
+        let Some(p) = parameters
+            .get_str("phpat")
+            .and_then(pun_phpstan::Value::as_array)
+        else {
+            return Ok(None);
+        };
+        let tests = (p
+            .get_str("tests")
+            .and_then(pun_phpstan::Value::as_array)
+            .unwrap()
+            .values())
+        .map(|v| v.as_str().unwrap().to_string())
+        .collect();
+        let flag = |k: &str| p.get_str(k) == Some(&pun_phpstan::Value::Bool(true));
+        Ok(Some((
+            tests,
+            flag("show_rule_names"),
+            flag("ignore_doc_comments"),
+        )))
+    };
+    assert_eq!(
+        phpat("[extensions]\nphpat = { tests = [\"Arch\\\\T\"], show-rule-names = true }\n"),
+        Ok(Some((vec!["Arch\\T".to_string()], true, false)))
+    );
+    assert_eq!(
+        phpat("[extensions]\nphpat = \"on\"\n"),
+        Ok(Some((vec![], false, false)))
+    );
+    assert_eq!(phpat("[extensions]\nphpat = \"off\"\n"), Ok(None));
+    // Its group off, phpat's rule is off and its tests don't run.
+    assert_eq!(
+        phpat(
+            "[analyse.rules]\nphpat = \"off\"\n\n[extensions]\nphpat = { tests = [\"Arch\\\\T\"] }\n"
+        ),
+        Ok(None)
+    );
+    let err = phpat("[extensions]\nphpat = { tests = [\"A\"], show-names = true }\n").unwrap_err();
+    assert!(
+        err.contains("[extensions] phpat: unknown field `show-names`"),
+        "{err}"
+    );
+    let err = phpat("[extensions]\nphpat = 1\n").unwrap_err();
+    assert!(
+        err.ends_with(
+            "[extensions] `phpat` = 1: expected \"on\", \"off\" or a table of phpat settings"
+        ),
+        "{err}"
     );
 }

@@ -83,6 +83,18 @@ pub struct Project {
     pub relative_path: RelativePath,
     pub larastan: Option<crate::Larastan>,
     pub carbon: Option<crate::Carbon>,
+    /// `parameters.phpat` with the test classes, when phpat is on; [`Project::load_phpat`] reads the tests.
+    pub phpat_config: Option<crate::phpat::Config>,
+    pub phpat: Option<std::sync::Arc<crate::phpat::Rules>>,
+    /// `[analyse] php-rules`: the neon files whose rules the PHP workers run; [`Project::start_php_rules`] prepares them.
+    pub php_rules_config: Vec<String>,
+    /// `[analyse] php-rules-workers`: the most PHP workers that run them; `None` is the number of cores, at most 8.
+    pub php_rules_workers: Option<usize>,
+    /// `[analyse] php-rules-paths`: the absolute paths the workers check; empty is every analysed file.
+    pub php_rules_paths: Vec<PathBuf>,
+    /// The rule classes Pun ports, which the workers leave to the native analysis.
+    pub php_rules_native: Vec<String>,
+    pub php_rules: Option<std::sync::Arc<crate::PhpRules>>,
     pub type_aliases: Vec<(String, String)>,
     pub stubs: Vec<PathBuf>,
     pub reported: Option<Reported>,
@@ -301,7 +313,57 @@ fn strings<'a>(params: &'a Array, key: &str) -> Vec<&'a str> {
         .unwrap_or_default()
 }
 
+/// `parameters.phpat`, which Pun also gives the `tests` list phpstan.neon's `phpat.test` services name.
+fn phpat_config(params: &Array) -> Option<crate::phpat::Config> {
+    let p = params.get_str("phpat").and_then(Value::as_array)?;
+    let flag = |k: &str| p.get_str(k) == Some(&Value::Bool(true));
+    Some(crate::phpat::Config {
+        tests: strings(p, "tests")
+            .into_iter()
+            .map(str::to_string)
+            .collect(),
+        ignore_doc_comments: flag("ignore_doc_comments"),
+        ignore_built_in_classes: flag("ignore_built_in_classes"),
+        show_rule_names: flag("show_rule_names"),
+    })
+}
+
 impl Project {
+    /// Reads the phpat tests `phpat_config` names, once the analysed and scanned files are final. A test Pun can't
+    /// read statically is an error that names it.
+    pub fn load_phpat(&mut self) -> Result<(), String> {
+        let Some(config) = &self.phpat_config else {
+            return Ok(());
+        };
+        let rules = crate::phpat::Rules::load(self, config)?;
+        self.phpat = Some(std::sync::Arc::new(rules));
+        Ok(())
+    }
+
+    /// Prepares the php-rules workers when `php_rules_config` names neon files, with `paths` (or `php_rules_paths`,
+    /// which the workers then keep to) as PHPStan's analysed paths. They start when a file needs them; a worker that can't start fails the run ([`crate::PhpRules::failure`]).
+    /// `cache` is the result cache's file and the caller's part of its key ([`crate::PhpRules::start`]).
+    pub fn start_php_rules(&mut self, paths: &[PathBuf], cache: Option<(PathBuf, &str)>) {
+        if self.php_rules_config.is_empty() {
+            return;
+        }
+        let neon: Vec<PathBuf> = self.php_rules_config.iter().map(PathBuf::from).collect();
+        let workers = (self.php_rules_workers).unwrap_or_else(|| {
+            std::thread::available_parallelism()
+                .map_or(1, std::num::NonZeroUsize::get)
+                .min(8)
+        });
+        let root = &self.current_working_directory;
+        let (paths, only) = if self.php_rules_paths.is_empty() {
+            (paths, false)
+        } else {
+            (&self.php_rules_paths[..], true)
+        };
+        let native = &self.php_rules_native;
+        let rules = crate::PhpRules::start(root, &neon, native, paths, only, workers, cache);
+        self.php_rules = Some(std::sync::Arc::new(rules));
+    }
+
     pub fn from_config(root: &Path, params: &Array) -> Project {
         let extensions: Vec<String> = strings(params, "fileExtensions")
             .into_iter()
@@ -589,6 +651,25 @@ impl Project {
             relative_path: RelativePath::of(&paths),
             larastan: crate::Larastan::from_params(root, params),
             carbon: crate::Carbon::from_params(root, params),
+            phpat_config: phpat_config(params),
+            phpat: None,
+            php_rules_config: strings(params, "punPhpRules")
+                .into_iter()
+                .map(str::to_string)
+                .collect(),
+            php_rules_workers: match params.get_str("punPhpRulesWorkers") {
+                Some(Value::Int(n)) => usize::try_from(*n).ok(),
+                _ => None,
+            },
+            php_rules_paths: strings(params, "punPhpRulesPaths")
+                .into_iter()
+                .map(PathBuf::from)
+                .collect(),
+            php_rules_native: strings(params, "punPhpRulesNative")
+                .into_iter()
+                .map(str::to_string)
+                .collect(),
+            php_rules: None,
             type_aliases: params
                 .get_str("typeAliases")
                 .and_then(Value::as_array)
@@ -695,6 +776,13 @@ impl Project {
             too_wide: TooWide::default(),
             larastan: None,
             carbon: None,
+            phpat_config: None,
+            phpat: None,
+            php_rules_config: Vec::new(),
+            php_rules_workers: None,
+            php_rules_paths: Vec::new(),
+            php_rules_native: Vec::new(),
+            php_rules: None,
             type_aliases: Vec::new(),
             stubs: Vec::new(),
             reported: None,

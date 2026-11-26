@@ -8,7 +8,7 @@ open questions. Finished work is not listed; `git log` has it.
 One lead agent works on `main` and spawns subagents for independent slices in worktrees (AGENTS.md "How work runs").
 The latest release is v0.3.2.
 
-- **Counts** (mapping.toml `ported = true`): format 164 of 164, lint 834 of 835, analyse 364 of 370. Pending: lint 1
+- **Counts** (mapping.toml `ported = true`): format 164 of 164, lint 834 of 835, analyse 365 of 371. Pending: lint 1
   (`laravel/prefer-pivot-class`, §3 Foundations), analyse 6 (`classes/invalid-new`,
   `debug/dump-native-type`, `debug/dump-scope`, `types/return-by-ref-finally`, `undefined/compact-variable`,
   `undefined/variable`). Ported rules keep their parity gaps in the test gap lists
@@ -220,6 +220,12 @@ All from Pushpak unless marked "assistant's call"; dated 2026-10-17 unless given
   `type-coverage` analyse group, with its parameters as rule options and migrate's switch as for disallowed-calls.
   `pun analyse` keeps an error without an identifier (its measure mode) and one whose identifier an extension's
   config entry names (`Project::extension_identifiers`, for disallowed-calls' `errorIdentifier`).
+- **phpat is built in; a project's own PHPStan rules are not** (assistant's call on shipfastlabs/pun#55, 2026-11-25):
+  phpat 0.12.5 is the `phpat` extension (`[extensions] phpat = { tests = [...], ... }`, which `pun migrate` writes
+  from the services phpstan.neon tags `phpat.test` and `parameters.phpat`). Pun reads the test classes statically; a
+  builder chain it can't evaluate is a run error naming the code. Every phpat rule class reports under the one rule
+  `analyse/phpat/architecture-violation`, because phpat names errors after the test method (`phpat.<method>`). A
+  PHPStan-compatible PHP rule API stays out ("No PHP fallback"), so `rules:` classes keep needing PHPStan.
 
 ### Engines
 

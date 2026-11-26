@@ -50,6 +50,25 @@ pub(super) fn to_phpdoc_bytes(t: &Type) -> Vec<u8> {
         Type::Never(_) => "never".into(),
         Type::ConstInt(i) => i.to_string().into_bytes(),
         Type::ConstFloat(f) => float_to_string(*f).into_bytes(),
+        // ConstantStringType::toPhpDocNode(): a PHPDoc string can't hold a newline, so it prints the generalized type
+        Type::ConstString(s) if s.contains(&b'\n') => {
+            let mut parts = vec![Type::String, Type::Accessory(Accessory::LiteralString)];
+            if t.is_numeric_string().yes() {
+                parts.push(Type::Accessory(Accessory::NumericString));
+            }
+            parts.push(Type::Accessory(if s.as_slice() == b"0" {
+                Accessory::NonEmptyString
+            } else {
+                Accessory::NonFalsyString
+            }));
+            if s.to_ascii_lowercase() == *s {
+                parts.push(Type::Accessory(Accessory::LowercaseString));
+            }
+            if s.to_ascii_uppercase() == *s {
+                parts.push(Type::Accessory(Accessory::UppercaseString));
+            }
+            to_phpdoc_bytes(&intersect(parts))
+        }
         Type::ConstString(s) => {
             let mut out = vec![b'\''];
             for &byte in s {

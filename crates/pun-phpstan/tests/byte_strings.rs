@@ -408,3 +408,26 @@ fn raw_multiline_crlf_tags_preserve_quoted_payloads() {
         assert_eq!(json!(values), row["tags"]);
     }
 }
+
+/// A constant string with a newline prints as its generalized type, as PHPStan's `dumpPhpDocType()` (2.3) shows it: a
+/// PHPDoc string literal can't hold a newline.
+#[test]
+fn multiline_constant_string_phpdoc() {
+    for (s, want) in [
+        ("SELECT\n x", "literal-string&non-falsy-string"),
+        ("abc\n", "literal-string&lowercase-string&non-falsy-string"),
+        (
+            "1\n",
+            "literal-string&lowercase-string&non-falsy-string&numeric-string&uppercase-string",
+        ),
+        ("A\nB", "literal-string&non-falsy-string&uppercase-string"),
+        ("it's", "'it\\'s'"),
+    ] {
+        let t = Type::ConstString(s.as_bytes().to_vec());
+        assert_eq!(
+            pun_phpstan::types::to_phpdoc_fully_qualified(&t),
+            want,
+            "{s:?}"
+        );
+    }
+}

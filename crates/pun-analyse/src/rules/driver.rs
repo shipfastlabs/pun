@@ -98,6 +98,8 @@ pub(crate) struct Checks {
     reported: Option<crate::project::Reported>,
     extension_identifiers: HashSet<String>,
     method_rules: crate::MethodRules,
+    phpat: Option<std::sync::Arc<crate::phpat::Rules>>,
+    php_rules: Option<std::sync::Arc<crate::PhpRules>>,
     pub(super) strict: crate::StrictRules,
     pub(super) exceptions: crate::Exceptions,
     too_wide: crate::TooWide,
@@ -156,6 +158,8 @@ impl Checks {
                         || id.starts_with("larastan.collected.")
                         || self.extension_identifiers.contains(id)
                         || reported(id)
+                        // a php-rules error keeps its rule's own identifier; the workers run only when php-rules are on
+                        || self.php_rules.as_ref().is_some_and(|r| r.reported(id))
                 })
             });
         }
@@ -387,6 +391,8 @@ impl Checks {
             switches.set(switch, project.options.contains(option));
         }
         Checks {
+            phpat: project.phpat.clone(),
+            php_rules: project.php_rules.clone(),
             switches,
             natives,
             level: project.level,
@@ -584,6 +590,10 @@ fn checker<'a, 'arena>(
             .intersects(Toggles::UNUSED_PARAMETERS | Toggles::UNUSED_VARIABLE),
     ));
     typed.extend(super::operators::typed_expressions(project.strict, program));
+    if project.php_rules.is_some() {
+        // a project rule may ask the type of any expression
+        typed.extend(super::php_rules::expressions(program));
+    }
     typed.extend(super::types::throw_points::typed(
         program,
         project.level >= 4
@@ -745,6 +755,14 @@ pub(crate) fn check_file(
         &arena, file, program, &names, codebase, project, files, sources, None,
     );
     walk(&mut checker, program, project);
+    if let Some(rules) = &project.phpat {
+        let found = super::phpat::check(&checker, program, rules);
+        checker.errors.extend(found);
+    }
+    if let Some(rules) = &project.php_rules {
+        let found = super::php_rules::check(&checker, path, rules);
+        checker.errors.extend(found);
+    }
     let name = checker.file_name();
     let (mut lines, parse) = lines_to_ignore(&file.contents);
     let mut unmatched = lines.clone();
@@ -860,6 +878,17 @@ fn in_trait_context(
         renames: u.renames.clone(),
     });
     walk(&mut checker, program, project);
+    if let Some(rules) = &project.phpat {
+        let found = super::phpat::check(&checker, program, rules);
+        checker.errors.extend(found);
+    }
+    if let Some(rules) = &project.php_rules {
+        let path = files
+            .get(&t.span.file_id)
+            .expect("the trait's file was read");
+        let found = super::php_rules::check(&checker, path, rules);
+        checker.errors.extend(found);
+    }
     let label = checker.label.clone();
     let (mut lines, _) = lines_to_ignore(&file.contents);
     lines.retain(|line, _| {

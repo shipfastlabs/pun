@@ -59,6 +59,12 @@ impl Key {
     }
 }
 
+/// Whether the result caches are off: `--no-cache` (`flag`), `PUN_NO_CACHE`, or `PUN_PROFILE`.
+pub(crate) fn disabled(flag: bool) -> bool {
+    let set = |k: &str| std::env::var_os(k).is_some_and(|v| !v.is_empty() && v != "0");
+    flag || set("PUN_NO_CACHE") || std::env::var_os("PUN_PROFILE").is_some()
+}
+
 /// A file's size and modification time in nanoseconds, or nothing when it is missing.
 pub(crate) fn stat(path: &Path) -> Vec<u8> {
     let Ok(m) = std::fs::metadata(path) else {

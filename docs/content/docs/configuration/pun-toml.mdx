@@ -81,6 +81,7 @@ Extensions add the rules and analysis for a framework or test tool. Each one is 
 | `mockery` | `mockery/mockery` or `phpstan/phpstan-mockery` | phpstan-mockery's PHPStan extension in analyse. Not ported yet: it changes nothing |
 | `disallowed-calls` | `spaze/phpstan-disallowed-calls` | The `disallowed` analyse rules. Not ported yet: it changes nothing |
 | `type-coverage` | `tomasvotruba/type-coverage` | The `type-coverage` analyse rules. Not ported yet: it changes nothing |
+| `phpat` | `phpat/phpat` | phpat's architecture tests in analyse, under `analyse/phpat/architecture-violation` |
 
 | Value | Effect |
 | --- | --- |
@@ -90,6 +91,24 @@ Extensions add the rules and analysis for a framework or test tool. Each one is 
 An extension that is on lets its lint rules run: the ones your `[lint] preset` or `[lint] sets` hold. Its rules in no preset, such as `laravel/no-controller-middleware`, stay opt-in. Name them in `[lint.rules]` or `[lint.groups]`. To turn part of an extension off, set its group to `"off"` in `[lint.groups]` or `[analyse.rules]`, or set a single rule to `"off"`.
 
 A rule that you name in `[lint.rules]` runs even when its extension is off. Upgrade groups such as `laravel-12` are the exception: they need the extension, and you must name them.
+
+### phpat
+
+`phpat` also takes a table of settings, which turns it on. `pun migrate` writes it from the classes `phpstan.neon` tags `phpat.test` and from `parameters.phpat`:
+
+```toml title="pun.toml"
+[extensions]
+phpat = { tests = ["Tests\\Architecture\\LayerTest"], show-rule-names = true }
+```
+
+| Key | Meaning |
+| --- | --- |
+| `tests` | The test classes. Pun finds each one through Composer's autoload (`autoload-dev` included), or in the analysed and scanned files |
+| `ignore-doc-comments` | phpat's `ignore_doc_comments`: PHPDoc types are not dependencies. Default `false` |
+| `ignore-built-in-classes` | phpat's `ignore_built_in_classes`: PHP's own classes are not checked. Default `false` |
+| `show-rule-names` | phpat's `show_rule_names`: each message starts with its test method's name. Default `false` |
+
+Pun reads the tests without running PHP: the public methods marked `#[TestRule]` or named `test*`, the test class's traits and parents included, returning or yielding `PHPat::rule()` chains. Their arguments can be literals, `::class` names, the test class's constants, local variables, `array_map()` with a `Selector` factory and a `foreach` that appends to a local array. Anything only PHP could evaluate, such as another function call, a conditional or a helper method, is a run error that names the code. Errors keep phpat's messages and `phpat.<test method>` identifiers, so `@phpstan-ignore` comments and `ignoreErrors` entries still match. Turn phpat off with `phpat = "off"` in `[analyse.rules]`.
 
 Format rules don't depend on extensions. Blade formatting is `"laravel/blade" = true` in `[format.rules]`, which `pun migrate` writes only when `pint.json` turns it on. An unknown extension name is a config error. [`pun extension list`](/docs/commands/extension) shows which extensions are on, and why.
 
@@ -150,6 +169,9 @@ Laravel, Pest, and PHPUnit rules also need their [extension](#extensions). PHP u
 | `stubs` | Stub files whose PHPDoc refines vendor symbols, as in PHPStan's `stubFiles` |
 | `scan` | Files and folders Pun reads for their classes, functions, and constants but doesn't analyse, as in PHPStan's `scanFiles` and `scanDirectories` |
 | `bootstrap` | PHPStan's `bootstrapFiles`. Pun doesn't run them: it reads their symbols as `scan` does, and Larastan reads their macros |
+| `php-rules` | Experimental prototype, pending [#55](https://github.com/shipfastlabs/pun/issues/55). Neon files, usually `["phpstan.neon"]`, whose PHPStan rule classes (`rules:` and services tagged `phpstan.rules.rule`) Pun runs in a PHP worker, on the project's `vendor/autoload.php` and `vendor/phpstan/phpstan`. Runs only with `--php-rules` or `PUN_PHP_RULES=1`. See [custom rules](#custom-phpstan-rules-prototype) |
+| `php-rules-workers` | How many PHP workers run `php-rules` at once. Default: the number of CPU cores, at most 8 |
+| `php-rules-paths` | The paths `php-rules` check, relative to the project, as in `paths`, such as `["app"]`. The rest of `analyse` still covers all of `paths`. A trait's body is checked with each class that uses it, when that class's file is in these paths. Default: all of `paths` |
 | `bleeding-edge` | `true` infers types as PHPStan's `bleedingEdge.neon` does, except sealed and unsealed array shapes. Default `false` |
 | `union-types`, `nullables`, `explicit-mixed`, `implicit-mixed` | `true` or `false` turns one type switch on or off: PHPStan's level 7, 8, 9, or 10 check. Default: on in the presets that cover that level (`strict` for the first two, `max` for all four, and each `phpstan/level_<n>` from its level) |
 | `report-unmatched` | `false` reports no unmatched `@phpstan-ignore` comment and is the default of each `[[analyse.ignore]]` entry, as PHPStan's `reportUnmatchedIgnoredErrors`. Default `true` |
@@ -157,6 +179,27 @@ Laravel, Pest, and PHPUnit rules also need their [extension](#extensions). PHP u
 | `[[analyse.ignore]]` | Errors to ignore, as in PHPStan's `ignoreErrors` |
 
 Every analyse finding is an error.
+
+### Custom PHPStan rules (prototype)
+
+This is an experimental prototype, pending [#55](https://github.com/shipfastlabs/pun/issues/55): it runs your project's PHP, which Pun otherwise never does. It runs only when you ask for it on the command line or in the environment: pass `--php-rules` to `pun analyse`, or set `PUN_PHP_RULES=1` (which `pun check` reads too). With `php-rules` in `pun.toml` but neither, Pun prints a one-line notice that the rules are configured but not enabled, and runs no PHP. A committed `pun.toml` alone never runs the repository's PHP.
+
+Pun runs your rules in a pool of `php` workers, as PHPStan runs its parallel workers: up to `php-rules-workers` of them (default: the number of CPU cores, at most 8), each started when a file needs it. Each worker runs without a memory limit (as PHPStan's `--memory-limit=-1`) and holds its own booted PHPStan and app, so a large project can take several hundred MB per worker; lower `php-rules-workers` if memory is tight. Each boots PHPStan from the neon files you list, with their includes, parameters and `bootstrapFiles` (Larastan's boots your Laravel app), so your rules get PHPStan's own reflection and container, and Pun answers each `$scope->getType()` with the type Pun inferred. A project without `php-rules` runs no PHP.
+
+List your `phpstan.neon`, so your rules see the same parameters and booted app as under PHPStan:
+
+```toml pun.toml
+[analyse]
+php-rules = ["phpstan.neon"]
+```
+
+Pun skips the rule classes it ports natively: PHPStan's own, phpstan-strict-rules', phpstan-deprecation-rules', Larastan's and phpat's, which run through its presets and `[extensions]`. Every other rule class the neon files register runs in the worker: your own, and those of extensions Pun doesn't port, such as phpstan-phpunit, phpstan-doctrine or phpstan-symfony.
+
+Their errors report under the rule `php-rules`, with the identifier each rule gave them (`-v` and `--format=json` show it), so `@phpstan-ignore <identifier>`, `[[analyse.ignore]]` and the baseline work as for other findings. `php-rules` is no Pun rule: no preset turns it on, and it reports only while the workers run.
+
+The rules get the parsed nodes plus `InClassNode`, `InClassMethodNode` and `FileNode`. `Scope` answers `getFile()`, `getNamespace()`, `isInClass()`, `getClassReflection()`, `isInTrait()`, `getTraitReflection()`, `getFunctionName()`, `resolveName()` and `getType()`. A rule that calls another `Scope` method, asks for another PHPStan virtual node, or calls `InClassMethodNode::getMethodReflection()` stops `pun analyse` with an error (exit 2) that names it. So does a `getType()` for an expression Pun has no type for (one the two parsers span differently, or a node the rule built itself): the error names the file, line and expression, rather than the rule getting `mixed` and reporting something PHPStan wouldn't. A missing `php`, autoloader or PHPStan phar, or a rule class that doesn't load, is an error too.
+
+Like PHPStan, Pun keeps the rules' results in a result cache, beside the [result cache](/docs/commands/format#what-happens) of `format` and `lint` in `PUN_CACHE_DIR`. A file's results are reused while neither it nor a file it depends on changed: the files declaring the classes and functions it names or its expressions' types hold, with their parent classes, interfaces and traits. A change to the neon files or what they include, to `composer.lock` or the installed packages, to a PHP file the workers loaded (your rule classes, the bootstrap files and what those load), to `pun.toml` or to Pun runs every file again. A run that needs no file checked starts no worker. As with PHPStan's own result cache, a rule that reads a class the file doesn't refer to (for example, a schema class it looks up by name) sees that class's changes only on the next full run; `--no-cache` or `PUN_NO_CACHE=1` runs every file.
 
 Each `[[analyse.ignore]]` entry takes these keys. An error is ignored when it matches every key given.
 
@@ -259,8 +302,9 @@ To run without a file, pass `--preset <name>` (`laravel`, `psr12`, or `empty`) o
 | `PUN_AGENT`, `PAO_FORCE`, `PAO_DISABLE` | Turn [agent output](/docs/guides/coding-agents) on or off |
 | `PUN_IGNORE_PHP_CONSTRAINT` | Runs on a project whose `require.php` allows PHP below 8.3. Unsupported: results on older syntax are unchecked |
 | `PUN_PROFILE` | Prints the time of each stage on stderr |
-| `PUN_NO_CACHE=1` | Turns off the [result cache](/docs/commands/format#what-happens), like `--no-cache` |
-| `PUN_CACHE_DIR` | Cache for the [result cache](/docs/commands/format#what-happens), Blade's Prettier workers, [`pun x`](/docs/commands/x#options) installs, and the [package store](/docs/commands/install#what-happens) |
+| `PUN_PHP_RULES=1` | Runs the experimental [`php-rules`](#custom-phpstan-rules-prototype), like `pun analyse --php-rules` |
+| `PUN_NO_CACHE=1` | Turns off the [result cache](/docs/commands/format#what-happens) and the [`php-rules`](#custom-phpstan-rules-prototype) result cache, like `--no-cache` |
+| `PUN_CACHE_DIR` | Cache for the [result cache](/docs/commands/format#what-happens) and the [`php-rules`](#custom-phpstan-rules-prototype) result cache, Blade's Prettier workers, [`pun x`](/docs/commands/x#options) installs, and the [package store](/docs/commands/install#what-happens) |
 | `PUN_LINK_MODE` | How [`pun install`](/docs/commands/install#what-happens) links packages from the store: `hardlink` (default), `clone`, or `copy` |
 | `PUN_REQUIRE_ATTESTATION=1` | [`pun self-update`](/docs/commands/self-update) and the [Composer package](/docs/installation#composer)'s first download fail when they cannot check the build attestation |
 | `COMPOSER_HOME`, `COMPOSER_CACHE_DIR` | Composer's home and download cache, shared with the [package commands](/docs/commands/install) |

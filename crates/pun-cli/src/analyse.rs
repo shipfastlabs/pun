@@ -16,6 +16,10 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 #[derive(Args, Default, Clone)]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "one bool per command-line flag"
+)]
 pub(crate) struct AnalyseArgs {
     /// The files or directories to analyse (default: `[analyse] paths`, else `[files] paths`, else the project).
     paths: Vec<PathBuf>,
@@ -38,6 +42,13 @@ pub(crate) struct AnalyseArgs {
     /// Print each finding on one line.
     #[arg(long)]
     concise: bool,
+    /// Run every `[analyse] php-rules` check, without reading or writing their result cache (Pun; also
+    /// `PUN_NO_CACHE=1`).
+    #[arg(long)]
+    no_cache: bool,
+    /// Run the `[analyse] php-rules` (experimental), which run the project's PHP (Pun; also `PUN_PHP_RULES=1`).
+    #[arg(long)]
+    php_rules: bool,
     /// `raw`: add each error's identifier, as PHPStan's `-v` does.
     #[arg(short, long, action = clap::ArgAction::Count)]
     verbose: u8,
@@ -122,6 +133,8 @@ pub(crate) struct Analysed {
     pub(crate) unmatched_baseline: usize,
     /// `@pun-ignore` comments without a rule ID, as problems (`ignore-comment`).
     pub(crate) malformed: Vec<Problem>,
+    /// The php-rules result cache's hits and misses, for `-v`.
+    pub(crate) php_rules_cache: Option<String>,
 }
 
 /// The syntax errors the engine did not report. It translates few of them into PHPParser's wording, and would
@@ -170,6 +183,7 @@ fn project(
     cfg: &Config,
     analysed: Vec<PathBuf>,
     analysed_paths: &[PathBuf],
+    no_cache: bool,
 ) -> Result<pun_analyse::Project> {
     use pun_phpstan::ignore::IgnoredErrors;
     use pun_phpstan::{Array, Key, Value};
@@ -242,6 +256,16 @@ fn project(
         renamed_named_arguments: on.contains("analyse/types/renamed-parameter-in-subtype"),
     };
     project.method_rules = method_rules;
+    project
+        .load_phpat()
+        .map_err(|e| run_error(format!("[extensions] phpat: {e}"), None))?;
+    let cache = php_rules_cache(cfg, no_cache);
+    project.start_php_rules(
+        &analysed_paths.iter().map(PathBuf::from).collect::<Vec<_>>(),
+        cache
+            .as_ref()
+            .map(|(file, key)| (file.clone(), key.as_str())),
+    );
     let routed = pun_config::identifiers_of_rules(|r| on.contains(r) || lint_on.contains(r));
     project.reported = Some(std::sync::Arc::new(move |id| {
         if method_rules.consistent_constructor
@@ -267,9 +291,49 @@ fn project(
     Ok(project)
 }
 
+/// The rule the `[analyse] php-rules` errors report under, with the identifiers the rules gave them: no Pun rule
+/// stands for them, so it has no `analyse/` group and no preset turns it on.
+const PHP_RULES_RULE: &str = "php-rules";
+
+/// `[analyse] php-rules` run the project's PHP, so only with `--php-rules` (`flag`) or `PUN_PHP_RULES=1`: a committed
+/// pun.toml alone runs nothing, and says that the rules are off.
+pub(crate) fn php_rules_opt_in(cfg: &mut Config, flag: bool) {
+    let set = std::env::var_os("PUN_PHP_RULES").is_some_and(|v| !v.is_empty() && v != "0");
+    if cfg.analyse.php_rules.is_empty() || flag || set {
+        return;
+    }
+    eprintln!(
+        "[analyse] php-rules are configured but not enabled: pass --php-rules or set PUN_PHP_RULES=1 to run them"
+    );
+    cfg.analyse.php_rules.clear();
+    cfg.analyse.php_rules_paths.clear();
+}
+
+/// The php-rules' result cache file, beside the result cache of `pun lint`, and the part of its key that covers Pun and
+/// the config; `None` when the caches are off.
+fn php_rules_cache(cfg: &Config, no_cache: bool) -> Option<(PathBuf, String)> {
+    if crate::cache::disabled(no_cache) {
+        return None;
+    }
+    let file = crate::cache::Cache::default_file(&cfg.root)?;
+    let exe = std::env::current_exe().ok()?;
+    let key = format!(
+        "{} {:?} {cfg:?}",
+        env!("CARGO_PKG_VERSION"),
+        crate::cache::stat(&exe)
+    );
+    Some((file.with_extension("php-rules.json"), key))
+}
+
 /// Analyse `paths` (or the configured paths) under `cfg`: enabled rules only, `@pun-ignore` comments and the
 /// baseline applied (unless `baseline` is false, for `--generate-baseline`).
-pub(crate) fn analyse(cfg: &Config, paths: &[PathBuf], use_baseline: bool) -> Result<Analysed> {
+/// `no_cache` runs every php-rules check, without their result cache.
+pub(crate) fn analyse(
+    cfg: &Config,
+    paths: &[PathBuf],
+    use_baseline: bool,
+    no_cache: bool,
+) -> Result<Analysed> {
     // mimalloc returns freed pages to the OS after 100 ms instead of 1 s: the parse trees and scratch of one phase
     // are gone before the next one peaks, which takes 5-7% off the peak RSS of laravel-pint and larastan. A purge
     // already scheduled keeps its 1 s deadline, so the collection runs those now.
@@ -292,9 +356,21 @@ pub(crate) fn analyse(cfg: &Config, paths: &[PathBuf], use_baseline: bool) -> Re
     if paths.is_empty() {
         paths.push(cfg.root.clone());
     }
-    let project = project(cfg, files, &paths)?;
+    let project = project(cfg, files, &paths, no_cache)?;
     let analysis =
         pun_analyse::analyse_project(&project).map_err(|e| run_error(e.to_string(), None))?;
+    if let Some(rules) = &project.php_rules {
+        if let Some(e) = rules.failure() {
+            return Err(run_error(format!("[analyse] php-rules: {e}"), None));
+        }
+        rules.save();
+    }
+    let php_rules_cache = (project.php_rules.as_ref()).and_then(|r| r.cache_summary());
+    let project_rule = |id: &str| {
+        (project.php_rules.as_ref())
+            .is_some_and(|r| r.reported(id))
+            .then_some(PHP_RULES_RULE)
+    };
     let mut errors = analysis.errors;
     errors.extend(syntax_errors(&project.analysed, &errors));
     let mut general = analysis.general;
@@ -309,8 +385,8 @@ pub(crate) fn analyse(cfg: &Config, paths: &[PathBuf], use_baseline: bool) -> Re
         .collect();
     let mut findings: Vec<Finding> = (errors.into_iter())
         .map(|e| {
-            let rule =
-                rule_of_identifier(&e.identifier).unwrap_or(if e.identifier == "phpstan.parse" {
+            let rule = (rule_of_identifier(&e.identifier).or_else(|| project_rule(&e.identifier)))
+                .unwrap_or(if e.identifier == "phpstan.parse" {
                     "parser-error"
                 } else {
                     UNMATCHED_IGNORE
@@ -360,6 +436,7 @@ pub(crate) fn analyse(cfg: &Config, paths: &[PathBuf], use_baseline: bool) -> Re
         files: count,
         unmatched_baseline,
         malformed,
+        php_rules_cache,
     })
 }
 
@@ -371,7 +448,7 @@ pub(crate) fn hidden_by_line_ignores(
     files: Vec<PathBuf>,
 ) -> Result<std::collections::HashMap<(String, i64), Vec<&'static str>>> {
     let paths = files.clone();
-    let mut project = project(cfg, files, &paths)?;
+    let mut project = project(cfg, files, &paths, true)?;
     project.options.set(
         pun_analyse::ProjectOptions::REPORT_IGNORES_WITHOUT_COMMENTS,
         true,
@@ -463,7 +540,8 @@ pub(crate) fn run(a: &AnalyseArgs) -> Result<Exit> {
         ignore_php_constraint: crate::ignore_php_constraint(),
         ..Default::default()
     };
-    let cfg = crate::run::load(&root, &opts)?;
+    let mut cfg = crate::run::load(&root, &opts)?;
+    php_rules_opt_in(&mut cfg, a.php_rules);
     if cfg.analyse.rules.is_empty() {
         let hint = "set [analyse] preset, or turn rules on under [analyse.rules]";
         return Err(run_error("No rules detected".into(), Some(hint.into())));
@@ -471,13 +549,20 @@ pub(crate) fn run(a: &AnalyseArgs) -> Result<Exit> {
     if let Some(path) = &a.generate_baseline {
         return generate_baseline(a, &cfg, path.as_deref(), started);
     }
-    let analysed = analyse(&cfg, &a.paths, true)?;
+    let analysed = analyse(&cfg, &a.paths, true, a.no_cache)?;
     present(a, &cfg, &analysed, started)
 }
 
 fn present(a: &AnalyseArgs, cfg: &Config, analysed: &Analysed, started: Instant) -> Result<Exit> {
     let root = &cfg.root;
     let errors = analysed.findings.len() + analysed.malformed.len() + analysed.general.len();
+    if let Some(line) = analysed
+        .php_rules_cache
+        .as_ref()
+        .filter(|_| a.verbose > 0 && !a.quiet)
+    {
+        eprintln!("{line}");
+    }
     match a.format.as_deref() {
         // `-q` prints nothing, as PHPStan's `--quiet` (with any error format, under a coding agent too).
         _ if a.quiet => {}
@@ -565,7 +650,7 @@ fn generate_baseline(
         Some(path) => path.to_path_buf(),
         None => PathBuf::from(cfg.analyse.baseline.as_deref().unwrap_or(baseline::DEFAULT)),
     };
-    let mut analysed = analyse(cfg, &a.paths, false)?;
+    let mut analysed = analyse(cfg, &a.paths, false, a.no_cache)?;
     if analysed
         .findings
         .iter()

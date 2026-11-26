@@ -1,0 +1,530 @@
+[
+ {
+  "file": "src/Attr/Aggregate.php",
+  "line": 5,
+  "identifier": "phpat.testKinds3",
+  "message": "App\\Attr\\Aggregate should be invokable",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Attr/Aggregate.php",
+  "line": 5,
+  "identifier": "phpat.testKinds6",
+  "message": "App\\Attr\\Aggregate should not exist",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Base.php",
+  "line": 5,
+  "identifier": "phpat.testAbstract0",
+  "message": "App\\Domain\\Base should not be abstract",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Customer.php",
+  "line": 14,
+  "identifier": "phpat.entitiesAreFinal",
+  "message": "App\\Domain\\Customer should be final",
+  "tip": "Entities are not extended",
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Customer.php",
+  "line": 14,
+  "identifier": "phpat.testExtendsAndImplements0",
+  "message": "App\\Domain\\Customer should implement App\\Domain\\Contracts\\Named",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Customer.php",
+  "line": 14,
+  "identifier": "phpat.testCustomerDependencies",
+  "message": "App\\Domain\\Customer should not depend on App\\Infra\\Db",
+  "tip": "\u2022 one\n\u2022 two",
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Customer.php",
+  "line": 14,
+  "identifier": "phpat.testCustomerDependencies",
+  "message": "App\\Domain\\Customer should not depend on App\\Infra\\Db",
+  "tip": "\u2022 one\n\u2022 two",
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Customer.php",
+  "line": 14,
+  "identifier": "phpat.testTraitsAndAttributesinclude",
+  "message": "App\\Domain\\Customer should not include App\\Domain\\Timestamps",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Customer.php",
+  "line": 18,
+  "identifier": "phpat.testCustomerDependencies",
+  "message": "App\\Domain\\Customer should not depend on App\\Infra\\Db",
+  "tip": "\u2022 one\n\u2022 two",
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Customer.php",
+  "line": 29,
+  "identifier": "phpat.testCustomerDependencies",
+  "message": "App\\Domain\\Customer should not depend on App\\Infra\\Db",
+  "tip": "\u2022 one\n\u2022 two",
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Customer.php",
+  "line": 29,
+  "identifier": "phpat.testCustomerDependencies",
+  "message": "App\\Domain\\Customer should not depend on App\\Infra\\Db",
+  "tip": "\u2022 one\n\u2022 two",
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Customer.php",
+  "line": 29,
+  "identifier": "phpat.testCustomerDependencies",
+  "message": "App\\Domain\\Customer should not depend on App\\Infra\\DbException",
+  "tip": "\u2022 one\n\u2022 two",
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Customer.php",
+  "line": 32,
+  "identifier": "phpat.testCustomerDependencies",
+  "message": "App\\Domain\\Customer should not depend on App\\Infra\\Db",
+  "tip": "\u2022 one\n\u2022 two",
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Customer.php",
+  "line": 33,
+  "identifier": "phpat.testCustomerDependencies",
+  "message": "App\\Domain\\Customer should not depend on App\\Infra\\DbException",
+  "tip": "\u2022 one\n\u2022 two",
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Customer.php",
+  "line": 39,
+  "identifier": "phpat.testCustomerDependencies",
+  "message": "App\\Domain\\Customer should not depend on App\\Infra\\Db",
+  "tip": "\u2022 one\n\u2022 two",
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Failure.php",
+  "line": 5,
+  "identifier": "phpat.testExtendsAndImplementsnotExtend",
+  "message": "App\\Domain\\Failure should extend LogicException",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Failure.php",
+  "line": 5,
+  "identifier": "phpat.testExtendsAndImplementsnot.implement",
+  "message": "App\\Domain\\Failure should not implement Stringable",
+  "tip": null,
+  "ignorable": false
+ },
+ {
+  "file": "src/Domain/Handler.php",
+  "line": 5,
+  "identifier": "phpat.testExtendsAndImplementsextend",
+  "message": "App\\Domain\\Handler should extend App\\Domain\\Base",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Handler.php",
+  "line": 5,
+  "identifier": "phpat.testNotFinal",
+  "message": "App\\Domain\\Handler should not be final",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Handler.php",
+  "line": 5,
+  "identifier": "phpat.testKinds4",
+  "message": "App\\Domain\\Handler should not be invokable",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Invoice.php",
+  "line": 5,
+  "identifier": "phpat.testAbstract1",
+  "message": "App\\Domain\\Invoice should be abstract",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Invoice.php",
+  "line": 5,
+  "identifier": "phpat.testExtendsAndImplementsextend",
+  "message": "App\\Domain\\Invoice should extend App\\Domain\\Base",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Invoice.php",
+  "line": 5,
+  "identifier": "phpat.testPublicMethods2",
+  "message": "App\\Domain\\Invoice should have only one public method named /^run/",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Money.php",
+  "line": 5,
+  "identifier": "phpat.testKinds0",
+  "message": "App\\Domain\\Money should be an interface",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Money.php",
+  "line": 5,
+  "identifier": "phpat.testKinds2",
+  "message": "App\\Domain\\Money should be enum",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Money.php",
+  "line": 5,
+  "identifier": "phpat.testKinds3",
+  "message": "App\\Domain\\Money should be invokable",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Money.php",
+  "line": 5,
+  "identifier": "phpat.testNames1",
+  "message": "App\\Domain\\Money should be named App\\Domain\\Cash",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Money.php",
+  "line": 5,
+  "identifier": "phpat.testExtendsAndImplementsextend",
+  "message": "App\\Domain\\Money should extend App\\Domain\\Base",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Money.php",
+  "line": 5,
+  "identifier": "phpat.testInheritedRule",
+  "message": "App\\Domain\\Money should not be readonly",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Order.php",
+  "line": 8,
+  "identifier": "phpat.testTraitsAndAttributes0",
+  "message": "App\\Domain\\Order should apply the attribute App\\Attr\\Missing",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Order.php",
+  "line": 8,
+  "identifier": "phpat.testKinds3",
+  "message": "App\\Domain\\Order should be invokable",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Order.php",
+  "line": 8,
+  "identifier": "phpat.testKinds6",
+  "message": "App\\Domain\\Order should not exist",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Order.php",
+  "line": 13,
+  "identifier": "phpat.testNothingConstructsTheDb",
+  "message": "App\\Domain\\Order should not construct App\\Infra\\Db",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Order.php",
+  "line": 13,
+  "identifier": "phpat.testDomainDoesNotDependOnInfra",
+  "message": "App\\Domain\\Order should not depend on App\\Infra\\Db",
+  "tip": "The domain stays free of infrastructure",
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Report.php",
+  "line": 6,
+  "identifier": "phpat.testKinds3",
+  "message": "App\\Domain\\Report should be invokable",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Report.php",
+  "line": 6,
+  "identifier": "phpat.testExtendsAndImplementsextend",
+  "message": "App\\Domain\\Report should extend App\\Domain\\Base",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Report.php",
+  "line": 6,
+  "identifier": "phpat.testPublicMethods0",
+  "message": "App\\Domain\\Report should have only one public method",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Report.php",
+  "line": 6,
+  "identifier": "phpat.testPublicMethods1",
+  "message": "App\\Domain\\Report should have only one public method named execute",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Report.php",
+  "line": 6,
+  "identifier": "phpat.testNotFinal",
+  "message": "App\\Domain\\Report should not be final",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Status.php",
+  "line": 5,
+  "identifier": "phpat.testKinds3",
+  "message": "App\\Domain\\Status should be invokable",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Domain/Status.php",
+  "line": 5,
+  "identifier": "phpat.testKinds1",
+  "message": "App\\Domain\\Status should not be enum",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 7,
+  "identifier": "phpat.testNames0",
+  "message": "App\\Http\\Controller\\Helper should be named matching the regex /Controller$/",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 7,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Domain\\Order",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 7,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Domain\\Order",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 7,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Domain\\Order",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 7,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Domain\\Order",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 7,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Domain\\Order",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 7,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Domain\\Order",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 7,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Infra\\Clock",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 7,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Infra\\Clock",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 7,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Infra\\Clock",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 7,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Infra\\Clock",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 7,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Infra\\Clock",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 7,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Infra\\Clock",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 9,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Domain\\Order",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 9,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Domain\\Order",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 9,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Domain\\Order",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 9,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Infra\\Clock",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 9,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Infra\\Clock",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 9,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Infra\\Clock",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 9,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Infra\\Clock",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/Helper.php",
+  "line": 11,
+  "identifier": "phpat.testControllersDependOnDomain",
+  "message": "App\\Http\\Controller\\Helper should depend on App\\Infra\\Clock",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Http/Controller/UserController.php",
+  "line": 5,
+  "identifier": "phpat.testKinds3",
+  "message": "App\\Http\\Controller\\UserController should be invokable",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Infra/DbException.php",
+  "line": 5,
+  "identifier": "phpat.testExtendsAndImplementsnotExtend",
+  "message": "App\\Infra\\DbException should extend LogicException",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Infra/DbException.php",
+  "line": 5,
+  "identifier": "phpat.testExtendsAndImplementsnot.implement",
+  "message": "App\\Infra\\DbException should not implement Stringable",
+  "tip": null,
+  "ignorable": false
+ },
+ {
+  "file": "src/Infra/LoggerFactory.php",
+  "line": 5,
+  "identifier": "phpat.testKinds3",
+  "message": "App\\Infra\\LoggerFactory should be invokable",
+  "tip": null,
+  "ignorable": true
+ }
+]

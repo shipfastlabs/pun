@@ -22,6 +22,20 @@ const STRICT_RULES_PARAMETERS: [(&str, bool); 12] = [
     ("checkStrictPrintfPlaceholderTypes", true),
 ];
 
+/// The analyse rule phpat's rules report under.
+pub(crate) const PHPAT_RULE: &str = "analyse/phpat/architecture-violation";
+
+/// The PHPStan, strict-rules, deprecation-rules, Larastan and phpat rule classes Pun ports
+/// (`[upstream.phpstan-classes]` entries with a Pun rule): the php-rules workers leave them to the native analysis and
+/// run every other rule class.
+fn native_rule_classes() -> Vec<String> {
+    let classes = mapping::section(&["upstream", "phpstan-classes"]).table();
+    (classes.values())
+        .filter(|e| e.get("pun").is_some())
+        .filter_map(|e| Some(e.get("class")?.as_str()?.to_string()))
+        .collect()
+}
+
 /// The bootstrap file nesbot/carbon's `extension.neon` names, from the project root.
 const CARBON_BOOTSTRAP: &str = "vendor/nesbot/carbon/lazy/Carbon/UnprotectedDatePeriod.php";
 
@@ -62,7 +76,7 @@ impl Analyse {
         u8::try_from(rules.chain(switches).max().unwrap_or(0)).expect("PHPStan levels are 0 to 10")
     }
 
-    /// `stubFiles`, `scanFiles`, `scanDirectories` and `bootstrapFiles`, as absolute paths: a `scan` entry that is a
+    /// `stubFiles`, `scanFiles`, `scanDirectories`, `bootstrapFiles` and `punPhpRules`, as absolute paths: a `scan` entry that is a
     /// directory is a scanned directory, any other a scanned file.
     fn file_parameters(&self, root: &Path, p: &mut Array) {
         let (dirs, files): (Vec<_>, Vec<_>) = (self.scan.iter())
@@ -81,6 +95,45 @@ impl Analyse {
         ] {
             let paths = paths.into_iter().map(Value::str);
             p.set(Key::from(name), Value::Array(Array::list(paths)));
+        }
+        // `punPhpRules`: the `php-rules` neon files, with the rule classes Pun runs natively, which the workers skip
+        if !self.php_rules.is_empty() {
+            let neon = absolute(&self.php_rules).into_iter().map(Value::str);
+            p.set(Key::from("punPhpRules"), Value::Array(Array::list(neon)));
+            let native = native_rule_classes().into_iter().map(Value::str);
+            p.set(
+                Key::from("punPhpRulesNative"),
+                Value::Array(Array::list(native)),
+            );
+            if let Some(n) = self.php_rules_workers {
+                p.set(Key::from("punPhpRulesWorkers"), Value::Int(n.into()));
+            }
+            if !self.php_rules_paths.is_empty() {
+                let paths = absolute(&self.php_rules_paths).into_iter().map(Value::str);
+                p.set(
+                    Key::from("punPhpRulesPaths"),
+                    Value::Array(Array::list(paths)),
+                );
+            }
+        }
+    }
+
+    /// phpat's `parameters.phpat`, with the test classes its services name, when its rule is on.
+    fn phpat_parameter(&self, on: &HashSet<&str>, p: &mut Array) {
+        if let Some(phpat) = &self.phpat
+            && on.contains(PHPAT_RULE)
+        {
+            let mut a = Array::new();
+            let tests = phpat.tests.iter().map(|t| Value::str(t.as_str()));
+            a.set(Key::from("tests"), Value::Array(Array::list(tests)));
+            for (name, value) in [
+                ("ignore_doc_comments", phpat.ignore_doc_comments),
+                ("ignore_built_in_classes", phpat.ignore_built_in_classes),
+                ("show_rule_names", phpat.show_rule_names),
+            ] {
+                a.set(Key::from(name), Value::Bool(value));
+            }
+            p.set(Key::from("phpat"), Value::Array(a));
         }
     }
 
@@ -103,6 +156,7 @@ impl Analyse {
         ] {
             p.set(Key::from(name), Value::Bool(value));
         }
+        self.phpat_parameter(&on, &mut p);
         p.set(
             Key::from("cliArgumentsVariablesRegistered"),
             Value::Bool(true),

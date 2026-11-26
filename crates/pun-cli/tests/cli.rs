@@ -1107,6 +1107,7 @@ carbon            off  Carbon's macros and DatePeriodBase in analyse: not in pun
 mockery           off  phpstan-mockery's mock types in analyse: not in pun.toml
 disallowed-calls  off  The calls and uses your config forbids, in analyse: not in pun.toml
 type-coverage     off  Minimum shares of declared types, in analyse: not in pun.toml
+phpat             off  phpat's architecture tests in analyse: not in pun.toml
 "#;
     assert_eq!(
         pun(&dir, &["extension", "list"]),
@@ -1134,6 +1135,7 @@ type-coverage     off  Minimum shares of declared types, in analyse: not in pun.
                 ("mockery", false, None),
                 ("disallowed-calls", false, None),
                 ("type-coverage", false, None),
+                ("phpat", false, None),
             ],
             Some(0)
         )
@@ -1229,6 +1231,7 @@ carbon = "off"
 mockery = "off"
 disallowed-calls = "off"
 type-coverage = "off"
+phpat = "off"
 
 [format]
 preset = "empty"
