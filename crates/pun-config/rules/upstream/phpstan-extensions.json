@@ -1254,5 +1254,583 @@
   "package": "phpstan/phpstan-strict-rules",
   "registered_in": "rules.neon conditionalTags",
   "version": "2.0.12"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Declaration\\Named\\ClassnameRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Declaration\\IsReadonly\\IsReadonlyRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Declaration\\IsAbstract\\AbstractRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Declaration\\IsFinal\\IsFinalRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Declaration\\IsEnum\\IsEnumRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Declaration\\IsInvokable\\IsInvokableRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Declaration\\OnePublicMethod\\HasOnlyOnePublicMethodRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Declaration\\OnePublicMethodNamed\\HasOnlyOnePublicMethodNamedRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Declaration\\IsInterface\\IsInterfaceRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Declaration\\Exists\\ExistsRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Implement\\ImplementedInterfacesRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Extend\\ParentClassRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\IncludeTrait\\IncludedTraitsRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\DirectInterfacesRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\ParentClassRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\IncludedTraitsRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\AllAttributesRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\ClassPropertyRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\ConstantUseRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\DocMethodTagRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\DocMixinTagRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\DocParamTagRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\DocPropertyTagRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\DocReturnTagRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\DocThrowsTagRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\DocVarTagRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\MethodParamRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\MethodReturnRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\NewRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\StaticMethodRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\CatchBlockRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Depend\\InstanceofRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\Construct\\NewRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
+ },
+ {
+  "deprecated": false,
+  "deprecation_evidence": null,
+  "docs_url": "https://github.com/carlosas/phpat/blob/0.12.5/extension.neon",
+  "fqcn": "PHPat\\Rule\\Assertion\\Relation\\ApplyAttribute\\ClassAttributeRule",
+  "gated_by": null,
+  "identifiers": [
+   "phpat.%s"
+  ],
+  "in_scope": true,
+  "kind": "phpstan-rule",
+  "level": null,
+  "out_of_scope_reason": null,
+  "package": "phpat/phpat",
+  "registered_in": "extension.neon services tags phpstan.rules.rule",
+  "version": "0.12.5"
  }
 ]

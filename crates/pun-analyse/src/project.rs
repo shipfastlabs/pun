@@ -83,6 +83,9 @@ pub struct Project {
     pub relative_path: RelativePath,
     pub larastan: Option<crate::Larastan>,
     pub carbon: Option<crate::Carbon>,
+    /// `parameters.phpat` with the test classes, when phpat is on; [`Project::load_phpat`] reads the tests.
+    pub phpat_config: Option<crate::phpat::Config>,
+    pub phpat: Option<std::sync::Arc<crate::phpat::Rules>>,
     pub type_aliases: Vec<(String, String)>,
     pub stubs: Vec<PathBuf>,
     pub reported: Option<Reported>,
@@ -301,7 +304,33 @@ fn strings<'a>(params: &'a Array, key: &str) -> Vec<&'a str> {
         .unwrap_or_default()
 }
 
+/// `parameters.phpat`, which Pun also gives the `tests` list phpstan.neon's `phpat.test` services name.
+fn phpat_config(params: &Array) -> Option<crate::phpat::Config> {
+    let p = params.get_str("phpat").and_then(Value::as_array)?;
+    let flag = |k: &str| p.get_str(k) == Some(&Value::Bool(true));
+    Some(crate::phpat::Config {
+        tests: strings(p, "tests")
+            .into_iter()
+            .map(str::to_string)
+            .collect(),
+        ignore_doc_comments: flag("ignore_doc_comments"),
+        ignore_built_in_classes: flag("ignore_built_in_classes"),
+        show_rule_names: flag("show_rule_names"),
+    })
+}
+
 impl Project {
+    /// Reads the phpat tests `phpat_config` names, once the analysed and scanned files are final. A test Pun can't
+    /// read statically is an error that names it.
+    pub fn load_phpat(&mut self) -> Result<(), String> {
+        let Some(config) = &self.phpat_config else {
+            return Ok(());
+        };
+        let rules = crate::phpat::Rules::load(self, config)?;
+        self.phpat = Some(std::sync::Arc::new(rules));
+        Ok(())
+    }
+
     pub fn from_config(root: &Path, params: &Array) -> Project {
         let extensions: Vec<String> = strings(params, "fileExtensions")
             .into_iter()
@@ -589,6 +618,8 @@ impl Project {
             relative_path: RelativePath::of(&paths),
             larastan: crate::Larastan::from_params(root, params),
             carbon: crate::Carbon::from_params(root, params),
+            phpat_config: phpat_config(params),
+            phpat: None,
             type_aliases: params
                 .get_str("typeAliases")
                 .and_then(Value::as_array)
@@ -695,6 +726,8 @@ impl Project {
             too_wide: TooWide::default(),
             larastan: None,
             carbon: None,
+            phpat_config: None,
+            phpat: None,
             type_aliases: Vec::new(),
             stubs: Vec::new(),
             reported: None,

@@ -1225,3 +1225,78 @@ fn scan_and_bootstrap_files_declare_symbols() {
         (String::new(), String::new(), Some(0))
     );
 }
+
+const PHPAT_TEST: &str = "<?php\n\nnamespace Arch;\n\nuse PHPat\\Selector\\Selector;\nuse PHPat\\Test\\Builder\\Rule;\nuse PHPat\\Test\\PHPat;\n\nfinal class LayerTest\n{\n    public function testDomainIsPure(): Rule\n    {\n        return PHPat::rule()\n            ->classes(Selector::inNamespace('App\\Domain'))\n            ->shouldNotDependOn()\n            ->classes(Selector::inNamespace('App\\Infra'))\n            ->because('Keep the domain pure');\n    }\n}\n";
+
+fn phpat_project(name: &str, extension: &str) -> PathBuf {
+    project(
+        "analyse",
+        name,
+        &[
+            (
+                "composer.json",
+                r#"{"autoload": {"psr-4": {"App\\": "src/"}}, "autoload-dev": {"psr-4": {"Arch\\": "arch/"}}}"#,
+            ),
+            (
+                "pun.toml",
+                &format!(
+                    "[analyse]\npreset = \"phpstan/level_0\"\npaths = [\"src\"]\n\n[extensions]\nphpat = {extension}\n"
+                ),
+            ),
+            (
+                "src/Domain/Order.php",
+                "<?php\n\nnamespace App\\Domain;\n\nuse App\\Infra\\Db;\n\nfinal class Order\n{\n    public function save(Db $db): void\n    {\n        // @phpstan-ignore phpat.testDomainIsPure\n        $copy = new Db();\n    }\n}\n",
+            ),
+            (
+                "src/Infra/Db.php",
+                "<?php\n\nnamespace App\\Infra;\n\nclass Db\n{\n}\n",
+            ),
+            ("arch/LayerTest.php", PHPAT_TEST),
+        ],
+    )
+}
+
+/// phpat's tests run inside `pun analyse`: PHPStan 2.3.5 with phpat 0.12.5 on the same project (level 0, the test
+/// class tagged `phpat.test`) prints this JSON and exits 1. The `@phpstan-ignore` comment covers the second error.
+#[test]
+fn phpat_tests_run_in_analyse() {
+    let d = phpat_project("phpat", r#"{ tests = ["Arch\\LayerTest"] }"#);
+    let (out, code) = run(&d, &[PUN, "analyse"], &["--error-format=json"]);
+    let file = d.join("src/Domain/Order.php").canonicalize().unwrap();
+    let want = format!(
+        r#"{{"totals":{{"errors":0,"file_errors":1}},"files":{{"{}":{{"errors":1,"messages":[{{"message":"App\\Domain\\Order should not depend on App\\Infra\\Db","line":9,"ignorable":true,"tip":"Keep the domain pure","identifier":"phpat.testDomainIsPure"}}]}}}},"errors":[]}}"#,
+        file.display()
+    );
+    assert_eq!((out, code), (want, Some(1)));
+    // Switched off as a group, phpat reports nothing, so the ignore comment matches no error, as in PHPStan without
+    // phpat.
+    std::fs::write(
+        d.join("pun.toml"),
+        "[analyse]\npreset = \"phpstan/level_0\"\npaths = [\"src\"]\n\n[analyse.rules]\nphpat = \"off\"\n\n[extensions]\nphpat = { tests = [\"Arch\\\\LayerTest\"] }\n",
+    )
+    .unwrap();
+    let (out, code) = run(&d, &[PUN, "analyse"], &["--error-format=json"]);
+    let want = format!(
+        r#"{{"totals":{{"errors":0,"file_errors":1}},"files":{{"{}":{{"errors":1,"messages":[{{"message":"No error with identifier phpat.testDomainIsPure is reported on line 12.","line":12,"ignorable":false,"identifier":"ignore.unmatchedIdentifier","fixable":true}}]}}}},"errors":[]}}"#,
+        file.display()
+    );
+    assert_eq!((out, code), (want, Some(1)));
+}
+
+/// A phpat test Pun can't find or read stops the run (exit 2) with an error that names it.
+#[test]
+fn unreadable_phpat_test_is_a_run_error() {
+    let d = phpat_project("phpat-missing", r#"{ tests = ["Arch\\Missing"] }"#);
+    let out = clean_env(&mut Command::new(PUN), &["PATH", "HOME"])
+        .current_dir(&d)
+        .env("PUN_AGENT", "0")
+        .args(["analyse", "--error-format=json"])
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8(out.stderr).unwrap();
+    assert_eq!(out.status.code(), Some(2), "{stderr}");
+    assert!(
+        stderr.contains("[extensions] phpat: phpat test class Arch\\Missing was not found"),
+        "{stderr}"
+    );
+}

@@ -77,7 +77,15 @@ pub static TYPE_COVERAGE: ExtensionMeta = ExtensionMeta {
     packages: &["tomasvotruba/type-coverage"],
 };
 
-pub static ALL: [&ExtensionMeta; 7] = [
+pub static PHPAT: ExtensionMeta = ExtensionMeta {
+    id: "phpat",
+    name: "phpat",
+    description: "phpat's architecture tests in analyse",
+    groups: &["phpat"],
+    packages: &["phpat/phpat"],
+};
+
+pub static ALL: [&ExtensionMeta; 8] = [
     &LARAVEL,
     &PEST,
     &PHPUNIT,
@@ -85,7 +93,34 @@ pub static ALL: [&ExtensionMeta; 7] = [
     &MOCKERY,
     &DISALLOWED_CALLS,
     &TYPE_COVERAGE,
+    &PHPAT,
 ];
+
+/// `[extensions] phpat`'s settings: the test classes phpstan.neon tags `phpat.test`, and `parameters.phpat`.
+#[derive(Debug, Clone, Default, PartialEq, Eq, serde::Deserialize, Serialize)]
+#[serde(deny_unknown_fields, rename_all = "kebab-case")]
+pub struct Phpat {
+    #[serde(default)]
+    pub tests: Vec<String>,
+    #[serde(default)]
+    pub ignore_doc_comments: bool,
+    #[serde(default)]
+    pub ignore_built_in_classes: bool,
+    #[serde(default)]
+    pub show_rule_names: bool,
+}
+
+/// `[extensions] phpat` as a table of settings (which turns phpat on), or `None` for a plain switch.
+pub(crate) fn phpat(at: &str, t: &toml::Table) -> Result<Option<Phpat>> {
+    match t.get(PHPAT.id) {
+        Some(toml::Value::Table(settings)) => settings
+            .clone()
+            .try_into()
+            .map(Some)
+            .map_err(|e| anyhow::anyhow!("{at}: [extensions] phpat: {}", e.message())),
+        _ => Ok(None),
+    }
+}
 
 /// The extension that owns `group`, and the version in the group's name when it is a version group.
 pub fn owner(group: &str) -> Option<(&'static ExtensionMeta, Option<&str>)> {
@@ -141,9 +176,13 @@ pub(crate) fn switches(at: &str, t: toml::Table) -> Result<BTreeMap<&'static str
             };
             let s = match v.as_str() {
                 Some("on") => Switch::On,
+                None if e.id == PHPAT.id && v.is_table() => Switch::On,
                 Some("off") => Switch::Off,
                 Some("auto") => bail!(
                     "{at}: [extensions] `{name}` = \"auto\" was removed: an extension is on only when pun.toml says so; use \"on\" or \"off\" (`pun migrate` writes the ones composer.lock shows)"
+                ),
+                _ if e.id == PHPAT.id => bail!(
+                    "{at}: [extensions] `{name}` = {v}: expected \"on\", \"off\" or a table of phpat settings"
                 ),
                 _ => bail!("{at}: [extensions] `{name}` = {v}: expected \"on\" or \"off\""),
             };

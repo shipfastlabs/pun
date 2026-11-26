@@ -31,9 +31,11 @@ pub struct Phpstan {
     pub php_version: Option<String>,
     pub parameters: Array,
     pub changed: Vec<(String, Value)>,
+    /// phpat's settings, when the config includes phpat or tags a service `phpat.test`.
+    pub phpat: Option<crate::extensions::Phpat>,
 }
 
-const BUILT_IN: [(&str, Option<&str>); 10] = [
+const BUILT_IN: [(&str, Option<&str>); 11] = [
     ("larastan/larastan", Some("larastan")),
     ("phpstan/phpstan-strict-rules", Some("phpstan-strict-rules")),
     (
@@ -50,10 +52,12 @@ const BUILT_IN: [(&str, Option<&str>); 10] = [
         Some("phpstan-disallowed-calls"),
     ),
     ("tomasvotruba/type-coverage", Some("type-coverage")),
+    ("phpat/phpat", Some("phpat")),
 ];
 
-const HANDLED: [&str; 19] = [
+const HANDLED: [&str; 20] = [
     "level",
+    "phpat",
     "stubFiles",
     "paths",
     "excludePaths",
@@ -196,6 +200,17 @@ pub fn from_phpstan(root: &Path, config: &Path) -> Result<Phpstan> {
     }
     out.unsupported
         .extend(custom_classes(root, config, &includes));
+    let tests = phpat_tests(root, config, &includes);
+    if out.extensions.contains("phpat/phpat") || !tests.is_empty() {
+        let options = p.get_str("phpat").and_then(Value::as_array);
+        let flag = |k: &str| options.and_then(|o| o.get_str(k)) == Some(&Value::Bool(true));
+        out.phpat = Some(crate::extensions::Phpat {
+            tests,
+            ignore_doc_comments: flag("ignore_doc_comments"),
+            ignore_built_in_classes: flag("ignore_built_in_classes"),
+            show_rule_names: flag("show_rule_names"),
+        });
+    }
     let packages: Vec<&String> = (includes.iter())
         .filter(|i| package(&relative(root, i)).is_some())
         .collect();
@@ -395,6 +410,33 @@ fn custom_classes(root: &Path, config: &Path, includes: &[String]) -> Vec<(Strin
             } else {
                 let why = format!("a custom PHPStan extension ({tag}); Pun runs no PHP extensions");
                 add(format!("extension {c}"), why);
+            }
+        }
+    }
+    out
+}
+
+/// The classes of the services the project's own config files tag `phpat.test`: phpat's test classes.
+fn phpat_tests(root: &Path, config: &Path, includes: &[String]) -> Vec<String> {
+    let own = std::iter::once(config.display().to_string()).chain(
+        (includes.iter())
+            .filter(|i| package(&relative(root, i)).is_none() && !is_baseline(i))
+            .cloned(),
+    );
+    let mut out: Vec<String> = Vec::new();
+    for file in own {
+        let neon = neon(&file);
+        let services = neon.get_str("services").and_then(Value::as_array);
+        for s in services.into_iter().flat_map(Array::values) {
+            let Some(a) = s.as_array() else { continue };
+            let tagged = (a.get_str("tags").and_then(Value::as_array))
+                .is_some_and(|t| t.values().any(|v| v.as_str() == Some("phpat.test")));
+            let class = a.get_str("class").and_then(Value::as_str);
+            if let (true, Some(c)) = (tagged, class) {
+                let c = c.trim_start_matches('\\').to_string();
+                if !out.contains(&c) {
+                    out.push(c);
+                }
             }
         }
     }
@@ -701,9 +743,38 @@ fn loaded_extensions(body: &str, phpstan: &Phpstan) -> String {
     out
 }
 
+/// `[extensions] phpat` as a table of its settings.
+fn phpat_line(phpat: &crate::extensions::Phpat) -> String {
+    let tests: Vec<String> = (phpat.tests.iter())
+        .map(|t| serde_json::Value::String(t.clone()).to_string())
+        .collect();
+    let mut fields = vec![format!("tests = [{}]", tests.join(", "))];
+    for (key, on) in [
+        ("ignore-doc-comments", phpat.ignore_doc_comments),
+        ("ignore-built-in-classes", phpat.ignore_built_in_classes),
+        ("show-rule-names", phpat.show_rule_names),
+    ] {
+        if on {
+            fields.push(format!("{key} = true"));
+        }
+    }
+    format!("phpat = {{ {} }}\n", fields.join(", "))
+}
+
 pub fn compose(root: &Path, parts: &mut Parts, phpstan: &Phpstan) -> Result<Analysed> {
     parts.extensions = loaded_extensions(&parts.extensions, phpstan);
     let preset = AnalysePreset::phpstan_of(phpstan.level, phpstan.max);
+    if let Some(phpat) = &phpstan.phpat {
+        let mut lines = (parts.extensions.lines())
+            .filter(|l| !l.starts_with("phpat ="))
+            .fold(String::new(), |mut out, l| {
+                out.push_str(l);
+                out.push('\n');
+                out
+            });
+        lines.push_str(&phpat_line(phpat));
+        parts.extensions = lines;
+    }
     if let Some(v) = &phpstan.php_version {
         parts.php = format!("version = \"{v}\"\n");
     }

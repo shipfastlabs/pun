@@ -1,0 +1,234 @@
+[
+ {
+  "file": "src/Cases/Base.php",
+  "line": 5,
+  "identifier": "phpat.testRegexnamespace",
+  "message": "App\\Cases\\Base should be final",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Base",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Contract",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Dep",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Dep",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\HasDep",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Inner1",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Inner2",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Marker",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Other",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Shared",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testRegexattribute",
+  "message": "App\\Cases\\Child should be final",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testRegexextends",
+  "message": "App\\Cases\\Child should be final",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testRegeximplements",
+  "message": "App\\Cases\\Child should be final",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testRegexincludes",
+  "message": "App\\Cases\\Child should be final",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testRegexnamespace",
+  "message": "App\\Cases\\Child should be final",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testTraitsnested",
+  "message": "App\\Cases\\Child should be final",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 11,
+  "identifier": "phpat.testTraitsparent",
+  "message": "App\\Cases\\Child should be final",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 16,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Dep",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 17,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Dep",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 24,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Base",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 24,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Contract",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 24,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Other",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 24,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on RuntimeException",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 26,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Base",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 27,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Dep",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 31,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Other",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/Child.php",
+  "line": 33,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Dep",
+  "tip": null,
+  "ignorable": true
+ },
+ {
+  "file": "src/Cases/HasDep.php (in context of class App\\Cases\\Child)",
+  "line": 9,
+  "identifier": "phpat.testDependencies",
+  "message": "App\\Cases\\Child should not depend on App\\Cases\\Dep",
+  "tip": null,
+  "ignorable": true
+ }
+]

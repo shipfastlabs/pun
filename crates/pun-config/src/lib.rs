@@ -317,10 +317,12 @@ fn parse(
             bail!("{at}: [files] paths: \"{p}\" is outside the project");
         }
     }
+    let phpat = extensions::phpat(&at.to_string(), &extensions)?;
     let gates = schema::Gates {
         php,
         composer,
         switches: extensions::switches(&at.to_string(), extensions)?,
+        phpat,
     };
     let phpstan_lint = analyse.phpstan_lint(path)?;
     let lint = schema::lint(path, lint, &files, &gates, &phpstan_lint)?;

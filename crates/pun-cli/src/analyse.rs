@@ -242,6 +242,9 @@ fn project(
         renamed_named_arguments: on.contains("analyse/types/renamed-parameter-in-subtype"),
     };
     project.method_rules = method_rules;
+    project
+        .load_phpat()
+        .map_err(|e| run_error(format!("[extensions] phpat: {e}"), None))?;
     let routed = pun_config::identifiers_of_rules(|r| on.contains(r) || lint_on.contains(r));
     project.reported = Some(std::sync::Arc::new(move |id| {
         if method_rules.consistent_constructor

@@ -1,16 +1,26 @@
 use crate::mapping;
 
-const SECTIONS: [&str; 4] = [
+const SECTIONS: [&str; 5] = [
     "phpstan",
     "larastan",
     "phpstan-strict-rules",
     "phpstan-deprecation-rules",
+    "phpat",
 ];
 
 pub(crate) fn entry(identifier: &str) -> Option<&'static toml::Value> {
     let sections = SECTIONS.map(|s| mapping::section(&["upstream", s]).table());
     if let Some(e) = sections.iter().find_map(|t| t.get(identifier)) {
         return Some(e);
+    }
+    // phpat names an error after its test method, whose name may keep dots (`phpat.rules.v2`)
+    if identifier
+        .strip_prefix("phpat.")
+        .is_some_and(|n| !n.is_empty())
+    {
+        return mapping::section(&["upstream", "phpat"])
+            .table()
+            .get("phpat.%s");
     }
     sections.iter().find_map(|t| {
         t.iter().find_map(|(k, e)| {

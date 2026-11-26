@@ -22,6 +22,9 @@ const STRICT_RULES_PARAMETERS: [(&str, bool); 12] = [
     ("checkStrictPrintfPlaceholderTypes", true),
 ];
 
+/// The analyse rule phpat's rules report under.
+pub(crate) const PHPAT_RULE: &str = "analyse/phpat/architecture-violation";
+
 /// The bootstrap file nesbot/carbon's `extension.neon` names, from the project root.
 const CARBON_BOOTSTRAP: &str = "vendor/nesbot/carbon/lazy/Carbon/UnprotectedDatePeriod.php";
 
@@ -84,6 +87,25 @@ impl Analyse {
         }
     }
 
+    /// phpat's `parameters.phpat`, with the test classes its services name, when its rule is on.
+    fn phpat_parameter(&self, on: &HashSet<&str>, p: &mut Array) {
+        if let Some(phpat) = &self.phpat
+            && on.contains(PHPAT_RULE)
+        {
+            let mut a = Array::new();
+            let tests = phpat.tests.iter().map(|t| Value::str(t.as_str()));
+            a.set(Key::from("tests"), Value::Array(Array::list(tests)));
+            for (name, value) in [
+                ("ignore_doc_comments", phpat.ignore_doc_comments),
+                ("ignore_built_in_classes", phpat.ignore_built_in_classes),
+                ("show_rule_names", phpat.show_rule_names),
+            ] {
+                a.set(Key::from(name), Value::Bool(value));
+            }
+            p.set(Key::from("phpat"), Value::Array(a));
+        }
+    }
+
     pub fn parameters(&self, root: &Path) -> Array {
         self.parameters_with_lint(root, |_| false)
     }
@@ -103,6 +125,7 @@ impl Analyse {
         ] {
             p.set(Key::from(name), Value::Bool(value));
         }
+        self.phpat_parameter(&on, &mut p);
         p.set(
             Key::from("cliArgumentsVariablesRegistered"),
             Value::Bool(true),

@@ -14,6 +14,7 @@ struct Carbon;
 struct Mockery;
 struct DisallowedCalls;
 struct TypeCoverage;
+struct Phpat;
 
 impl Extension for Laravel {
     fn meta(&self) -> &'static ExtensionMeta {
@@ -73,7 +74,13 @@ impl Extension for TypeCoverage {
     }
 }
 
-pub(crate) static ALL: [&dyn Extension; 7] = [
+impl Extension for Phpat {
+    fn meta(&self) -> &'static ExtensionMeta {
+        &meta::PHPAT
+    }
+}
+
+pub(crate) static ALL: [&dyn Extension; 8] = [
     &Laravel,
     &Pest,
     &Phpunit,
@@ -81,6 +88,7 @@ pub(crate) static ALL: [&dyn Extension; 7] = [
     &Mockery,
     &DisallowedCalls,
     &TypeCoverage,
+    &Phpat,
 ];
 
 pub(crate) fn fixers() -> Vec<Box<dyn pun_format::Fixer>> {

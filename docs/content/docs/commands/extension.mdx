@@ -36,6 +36,7 @@ carbon            off  Carbon's macros and DatePeriodBase in analyse: not in pun
 mockery           off  phpstan-mockery's mock types in analyse: not in pun.toml
 disallowed-calls  off  The calls and uses your config forbids, in analyse: not in pun.toml
 type-coverage     off  Minimum shares of declared types, in analyse: not in pun.toml
+phpat             off  phpat's architecture tests in analyse: not in pun.toml
 ```
 
 | Extension | Adds |
@@ -47,6 +48,7 @@ type-coverage     off  Minimum shares of declared types, in analyse: not in pun.
 | `mockery` | phpstan-mockery's PHPStan extension in analyse. It isn't ported yet, so turning it on changes nothing. |
 | `disallowed-calls` | spaze/phpstan-disallowed-calls' rules in analyse, in the `disallowed` group. They aren't ported yet, so turning it on changes nothing. |
 | `type-coverage` | tomasvotruba/type-coverage's rules in analyse, in the `type-coverage` group. They aren't ported yet, so turning it on changes nothing. |
+| `phpat` | [phpat](https://github.com/carlosas/phpat)'s architecture tests in analyse, reported under `analyse/phpat/architecture-violation`. Pun reads the test classes without running PHP. See [`[extensions]`](/docs/configuration/pun-toml#phpat). |
 
 An extension is on only when [`[extensions]`](/docs/configuration/pun-toml#extensions) says `"on"`. `pun init` and `pun migrate` write that for you.
 

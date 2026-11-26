@@ -81,6 +81,7 @@ Extensions add the rules and analysis for a framework or test tool. Each one is 
 | `mockery` | `mockery/mockery` or `phpstan/phpstan-mockery` | phpstan-mockery's PHPStan extension in analyse. Not ported yet: it changes nothing |
 | `disallowed-calls` | `spaze/phpstan-disallowed-calls` | The `disallowed` analyse rules. Not ported yet: it changes nothing |
 | `type-coverage` | `tomasvotruba/type-coverage` | The `type-coverage` analyse rules. Not ported yet: it changes nothing |
+| `phpat` | `phpat/phpat` | phpat's architecture tests in analyse, under `analyse/phpat/architecture-violation` |
 
 | Value | Effect |
 | --- | --- |
@@ -90,6 +91,24 @@ Extensions add the rules and analysis for a framework or test tool. Each one is 
 An extension that is on lets its lint rules run: the ones your `[lint] preset` or `[lint] sets` hold. Its rules in no preset, such as `laravel/no-controller-middleware`, stay opt-in. Name them in `[lint.rules]` or `[lint.groups]`. To turn part of an extension off, set its group to `"off"` in `[lint.groups]` or `[analyse.rules]`, or set a single rule to `"off"`.
 
 A rule that you name in `[lint.rules]` runs even when its extension is off. Upgrade groups such as `laravel-12` are the exception: they need the extension, and you must name them.
+
+### phpat
+
+`phpat` also takes a table of settings, which turns it on. `pun migrate` writes it from the classes `phpstan.neon` tags `phpat.test` and from `parameters.phpat`:
+
+```toml title="pun.toml"
+[extensions]
+phpat = { tests = ["Tests\\Architecture\\LayerTest"], show-rule-names = true }
+```
+
+| Key | Meaning |
+| --- | --- |
+| `tests` | The test classes. Pun finds each one through Composer's autoload (`autoload-dev` included), or in the analysed and scanned files |
+| `ignore-doc-comments` | phpat's `ignore_doc_comments`: PHPDoc types are not dependencies. Default `false` |
+| `ignore-built-in-classes` | phpat's `ignore_built_in_classes`: PHP's own classes are not checked. Default `false` |
+| `show-rule-names` | phpat's `show_rule_names`: each message starts with its test method's name. Default `false` |
+
+Pun reads the tests without running PHP: the public methods marked `#[TestRule]` or named `test*`, the test class's traits and parents included, returning or yielding `PHPat::rule()` chains. Their arguments can be literals, `::class` names, the test class's constants, local variables, `array_map()` with a `Selector` factory and a `foreach` that appends to a local array. Anything only PHP could evaluate, such as another function call, a conditional or a helper method, is a run error that names the code. Errors keep phpat's messages and `phpat.<test method>` identifiers, so `@phpstan-ignore` comments and `ignoreErrors` entries still match. Turn phpat off with `phpat = "off"` in `[analyse.rules]`.
 
 Format rules don't depend on extensions. Blade formatting is `"laravel/blade" = true` in `[format.rules]`, which `pun migrate` writes only when `pint.json` turns it on. An unknown extension name is a config error. [`pun extension list`](/docs/commands/extension) shows which extensions are on, and why.
 

@@ -19,12 +19,12 @@ INVENTORY = MAPPING.parent / "upstream"
 RECTOR_SETS = json.loads((MAPPING.parent / "rector-sets.json").read_text())
 PHP_SETS = "rector/php-sets"
 EDIT = "https://github.com/shipfastlabs/pun/edit/main/crates/pun-config/rules/mapping.toml"
-FAMILY = ("phpstan", "larastan", "phpstan-strict-rules", "phpstan-deprecation-rules")
+FAMILY = ("phpstan", "larastan", "phpstan-strict-rules", "phpstan-deprecation-rules", "phpat")
 TOOLS = {
     "pint": ("php-cs-fixer", "pint"),
     "php-cs-fixer": ("php-cs-fixer",),
     "rector": ("rector", "rector-laravel", "pest-plugin-rector", "rector-phpunit", "rector-symfony", "rector-doctrine", "rector-downgrade-php"),
-    "phpstan": ("phpstan", "phpstan-strict-rules", "phpstan-deprecation-rules"),
+    "phpstan": ("phpstan", "phpstan-strict-rules", "phpstan-deprecation-rules", "phpat"),
     "larastan": ("larastan",),
     "mago": ("mago-linter", "mago-analyzer", "pun"),
 }
@@ -517,6 +517,7 @@ Layout-only Rector rules map to format rules. The migration reports any that `[f
 | nesbot/carbon's `extension.neon` | Built in: `carbon = "on"` in `[extensions]` when composer.lock locks `nesbot/carbon` |
 | phpstan-mockery's `extension.neon` | Built in: `mockery = "on"` in `[extensions]` |
 | spaze/phpstan-disallowed-calls' or tomasvotruba/type-coverage's `extension.neon` | Built in: `disallowed-calls = "on"` or `type-coverage = "on"` in `[extensions]`. When phpstan.neon doesn't load the package but composer.lock locks it, the switch is `"off"`, because PHPStan doesn't run its rules |
+| phpat/phpat's `extension.neon`, services tagged `phpat.test`, `parameters.phpat` | Built in: `phpat = { tests = [...] }` in `[extensions]`, with `parameters.phpat` as `ignore-doc-comments`, `ignore-built-in-classes` and `show-rule-names` |
 | A check that is a lint rule in Pun (`array.duplicateKey`) | The lint rule, on in `[[lint.overrides]]` for `paths` and off for `excludePaths`, unless another config turns it on everywhere. `pun analyse` also reports the check's errors under the lint rule's ID, because the lint rule sees no types and can miss some |
 | `@phpstan-ignore method.notFound` | `@pun-ignore analyse/undefined/method` |
 | Baselines | Not copied. Run `pun analyse --generate-baseline`. |
@@ -525,6 +526,12 @@ Layout-only Rector rules map to format rules. The migration reports any that `[f
 | Custom extensions, `rules:` classes, services tagged `phpstan.*` | Reported and skipped, one line each |
 
 The rule mapping lists PHPStan identifiers. An exact identifier wins over a pattern.
+
+### Architecture tests and custom rules
+
+Pun runs [phpat](https://github.com/carlosas/phpat) 0.12 natively, as the `phpat` extension. It reads your test classes without running PHP, the test methods of their traits and parent classes included, and reports what phpat reports, with the same messages and `phpat.<test method>` identifiers, under [`analyse/phpat/architecture-violation`](/docs/rules/analyse/phpat/architecture-violation). It also reads local array variables, `array_map()` over a literal array with a `Selector` factory (`Selector::classname(...)`, a string callable, or a closure or arrow function that calls one), the spread `...` of such arrays into a selector list, and a `foreach` over a literal array that appends selectors to a local array. A trait `use` with `insteadof` or `as` adaptations, and a test that only PHP could evaluate, such as a selector built from another function call, a conditional or a helper method, stops `pun analyse` with an error that names the code. `Selector::appliesAttribute()` with `$arguments` isn't supported yet.
+
+Pun has no PHP extension API, so your project's own PHPStan rules (`rules:` classes and services tagged `phpstan.rules.rule`) don't run in Pun. Keep running PHPStan for them.
 """,
         "larastan": """Run `pun migrate --from phpstan` on the config that includes `larastan/larastan/extension.neon`.
 

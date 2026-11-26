@@ -209,7 +209,7 @@ From mapping.toml (`scripts/check-rule-mapping.py` prints them):
 | Mago 1.61.0 analyzer codes | 335 | - | 8 | 192 | - | 135 |
 | **Pun rules** (1,214) | 3,215 | **164** | **680** | **370** | | |
 
-Ported (`ported = true`): 164 of 164 format rules, 679 of 680 lint rules and 364 of 370 analyse rules. In scope: 518
+Ported (`ported = true`): 164 of 164 format rules, 679 of 680 lint rules and 365 of 371 analyse rules. In scope: 518
 Rector-family rules (503 → lint, 15 → format) and 405 PHPStan-family classes (370 → analyse, 31 → lint, 4 → format).
 
 ## 7. The one-to-one mapping
