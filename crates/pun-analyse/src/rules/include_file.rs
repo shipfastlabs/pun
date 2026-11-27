@@ -196,21 +196,13 @@ fn strings(c: &Checker, expr: &Expression) -> Vec<String> {
     }
 }
 
-fn constant_strings(t: &Type) -> Vec<String> {
-    match t {
-        Type::ConstString(s) => vec![String::from_utf8_lossy(s).into_owned()],
-        Type::Union(ts) | Type::Benevolent(ts) => {
-            let parts: Vec<_> = ts.iter().map(constant_strings).collect();
-            if parts.iter().any(Vec::is_empty) {
-                Vec::new()
-            } else {
-                parts.concat()
-            }
-        }
-        Type::Intersection(ts) => ts.iter().flat_map(constant_strings).collect(),
-        Type::Template(t) => constant_strings(&t.bound),
-        _ => Vec::new(),
-    }
+/// PHPStan's `getConstantStrings()`, through `pun-phpstan`'s port (a template bounded by a template bounded by one
+/// constant string has none).
+fn constant_strings(ty: &Type) -> Vec<String> {
+    ty.constant_strings()
+        .into_iter()
+        .map(|s| String::from_utf8_lossy(&s).into_owned())
+        .collect()
 }
 
 fn does_file_exist(c: &Checker, path: &str) -> bool {

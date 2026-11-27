@@ -1441,3 +1441,14 @@ return `Attribute<TMakeGet, TMakeSet>`, which PHPStan drops for the native `stat
 set: ...)` is the plain `Attribute` and accepted as any declared `Attribute<...>` (shipfastlabs/pun#152).
 `crates/pun-analyse/tests/fixtures/larastan-types/Type/PunAttributeMakeTest.json` covers it against PHPStan 2.3.7 with
 Larastan 3.15.0.
+
+## Benevolent union string members
+
+`ttype/atomic/mod.rs` adds `TAtomic::is_benevolent_string_member()`: whether a member of a benevolent union is a
+string by PHPStan's `isString()->yes()`, the test `BenevolentUnionType::pickFromTypes()` vetoes a member without
+constant values by. `string`, `class-string`, `scalar`, `numeric` and `array-key` members count (PHPStan flattens the
+last three with a string member), and a template counts when every member of its bound is a string, through bounds
+that are templates; any atom counts when one of its intersection types does (`T&string`, as
+IntersectionType::isString() is yes when a member is). mago-analyzer's `observations::constant_strings()` and pun-analyse's `str_repeat()` return-type
+extension use it (shipfastlabs/pun#34; `crates/pun-analyse/tests/fixtures/instance-property-reads` covers both against
+PHPStan 2.3.5).

@@ -106,7 +106,7 @@ impl<'ast, 'arena> Analyzable<'ast, 'arena> for StaticMethodCall<'arena> {
 
         let reflection_scope = block_context.clone();
         let mut method_resolution =
-            resolve_static_method_targets(context, block_context, artifacts, self.class, &self.method, self.span())?;
+            resolve_static_method_targets(context, block_context, artifacts, self.class, &self.method, self.span(), true)?;
         let short_circuit = crate::context::non_nullability::may_short_circuit(self.class, artifacts)
             .then(|| block_context.clone());
         let undocumented_template_result =

@@ -179,6 +179,7 @@ pub fn resolve_method_targets<'ctx, 'ast, 'arena, A>(
     is_null_safe: bool,
     operator_span: Span,
     access_span: Span,
+    constant_names_only: bool,
 ) -> Result<MethodResolutionResult, AnalysisError>
 where
     A: Arena,
@@ -199,6 +200,7 @@ where
         operator_span,
         access_span,
         None,
+        constant_names_only,
     )
 }
 
@@ -214,6 +216,7 @@ pub(crate) fn resolve_method_targets_after_receiver<'ctx, 'ast, 'arena, A: Arena
     operator_span: Span,
     access_span: Span,
     receiver_type: Option<&TUnion>,
+    constant_names_only: bool,
 ) -> Result<MethodResolutionResult, AnalysisError> {
     let mut result = MethodResolutionResult::default();
     let mut asserted_descendant_method_references = Vec::new();
@@ -231,6 +234,15 @@ pub(crate) fn resolve_method_targets_after_receiver<'ctx, 'ast, 'arena, A: Arena
         } else {
             result.has_invalid_target = true;
         }
+    }
+
+    // MethodCallHandler calls a dynamic name only through getConstantStrings(): those names, or a mixed call when
+    // there are none (`'name'|null`, a template bounded by a template bounded by one constant string). Mago's own
+    // partial application (`$receiver->{$name}(?)`), which PHPStan does not parse, keeps the selector's names and its
+    // invalid arms; a first-class callable with a dynamic name is a Closure before it gets here.
+    if constant_names_only && let Some(names) = crate::resolver::selector::dynamic_constant_names(selector, artifacts) {
+        result.has_dynamic_selector = names.is_empty();
+        method_names = names;
     }
 
     // The nullsafe twin resolves on its non-null receiver view. Redundancy is judged on the receiver's original type,

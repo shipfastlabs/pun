@@ -11,6 +11,7 @@ use mago_codex::ttype::combiner::CombinerOptions;
 use mago_codex::ttype::expander::StaticClassType;
 use mago_codex::ttype::expander::TypeExpansionOptions;
 use mago_codex::ttype::expander::expand_union;
+use mago_codex::ttype::get_error;
 use mago_codex::ttype::get_mixed;
 use mago_codex::ttype::get_mixed_maybe_from_loop;
 use mago_codex::ttype::get_never;
@@ -182,7 +183,9 @@ where
             ));
         }
 
+        // PropertyFetchHandler::composeResult() reads a dynamic name that is not a constant string as mixed.
         if resolution_result.has_ambiguous_path
+            || resolution_result.has_invalid_selector
             || resolution_result.encountered_mixed
             || resolution_result.has_possibly_defined_property
         {
@@ -194,10 +197,16 @@ where
         // when the chain holds one and the receiver can be null.
         let short_circuits =
             !is_null_safe && crate::context::non_nullability::may_short_circuit(object, artifacts);
-        if resolution_result.has_invalid_path
-            || short_circuits
-            || (resolution_result.encountered_null && (is_null_safe || resulting_expression_type.is_none()))
-        {
+        let adds_null = short_circuits
+            || (resolution_result.encountered_null && (is_null_safe || resulting_expression_type.is_none()));
+
+        // PropertyFetchHandler::composeResult() reads a property no receiver arm reflects as ErrorType, not null; an
+        // arm that does reflect it, or a mixed receiver, gives the whole read its type.
+        if resolution_result.has_invalid_path && resulting_expression_type.is_none() {
+            resulting_expression_type = Some(get_error());
+        }
+
+        if adds_null {
             resulting_expression_type =
                 Some(add_optional_union_type(get_null(), resulting_expression_type.as_ref(), context.codebase));
         }

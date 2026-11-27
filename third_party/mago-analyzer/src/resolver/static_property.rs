@@ -94,7 +94,10 @@ where
             break 'resolve_names;
         };
 
-        let variable_type = cast_type_to_string(
+        // The cast reports what a name of this type does at runtime; the names themselves are the name type's own
+        // constant strings. StaticPropertyFetchHandler::composeResult() resolves each of getConstantStrings() and reads
+        // any other name as mixed, so `'name'|null` or a template bounded by a template bounded by `'name'` is mixed.
+        cast_type_to_string(
             &variable_type,
             variable_id.as_ref().map(|id| id.as_bytes()),
             context,
@@ -103,17 +106,12 @@ where
             property_variable.span(),
         )?;
 
-        for variable_atomic_type in variable_type.types.as_ref() {
-            let Some(property_name) = variable_atomic_type.get_literal_string_value() else {
-                if variable_atomic_type.is_any_string() {
-                    result.has_ambiguous_path = true;
-                } else {
-                    result.has_invalid_path = true;
-                }
+        let names = crate::observations::constant_strings(&variable_type);
+        if names.is_empty() {
+            result.has_ambiguous_path = true;
+        }
 
-                continue;
-            };
-
+        for property_name in names {
             property_names.push(concat_word!("$", property_name));
         }
     };

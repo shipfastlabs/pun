@@ -341,7 +341,8 @@ fn ordinary_selectors_still_validate_and_actual_partial_application_keeps_its_ow
                 .filter(|issue| issue.code.as_deref()
                     == Some(IssueCode::InvalidMemberSelector.as_str()))
                 .count(),
-            1
+            3,
+            "the integer name and the null arm of each nullable name"
         );
         for (expression, expected) in [
             (
@@ -355,6 +356,16 @@ fn ordinary_selectors_still_validate_and_actual_partial_application_keeps_its_ow
             (
                 "$receiver->{$name}(?)",
                 json!({"kind": "value", "type": "never"}),
+            ),
+            // A name that is a constant string or null: the partial application resolves the constant name, as
+            // before this branch's PHPStan rule for dynamic calls (which needs every member to be a constant string).
+            (
+                "$receiver->{$nullable}(?, 1)",
+                json!({"kind": "signature", "parameters": ["string"], "return": "int"}),
+            ),
+            (
+                "PartialTarget::{$counter}(?)",
+                json!({"kind": "signature", "parameters": ["int"], "return": "int"}),
             ),
         ] {
             let start = std::str::from_utf8(source)

@@ -1,6 +1,7 @@
 use mago_allocator::Arena;
 use mago_codex::ttype::TType;
 use mago_codex::ttype::atomic::TAtomic;
+use mago_codex::ttype::atomic::generic::TGenericParameter;
 use mago_codex::ttype::union::TUnion;
 use mago_reporting::Annotation;
 use mago_reporting::Issue;
@@ -197,12 +198,12 @@ where
     let mut resolved_selectors = vec![];
     for atomic in selector_type.types.as_ref() {
         if let TAtomic::GenericParameter(parameter) = atomic {
-            resolved_selectors.extend(resolve_selector_from_type(
-                context,
-                Some(parameter.get_constraint()),
-                selector_span,
-                kind,
-            ));
+            match name_bound(parameter) {
+                Some(bound) => {
+                    resolved_selectors.extend(resolve_selector_from_type(context, Some(bound), selector_span, kind));
+                }
+                None => resolved_selectors.push(ResolvedSelector::GenericString),
+            }
 
             continue;
         }
@@ -259,4 +260,49 @@ where
     }
 
     resolved_selectors
+}
+
+/// The bound whose constant strings a template parameter used as a name has, or `None` when it has none.
+///
+/// PHPStan's `TemplateTypeFactory::create()` turns a template bounded by another template, itself bounded by a
+/// single constant string (or literal class string), into a `TemplateStringType`, whose `getConstantStrings()` is
+/// empty; a union bound stays a `TemplateUnionType` and keeps its constant strings. The chain is followed through
+/// every template without intersections that is the whole bound, as `pun-phpstan`'s `Type::constant_strings()` does.
+pub(crate) fn name_bound(parameter: &TGenericParameter) -> Option<&TUnion> {
+    let mut bound = parameter.get_constraint();
+    // A template with intersections is a TemplateIntersectionType, whose members each give their constant strings.
+    while let [TAtomic::GenericParameter(inner)] = bound.types.as_ref()
+        && inner.intersection_types.is_none()
+    {
+        bound = inner.get_constraint();
+        if let [atomic] = bound.types.as_ref()
+            && (atomic.get_literal_string_value().is_some() || atomic.get_class_string_value().is_some())
+        {
+            return None;
+        }
+    }
+
+    Some(bound)
+}
+
+/// The constant strings of a dynamic member name's own type, before any string coercion, or `None` for an identifier
+/// or a name of unknown type. PHPStan's property fetch and method call handlers resolve a dynamic name only through
+/// `getConstantStrings()`: an empty list (`1`, `'name'|null`, `string`, a template bounded by a template bounded by one
+/// constant string) reads or calls as mixed and resolves no member.
+pub(crate) fn dynamic_constant_names(
+    selector: &ClassLikeMemberSelector<'_>,
+    artifacts: &AnalysisArtifacts,
+) -> Option<Vec<Word>> {
+    let name_type = match selector {
+        ClassLikeMemberSelector::Expression(selector) => artifacts.get_expression_type(selector.expression),
+        ClassLikeMemberSelector::Variable(variable) => artifacts.get_expression_type(variable),
+        ClassLikeMemberSelector::Identifier(_) | ClassLikeMemberSelector::Missing(_) => None,
+    };
+
+    name_type.map(crate::observations::constant_strings)
+}
+
+/// Whether a dynamic member name has no constant strings (`dynamic_constant_names()` is empty).
+pub(crate) fn has_no_constant_name(selector: &ClassLikeMemberSelector<'_>, artifacts: &AnalysisArtifacts) -> bool {
+    dynamic_constant_names(selector, artifacts).is_some_and(|names| names.is_empty())
 }

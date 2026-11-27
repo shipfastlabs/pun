@@ -67,21 +67,13 @@ pub(super) fn class_constant<'arena>(
     }
 }
 
+/// PHPStan's `getConstantStrings()`, through `pun-phpstan`'s port (a template bounded by a template bounded by one
+/// constant string has none).
 pub(super) fn constant_strings(ty: &Type) -> Vec<String> {
-    match ty {
-        Type::ConstString(s) => vec![String::from_utf8_lossy(s).into_owned()],
-        Type::Template(t) => constant_strings(&t.bound),
-        Type::Union(parts) | Type::Benevolent(parts) => {
-            let strings: Vec<_> = parts.iter().map(constant_strings).collect();
-            if strings.iter().any(Vec::is_empty) {
-                Vec::new()
-            } else {
-                strings.concat()
-            }
-        }
-        Type::Intersection(parts) => parts.iter().flat_map(constant_strings).collect(),
-        _ => Vec::new(),
-    }
+    ty.constant_strings()
+        .into_iter()
+        .map(|s| String::from_utf8_lossy(&s).into_owned())
+        .collect()
 }
 
 fn class_constant_named(c: &mut Checker, access: &ClassConstantAccess, constant_name: &str) {
