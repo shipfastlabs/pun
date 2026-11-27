@@ -1520,6 +1520,26 @@ impl PluginRegistry {
             })
     }
 
+    /// The first function provider's type for `$this` inside an inline closure passed as `parameter` (`$name`).
+    pub(crate) fn get_function_parameter_closure_this_type<'ctx>(
+        &self,
+        codebase: &'ctx CodebaseMetadata,
+        source_file: &'ctx File,
+        block_context: &BlockContext<'ctx>,
+        artifacts: &AnalysisArtifacts,
+        invocation: &Invocation<'ctx, '_, '_>,
+        parameter: &[u8],
+    ) -> Option<TUnion> {
+        let Some(FunctionLikeIdentifier::Function(name)) = invocation.target.get_function_like_identifier() else {
+            return None;
+        };
+        let context = ProviderContext::new(codebase, source_file, block_context, artifacts);
+        let invocation = InvocationInfo::new(invocation);
+        self.get_function_provider_indices(name.as_bytes()).into_iter().find_map(|index| {
+            self.function_providers[index].get_parameter_closure_this_type(&context, &invocation, parameter)
+        })
+    }
+
     /// Returns a provider result for a function or method invocation.
     ///
     /// External provider failures are logged and preserve the native return type.

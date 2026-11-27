@@ -94,6 +94,7 @@ pub(crate) struct Checks {
     relative_path: RelativePath,
     larastan: Option<super::Larastan>,
     mockery: Option<crate::Mockery>,
+    pest: Option<crate::Pest>,
     type_coverage: Option<super::TypeCoverage>,
     internal: Option<super::internal::Names>,
     pub(super) type_aliases: Vec<(String, String)>,
@@ -175,6 +176,7 @@ impl Checks {
                 .iter()
                 .map(|m| m as &dyn crate::AnalyseExtension),
         )
+        .chain(self.pest.iter().map(|p| p as &dyn crate::AnalyseExtension))
     }
 }
 
@@ -194,6 +196,10 @@ impl Checks {
         let mut larastan = project.larastan.clone();
         if let Some(l) = &mut larastan {
             crate::AnalyseExtension::load(l, project, codebase);
+        }
+        let mut pest = project.pest.clone();
+        if let Some(p) = &mut pest {
+            crate::AnalyseExtension::load(p, project, codebase);
         }
         let mut switches = Switches::empty();
         switches.set(
@@ -404,6 +410,7 @@ impl Checks {
             relative_path: project.relative_path.clone(),
             larastan,
             mockery: project.mockery.clone(),
+            pest,
             type_coverage: project.type_coverage,
             internal: (internal_members
                 || project
@@ -688,6 +695,9 @@ fn checker<'a, 'arena>(
         top_level: HashSet::new(),
         piped: HashSet::new(),
         rebound: HashMap::new(),
+        pest_test_case: (project.pest.as_ref())
+            .zip(file.path.as_deref())
+            .map(|(pest, path)| pest.test_case(path, codebase)),
         label: String::from_utf8_lossy(&file.name).into_owned(),
         trait_context: None,
         trait_uses: Vec::new(),
@@ -721,6 +731,7 @@ fn checker<'a, 'arena>(
         level: project.level,
         switches: project.switches,
         larastan: project.larastan.as_ref(),
+        pest: project.pest.as_ref(),
         type_coverage: project.type_coverage.as_ref(),
         larastan_state: Default::default(),
         internal: project.internal.as_ref(),

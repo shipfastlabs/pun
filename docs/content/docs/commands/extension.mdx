@@ -41,7 +41,7 @@ type-coverage     off  Minimum shares of declared types, in analyse: not in pun.
 | Extension | Adds |
 | --- | --- |
 | `laravel` | Laravel lint and analyse rules, and Larastan's checks. |
-| `pest` | Pest lint rules. |
+| `pest` | Pest lint rules, and pest-plugin-phpstan's types in analyse. In a test or a hook (`test()`, `it()`, `describe()`, `beforeEach()`, `afterEach()`, `beforeAll()`, `afterAll()`), `$this` is the test case that `pest()->extend()` or `uses()` binds to the file's directory in `tests/Pest.php`, else `PHPUnit\Framework\TestCase`, and the closure can call its protected methods. A test case takes any property, and `$this->name` read in a test has the types the file's `beforeEach()` closures assign to it. A binding made in the test file itself isn't read. |
 | `phpunit` | PHPUnit lint rules. |
 | `carbon` | Carbon's PHPStan extension in analyse. Each class that implements `CarbonInterface` gets the macros that `X::macro('name', ...)` calls register in the analysed, scanned, and bootstrap files. Pun reads these calls without running PHP. A macro that is registered at runtime in any other way, such as with a dynamic name, isn't found. |
 | `mockery` | phpstan-mockery's PHPStan extension in analyse. `Mockery::mock()`, `spy()` and `namedMock()` return `MockInterface` intersected with the classes their string arguments name, `allows()` and `expects()` on a mock of one class accept any method and return `Expectation`, and a PHPDoc `MockInterface\|Foo` reads as `MockInterface&Foo`. It adds no rules. |

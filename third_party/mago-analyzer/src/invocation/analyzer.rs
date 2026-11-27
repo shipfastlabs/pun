@@ -1120,11 +1120,22 @@ where
             })
             .or(parameter_type);
 
-        // A `@param-closure-this T` parameter binds `$this` to `T` inside the closure literal.
-        // It takes precedence over any global `Closure::bind` scope for this argument.
-        artifacts.closure_bind_scope = parameter
-            .and_then(|(_, p)| p.get_closure_this_type())
-            .and_then(|closure_this_type| {
+        // A provider's closure-this type (PHPStan's `FunctionParameterClosureThisExtension`) wins over the
+        // parameter's `@param-closure-this T`, which binds `$this` to `T` inside the closure literal. A provided type
+        // also scopes the closure to its class, as the closure is bound to an instance of it (Pest's test case).
+        // Either takes precedence over any global `Closure::bind` scope for this argument.
+        let provided_closure_this = parameter.and_then(|(_, parameter)| parameter.get_name()).and_then(|name| {
+            context.plugin_registry.get_function_parameter_closure_this_type(
+                context.codebase,
+                context.source_file,
+                block_context,
+                artifacts,
+                invocation,
+                name.0.as_bytes(),
+            )
+        });
+        let declared_closure_this = || {
+            parameter.and_then(|(_, p)| p.get_closure_this_type()).and_then(|closure_this_type| {
                 // Resolve `self`/`static` and class-level context, then bind any method templates
                 // (e.g. a trait template `T` mapped to `self<...>` via `@use`).
                 let mut resolved = resolve_type_in_class_context(
@@ -1148,6 +1159,14 @@ where
 
                 closure_this_bind_scope(&resolved)
             })
+        };
+        artifacts.closure_bind_scope = provided_closure_this
+            .as_ref()
+            .and_then(|closure_this| {
+                closure_this_bind_scope(closure_this)
+                    .map(|scope| ClosureBindScope { class_name: extract_class_name_from_type(closure_this), ..scope })
+            })
+            .or_else(declared_closure_this)
             .or_else(|| global_closure_bind_scope.clone());
 
         let raw_callback_type = if arguments.types[*argument_offset].is_some() {

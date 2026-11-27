@@ -29,6 +29,19 @@ impl<'arena> Checker<'_, 'arena> {
             return;
         };
         let name = super::function_checks::function_name(self.names, self.codebase, id);
+        if let Some(class) = self.pest_test_case.clone()
+            && crate::Pest::binds_closure(&name)
+        {
+            for argument in &call.argument_list.arguments {
+                let value = unparen(argument.value());
+                if matches!(value, Expression::Closure(f) if f.r#static.is_none())
+                    || matches!(value, Expression::ArrowFunction(f) if f.r#static.is_none())
+                {
+                    self.rebind(value, Some(class.clone()), true);
+                }
+            }
+            return;
+        }
         if let Some(f) = self
             .codebase
             .get_function(name.as_bytes())

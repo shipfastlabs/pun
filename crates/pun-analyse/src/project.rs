@@ -84,6 +84,7 @@ pub struct Project {
     pub larastan: Option<crate::Larastan>,
     pub carbon: Option<crate::Carbon>,
     pub mockery: Option<crate::Mockery>,
+    pub pest: Option<crate::Pest>,
     /// tomasvotruba/type-coverage's `type_coverage` parameters, `None` when no type-coverage rule runs (also when
     /// only some of the configured paths are analysed: ScopeConfigurationResolver::areFullPathsAnalysed).
     pub type_coverage: Option<crate::TypeCoverage>,
@@ -596,6 +597,7 @@ impl Project {
             larastan: crate::Larastan::from_params(root, params),
             carbon: crate::Carbon::from_params(root, params),
             mockery: crate::Mockery::from_params(params),
+            pest: crate::Pest::from_params(root, params),
             type_coverage: crate::TypeCoverage::from_params(params),
             type_aliases: params
                 .get_str("typeAliases")
@@ -630,6 +632,7 @@ impl Project {
         (self.larastan.iter().map(|l| l as &dyn AnalyseExtension))
             .chain(self.carbon.iter().map(|c| c as &dyn AnalyseExtension))
             .chain(self.mockery.iter().map(|m| m as &dyn AnalyseExtension))
+            .chain(self.pest.iter().map(|p| p as &dyn AnalyseExtension))
     }
 
     pub fn new(analysed: Vec<PathBuf>, scanned: Vec<PathBuf>) -> Project {
@@ -710,6 +713,7 @@ impl Project {
             larastan: None,
             carbon: None,
             mockery: None,
+            pest: None,
             type_coverage: None,
             type_aliases: Vec::new(),
             stubs: Vec::new(),

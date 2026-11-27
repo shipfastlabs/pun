@@ -76,7 +76,37 @@ impl<'a> Checker<'a, '_> {
     ) -> impl Iterator<Item = &'a dyn ClassReflectionExtension> {
         (self.larastan.into_iter())
             .map(|l| l as &dyn ClassReflectionExtension)
+            .chain((self.pest.into_iter()).map(|p| p as &dyn ClassReflectionExtension))
             .chain([&SoapClientMethods as &dyn ClassReflectionExtension])
+    }
+}
+
+/// pest-plugin-phpstan's `universalObjectCratesClasses: [PHPUnit\Framework\TestCase]`: a test case has every
+/// property, as the tests assign theirs in `beforeEach()`.
+impl ClassReflectionExtension for crate::Pest {
+    fn method(
+        &self,
+        _: &Checker,
+        _: MethodPhase,
+        _: &Type,
+        _: &ClassLikeMetadata,
+        _: &[u8],
+    ) -> Option<MethodAnswer> {
+        None
+    }
+
+    fn has_property(&self, c: &Checker, class: &ClassLikeMetadata, _: &[u8]) -> bool {
+        let test_case = b"PHPUnit\\Framework\\TestCase";
+        class.name.as_bytes().eq_ignore_ascii_case(test_case)
+            || c.codebase.is_instance_of(class.name.as_bytes(), test_case)
+    }
+
+    fn calls_inaccessible_method(&self, _: &Checker, _: &Type, _: &str) -> bool {
+        false
+    }
+
+    fn static_forward(&self, _: &Checker, _: &ClassLikeMetadata, _: &str) -> Option<Type> {
+        None
     }
 }
 
