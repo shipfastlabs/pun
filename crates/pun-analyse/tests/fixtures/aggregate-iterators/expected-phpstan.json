@@ -1,0 +1,41 @@
+{
+ "level": 5,
+ "errors": [
+  {
+   "line": 34,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "line": 35,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "line": 39,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int",
+   "tip": null
+  },
+  {
+   "line": 40,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: DateTimeImmutable",
+   "tip": null
+  },
+  {
+   "line": 43,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: DateTimeInterface",
+   "tip": null
+  },
+  {
+   "line": 46,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: DateTimeInterface",
+   "tip": null
+  }
+ ]
+}

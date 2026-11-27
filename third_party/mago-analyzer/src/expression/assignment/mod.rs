@@ -1986,11 +1986,36 @@ fn ternary_assignment_conditions<'ctx, 'arena, A>(
     else {
         return;
     };
-    if then_type.has_mixed() || else_type.has_mixed() {
-        return;
-    }
     let codebase = context.codebase;
     let remainder = |arm: &TUnion, other: &TUnion| -> Option<TUnion> {
+        // TypeCombinator::remove(mixed, null) is `mixed~null`
+        if let [TAtomic::Mixed(mixed)] = arm.types.as_ref()
+            && other.is_null()
+        {
+            return Some(mixed.subtract(other, codebase));
+        }
+        if arm.has_mixed() || other.has_mixed() {
+            return None;
+        }
+        // TypeCombinator::remove() of the empty array from a possibly empty array that is not a shape: non-empty
+        if other.is_empty_array()
+            && let [TAtomic::Array(array)] = arm.types.as_ref()
+        {
+            let non_empty = match array {
+                TArray::List(list) if list.known_elements.is_none() && !list.element_type.is_never() => {
+                    let mut list = list.clone();
+                    list.non_empty = true;
+                    Some(TArray::List(list))
+                }
+                TArray::Keyed(keyed) if keyed.known_items.is_none() && keyed.parameters.is_some() => {
+                    Some(TArray::Keyed(keyed.clone().with_non_empty(true)))
+                }
+                _ => None,
+            };
+            if let Some(non_empty) = non_empty {
+                return Some(TUnion::from_atomic(TAtomic::Array(non_empty)));
+            }
+        }
         let mut left = arm.types.iter().filter(|atomic| {
             !union_comparator::is_contained_by(
                 codebase,

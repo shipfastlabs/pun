@@ -802,6 +802,36 @@ pub(crate) fn accessor_type(
     }
 }
 
+/// The model a class that neither declares `property` nor is a model names in its `@mixin` tags.
+fn mixin_model(
+    codebase: &CodebaseMetadata,
+    object: &TNamedObject,
+    property: &str,
+) -> Option<TNamedObject> {
+    let class = object.name.as_bytes();
+    let k = codebase.get_class_like(class)?;
+    if codebase.is_instance_of(class, MODEL.as_bytes())
+        || codebase
+            .get_declaring_property(class, property.as_bytes())
+            .is_some()
+        || k.magic_property_ids
+            .contains_key(&Word::new(property.as_bytes()))
+    {
+        return None;
+    }
+    k.mixins
+        .iter()
+        .flat_map(|m| m.type_union.types.iter())
+        .find_map(|m| match m {
+            TAtomic::Object(TObject::Named(m))
+                if codebase.is_instance_of(m.name.as_bytes(), MODEL.as_bytes()) =>
+            {
+                Some(m.clone())
+            }
+            _ => None,
+        })
+}
+
 fn relation_count(codebase: &CodebaseMetadata, class: &[u8], property: &str) -> bool {
     let Some(relation) = property.strip_suffix("_count") else {
         return false;
@@ -998,6 +1028,27 @@ impl ModelAttributes {
     }
 }
 
+/// The analyzer's expression ID of `$a->b->c`, a variable followed by named property fetches.
+fn fetch_id(e: &Expression<'_>) -> Option<String> {
+    match e {
+        Expression::Parenthesized(p) => fetch_id(p.expression),
+        Expression::Variable(Variable::Direct(v)) => {
+            Some(String::from_utf8_lossy(v.name).into_owned())
+        }
+        Expression::Access(Access::Property(p)) => {
+            let ClassLikeMemberSelector::Identifier(id) = &p.property else {
+                return None;
+            };
+            Some(format!(
+                "{}->{}",
+                fetch_id(p.object)?,
+                String::from_utf8_lossy(id.value)
+            ))
+        }
+        _ => None,
+    }
+}
+
 impl ExpressionHook for ModelAttributes {
     fn after_expression(
         &self,
@@ -1048,6 +1099,10 @@ impl ExpressionHook for ModelAttributes {
                     }
                 }
                 TAtomic::Object(TObject::Named(n)) => {
+                    // MixinPropertiesClassReflectionExtension: a class without the property reads it on its
+                    // `@mixin` model (a JsonResource's `@mixin Post`), relations and counts included
+                    let mixin = mixin_model(context.codebase(), n, &dollar);
+                    let n = mixin.as_ref().unwrap_or(n);
                     let class = n.name.as_bytes();
                     let declared = context
                         .codebase()
@@ -1125,6 +1180,20 @@ impl ExpressionHook for ModelAttributes {
         // (NullsafeShortCircuitingHelper)
         if short_circuits && properties > 0 && non_nullable == properties {
             ty.set_nullsafe_null(true);
+        }
+        // The analyzer remembers a fetch under its expression ID, first as its own `mixed`: this type replaces it,
+        // so a later `instanceof` or `!== null` narrows it, and a remembered type that is not `mixed` (this one,
+        // narrowed or assigned) is what the fetch reads, as for a declared property
+        if !nullsafe && let Some(id) = fetch_id(expr) {
+            let id = Word::new(id.as_bytes());
+            match context.block_context().locals.get(&id) {
+                Some(remembered) if !remembered.is_mixed() => return Ok(()),
+                Some(_) => {
+                    let remembered = std::rc::Rc::new(ty.clone());
+                    context.block_context_mut().locals.insert(id, remembered);
+                }
+                None => {}
+            }
         }
         context.set_expression_type(expr, ty);
         Ok(())

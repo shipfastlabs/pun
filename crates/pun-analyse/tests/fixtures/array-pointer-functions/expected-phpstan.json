@@ -1,0 +1,54 @@
+{
+ "general": [],
+ "errors": [
+  {
+   "file": "pointers.php",
+   "line": 27,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-empty-list<string>",
+   "tip": null
+  },
+  {
+   "file": "pointers.php",
+   "line": 29,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-empty-list<string>",
+   "tip": null
+  },
+  {
+   "file": "pointers.php",
+   "line": 31,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-empty-list<string>",
+   "tip": null
+  },
+  {
+   "file": "pointers.php",
+   "line": 33,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-empty-list<string>",
+   "tip": null
+  },
+  {
+   "file": "pointers.php",
+   "line": 35,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-empty-list<string>",
+   "tip": null
+  },
+  {
+   "file": "pointers.php",
+   "line": 41,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int|string",
+   "tip": null
+  },
+  {
+   "file": "pointers.php",
+   "line": 42,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: array{a: int, b: string}",
+   "tip": null
+  }
+ ]
+}

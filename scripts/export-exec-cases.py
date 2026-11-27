@@ -11,9 +11,15 @@ Composer's exception block) when Composer stops with an exception, which Pun pri
 `stderr_tail` marks a case whose stderr starts with what /bin/sh itself says, which differs between systems: only
 Composer's lines after it are checked.
 
+/bin/sh is bash on macOS and dash on Linux, which word their errors and exit codes differently, so the run records the
+results of the system it runs on and keeps the other system's from the fixture it replaces: a result both share stays
+on the case, and one that differs goes under `macos` and `linux` (null where one has no `message`), which the test
+picks from by the system it runs on. Re-record on both systems after a change to the cases; a case the old fixture
+lacks takes this system's results for both until then.
+
 usage: scripts/export-exec-cases.py   (needs php 8.5 and .oracle/composer from scripts/oracle.sh)
 """
-import json, os, re, shutil, subprocess, tempfile
+import json, os, re, shutil, subprocess, sys, tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PHAR = os.path.join(ROOT, '.oracle/composer/composer.phar')
@@ -33,6 +39,8 @@ LOCAL_ENV = '#!/usr/bin/env sh\necho "mine env $*"\n'
 LOCAL_PHP = '<?php echo "mine php ", implode(" ", array_slice($argv, 1)), "\\n";\n'
 
 ROOT_JSON = {'name': 'acme/app', 'version': '1.0.0'}
+# What a case records of Composer's run.
+RESULT = ['exit', 'stdout', 'stderr', 'message']
 
 
 def project(prefix='', bins=None, manifest=None, executable_bins=True):
@@ -181,7 +189,28 @@ def record(c):
 def main():
     version = subprocess.run(['php', PHAR, '--version'], capture_output=True, text=True).stdout
     assert 'Composer version 2.11.2 ' in version, version
-    cases = [record(c) for c in CASES]
+    this = {'darwin': 'macos', 'linux': 'linux'}[sys.platform]
+    other = {'macos': 'linux', 'linux': 'macos'}[this]
+    try:
+        with open(OUT) as f:
+            old = {c['name']: c for c in json.load(f)['cases']}
+    except FileNotFoundError:
+        old = {}
+    cases = []
+    for c in CASES:
+        out = record(c)
+        mine = {k: out.pop(k, None) for k in RESULT}
+        if c['name'] in old:
+            before = old[c['name']]
+            theirs = {k: before.get(other, {}).get(k, before.get(k)) for k in RESULT}
+        else:
+            print(f'{c["name"]}: no {other} results yet, re-record there')
+            theirs = mine
+        out.update({k: v for k, v in mine.items() if v == theirs[k] and v is not None})
+        split = [k for k in RESULT if mine[k] != theirs[k]]
+        if split:
+            out['linux'], out['macos'] = ({k: r[k] for k in split} for r in ((mine, theirs) if this == 'linux' else (theirs, mine)))
+        cases.append(out)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, 'w') as f:
         json.dump({'cases': cases}, f, indent=1, ensure_ascii=False)

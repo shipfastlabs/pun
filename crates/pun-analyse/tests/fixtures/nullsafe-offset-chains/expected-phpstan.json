@@ -1,0 +1,40 @@
+{
+ "general": [],
+ "errors": [
+  {
+   "file": "mailbox.php",
+   "line": 54,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: NullsafeOffsetChains\\Address|null",
+   "tip": null
+  },
+  {
+   "file": "mailbox.php",
+   "line": 55,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string|null",
+   "tip": null
+  },
+  {
+   "file": "mailbox.php",
+   "line": 56,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string|null",
+   "tip": null
+  },
+  {
+   "file": "mailbox.php",
+   "line": 57,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string|null",
+   "tip": null
+  },
+  {
+   "file": "mailbox.php",
+   "line": 58,
+   "identifier": "method.nonObject",
+   "message": "Cannot call method email() on NullsafeOffsetChains\\Address|null.",
+   "tip": null
+  }
+ ]
+}

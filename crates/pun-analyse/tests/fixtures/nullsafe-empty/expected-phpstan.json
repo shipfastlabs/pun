@@ -1,0 +1,47 @@
+{
+ "level": 3,
+ "errors": [
+  {
+   "line": 19,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: App\\Item",
+   "tip": null
+  },
+  {
+   "line": 20,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-empty-list<string>",
+   "tip": null
+  },
+  {
+   "line": 21,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int|null",
+   "tip": null
+  },
+  {
+   "line": 32,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string",
+   "tip": null
+  },
+  {
+   "line": 33,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int",
+   "tip": null
+  },
+  {
+   "line": 44,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-empty-list<string>",
+   "tip": null
+  },
+  {
+   "line": 45,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int",
+   "tip": null
+  }
+ ]
+}

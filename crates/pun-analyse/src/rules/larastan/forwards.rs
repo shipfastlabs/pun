@@ -182,7 +182,7 @@ impl MethodReturnTypeProvider for ModelForwards {
         ) else {
             return Vec::new();
         };
-        callbacks(codebase, function, &templates, invocation, Some(&this))
+        callbacks(context, function, &templates, invocation, Some(&this))
     }
 
     fn get_return_type(
@@ -248,6 +248,9 @@ impl MethodReturnTypeProvider for ModelForwards {
                 Some([tapped]) if !object_classes(tapped).is_empty() => Some(tapped.clone()),
                 _ => Some(mago_codex::ttype::get_mixed()),
             };
+        }
+        if let Some(ty) = storage_method(context, class, method, invocation) {
+            return Some(ty);
         }
         if !codebase.method_exists(class, method)
             && let Some(ty) = forward_builder_or_relation(context, &self.1, method, invocation)
@@ -904,6 +907,44 @@ fn higher_order_proxy(
     crate::laravel::proxy_result(codebase, &name, value, returned, collection)
 }
 
+/// StorageMethodsClassReflectionExtension runs before the Storage facade's `@method` tags: a method of the filesystem
+/// manager, then of the filesystem adapter, that a call from outside may use is the facade's method (`Storage::files()`
+/// is the adapter's `array<string>`, not the tag's `array`).
+fn storage_method(
+    context: &ProviderContext<'_, '_, '_>,
+    class: &[u8],
+    method: &[u8],
+    invocation: &InvocationInfo<'_, '_, '_>,
+) -> Option<TUnion> {
+    if !class.eq_ignore_ascii_case(b"Illuminate\\Support\\Facades\\Storage") {
+        return None;
+    }
+    let codebase = context.codebase();
+    [
+        &b"Illuminate\\Filesystem\\FilesystemManager"[..],
+        b"Illuminate\\Filesystem\\FilesystemAdapter",
+    ]
+    .into_iter()
+    .find_map(|root| {
+        let found = codebase.get_declaring_method(root, method)?;
+        if !found
+            .method_metadata
+            .as_ref()
+            .is_some_and(|m| m.visibility.is_public())
+        {
+            return None;
+        }
+        let root = TNamedObject::new(codebase.get_class_like(root)?.original_name);
+        method_type(
+            codebase,
+            root.name.as_bytes(),
+            &root,
+            method,
+            Some((context, invocation)),
+        )
+    })
+}
+
 fn facade_mixin(
     context: &ProviderContext<'_, '_, '_>,
     class: &[u8],
@@ -1142,7 +1183,7 @@ fn object_templates(
 }
 
 fn callbacks<'ast, 'arena>(
-    codebase: &CodebaseMetadata,
+    context: &ProviderContext<'_, '_, '_>,
     function: &mago_codex::metadata::function_like::FunctionLikeMetadata,
     templates: &TemplateResult,
     invocation: &InvocationInfo<'_, 'ast, 'arena>,
@@ -1170,6 +1211,7 @@ fn callbacks<'ast, 'arena>(
                 .unwrap_or(name.as_bytes());
             invocation.get_argument(i, &[name])
         };
+    let codebase = context.codebase();
     let mut templates = templates.clone();
     for (i, parameter) in function.parameters.iter().enumerate() {
         if let Some(literal) = argument_of(i, parameter).and_then(literal_string)
@@ -1203,6 +1245,11 @@ fn callbacks<'ast, 'arena>(
                         .get_type_signature()
                         .cloned()
                         .unwrap_or_else(mago_codex::ttype::get_mixed);
+                    if let Some(resolved) =
+                        parameter_conditional(context, function, invocation, &declared)
+                    {
+                        declared = resolved;
+                    }
                     if let Some(options) = &this {
                         expand_union(codebase, &mut declared, options);
                     }
@@ -1281,6 +1328,70 @@ fn callbacks<'ast, 'arena>(
     out
 }
 
+/// ConditionalTypeForParameter::resolve() on a callback parameter typed `($param is T ? A : B)`, with the type of the
+/// call's argument for `$param`: `A` when `T` is its supertype, `B` when it is not, else (a maybe) `None`, which leaves
+/// both branches.
+fn parameter_conditional(
+    context: &ProviderContext<'_, '_, '_>,
+    function: &mago_codex::metadata::function_like::FunctionLikeMetadata,
+    invocation: &InvocationInfo<'_, '_, '_>,
+    declared: &TUnion,
+) -> Option<TUnion> {
+    let [TAtomic::Conditional(conditional)] = declared.types.as_ref() else {
+        return None;
+    };
+    let [TAtomic::Variable(variable)] = conditional.subject.types.as_ref() else {
+        return None;
+    };
+    let (i, parameter) =
+        (function.parameters.iter().enumerate()).find(|(_, p)| p.get_name().0 == *variable)?;
+    let name = variable.as_bytes();
+    let argument = invocation.get_argument(i, &[name.strip_prefix(b"$").unwrap_or(name)]);
+    // A forwarded method's callbacks are asked for before its arguments are analysed: a literal string is read off
+    let argument = match argument {
+        Some(a) => context.get_expression_type(a).cloned().or_else(|| {
+            let mago_syntax::cst::Expression::Literal(mago_syntax::cst::Literal::String(s)) =
+                a.unparenthesized()
+            else {
+                return None;
+            };
+            Some(mago_codex::ttype::get_literal_string(mago_word::word(
+                s.value?,
+            )))
+        })?,
+        None => parameter.get_default_type()?.type_union.clone(),
+    };
+    let codebase = context.codebase();
+    let target = &conditional.target;
+    let (then, otherwise) = if conditional.negated {
+        (&conditional.otherwise, &conditional.then)
+    } else {
+        (&conditional.then, &conditional.otherwise)
+    };
+    let mut result = ComparisonResult::new();
+    if union_comparator::is_contained_by(
+        codebase,
+        &argument,
+        target,
+        false,
+        false,
+        false,
+        &mut result,
+    ) {
+        return Some((**then).clone());
+    }
+    let disjoint = argument.types.iter().all(|a| {
+        !union_comparator::can_expression_types_be_identical(
+            codebase,
+            &TUnion::from_atomic(a.clone()),
+            target,
+            false,
+            false,
+        )
+    });
+    disjoint.then(|| (**otherwise).clone())
+}
+
 fn infer_method_templates(
     codebase: &CodebaseMetadata,
     function: &mago_codex::metadata::function_like::FunctionLikeMetadata,
@@ -1335,7 +1446,7 @@ fn infer_method_templates(
                 continue;
             };
             let priced = invocation.get_argument(i, &[name]).and_then(|callback| {
-                let arguments = callbacks(codebase, function, templates, invocation, None)
+                let arguments = callbacks(context, function, templates, invocation, None)
                     .into_iter()
                     .find(|c| std::ptr::eq(c.callback, callback))?
                     .arguments;

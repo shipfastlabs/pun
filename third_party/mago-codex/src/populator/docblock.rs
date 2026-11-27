@@ -111,6 +111,23 @@ fn is_static_return(union: &TUnion) -> bool {
 ///
 /// # Returns
 /// `true` if the parent's docblock type should be inherited, `false` otherwise
+/// PhpDocInheritanceResolver reads a built-in parent's PHPDoc from its stub, which states the parameter types Mago's
+/// prelude declares natively: an untyped, undocumented parameter of a method overriding a built-in one takes the
+/// built-in parameter's type (`SessionHandlerInterface::read($id)` makes `$id` a string).
+fn inherits_built_in_native(
+    parent_method: &FunctionLikeMetadata,
+    parent_native: Option<&TypeMetadata>,
+    parent_docblock: Option<&TypeMetadata>,
+    child_native: Option<&TUnion>,
+    child_type: Option<&TypeMetadata>,
+) -> bool {
+    parent_method.flags.is_built_in()
+        && parent_native.is_some()
+        && parent_docblock.is_none()
+        && child_native.is_none()
+        && child_type.is_none_or(|m| !m.from_docblock || m.inferred)
+}
+
 fn should_inherit_docblock_type(
     parent_native: Option<&TUnion>,
     parent_docblock: Option<&TypeMetadata>,
@@ -873,7 +890,13 @@ fn resolve_method_inheritance(
                 let parent_docblock = parent_param.type_metadata.as_ref().filter(|m| m.from_docblock);
                 let child_native = child_param.type_declaration_metadata.as_ref().map(|m| &m.type_union);
 
-                should_inherit_docblock_type(
+                inherits_built_in_native(
+                    parent_method,
+                    parent_param.type_declaration_metadata.as_ref(),
+                    parent_docblock,
+                    child_native,
+                    child_param.type_metadata.as_ref(),
+                ) || should_inherit_docblock_type(
                     parent_param.type_declaration_metadata.as_ref().map(|m| &m.type_union),
                     parent_docblock,
                     child_native,
@@ -943,7 +966,9 @@ fn resolve_method_inheritance(
                 .type_metadata
                 .as_ref()
                 .filter(|_| *inherit)
-                .map(|metadata| (substitute_type(metadata), metadata.span, metadata.from_docblock))
+                .map(|metadata| {
+                    (substitute_type(metadata), metadata.span, metadata.from_docblock || parent_method.flags.is_built_in())
+                })
         })
         .collect();
 

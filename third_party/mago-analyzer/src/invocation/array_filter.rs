@@ -15,6 +15,8 @@ use mago_codex::ttype::atomic::array::keyed::KnownItems;
 use mago_codex::ttype::atomic::array::keyed::TKeyedArray;
 use mago_codex::ttype::combiner::CombinerOptions;
 use mago_codex::ttype::get_array_parameters;
+use mago_codex::ttype::get_array_value_parameter;
+use mago_codex::ttype::get_null;
 use mago_codex::ttype::get_empty_keyed_array;
 use mago_codex::ttype::get_keyed_array;
 use mago_codex::ttype::union::TUnion;
@@ -52,17 +54,23 @@ where
     let Some(FunctionLikeIdentifier::Function(name)) = invocation.target.get_function_like_identifier() else {
         return None;
     };
-    if !name.as_bytes().eq_ignore_ascii_case(b"array_filter") {
+    // Pun: ArrayFindFunctionReturnTypeExtension runs the same helper without a mode and takes the filtered arrays'
+    // value type, nullable unless a value surely remains.
+    let find = name.as_bytes().eq_ignore_ascii_case(b"array_find");
+    if !find && !name.as_bytes().eq_ignore_ascii_case(b"array_filter") {
         return None;
     }
     let info = InvocationInfo::new(invocation);
     let array_argument = info.get_argument(0, &[b"array"])?;
+    if find && info.get_argument(1, &[b"callback"]).is_none() {
+        return None;
+    }
     // a missing or `null` callback removes the falsey values (`filterArrayRemovingFalsey()`)
     let callback = info
         .get_argument(1, &[b"callback"])
         .filter(|callback| !artifacts.get_expression_type(callback).is_some_and(TUnion::is_null));
     // determineMode(): ARRAY_FILTER_USE_BOTH is 1 and ARRAY_FILTER_USE_KEY 2; anything else uses the item
-    let (use_key, use_item) = match info.get_argument(2, &[b"mode"]).filter(|_| callback.is_some()) {
+    let (use_key, use_item) = match info.get_argument(2, &[b"mode"]).filter(|_| callback.is_some() && !find) {
         None => (false, true),
         Some(mode) => match artifacts.get_expression_type(mode)?.get_single_literal_int_value()? {
             1 => (true, true),
@@ -147,7 +155,23 @@ where
             None => filtered,
         });
     }
-    result
+    if !find {
+        return result;
+    }
+    let result = result?;
+    let mut found: Option<TUnion> = None;
+    let mut always = true;
+    for atomic in result.types.iter() {
+        let TAtomic::Array(array) = atomic else { return None };
+        always &= array.is_non_empty();
+        let value = get_array_value_parameter(array, context.codebase);
+        found = Some(match found {
+            Some(acc) => add_union_type(acc, &value, context.codebase, CombinerOptions::default()),
+            None => value,
+        });
+    }
+    let found = found?;
+    Some(if always { found } else { add_union_type(found, &get_null(), context.codebase, CombinerOptions::default()) })
 }
 
 /// The callback's returned expression, or a called function's assertions when true and when false.

@@ -1,0 +1,24 @@
+{
+    "test": "Type/PunMixinModelPropertiesTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-mixin-model-properties.php",
+            "declares": [
+                "punmixinmodelproperties\\apple",
+                "punmixinmodelproperties\\box",
+                "punmixinmodelproperties\\boxresource",
+                "punmixinmodelproperties\\plain"
+            ],
+            "asserts": [
+                33,
+                34,
+                47,
+                48
+            ],
+            "errors": []
+        }
+    ]
+}

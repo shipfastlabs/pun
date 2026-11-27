@@ -77,6 +77,7 @@ impl<'a> Checker<'a, '_> {
         (self.larastan.into_iter())
             .map(|l| l as &dyn ClassReflectionExtension)
             .chain((self.pest.into_iter()).map(|p| p as &dyn ClassReflectionExtension))
+            .chain([&SoapClientMethods as &dyn ClassReflectionExtension])
     }
 }
 
@@ -105,6 +106,43 @@ impl ClassReflectionExtension for crate::Pest {
     }
 
     fn static_forward(&self, _: &Checker, _: &ClassLikeMetadata, _: &str) -> Option<Type> {
+        None
+    }
+}
+
+/// PHPStan's `SoapClientMethodsClassReflectionExtension`, which it registers after every other methods extension:
+/// any method exists on `SoapClient` and its subclasses, because ext-soap calls the service's operations through
+/// `__call()`.
+struct SoapClientMethods;
+
+impl ClassReflectionExtension for SoapClientMethods {
+    fn method(
+        &self,
+        c: &Checker,
+        phase: MethodPhase,
+        _receiver: &Type,
+        class: &ClassLikeMetadata,
+        _name: &[u8],
+    ) -> Option<MethodAnswer> {
+        (phase == MethodPhase::Last
+            && (c.codebase).is_instance_of(class.name.as_bytes(), b"soapclient"))
+        .then_some(MethodAnswer::Exists(None))
+    }
+
+    fn has_property(&self, _c: &Checker, _class: &ClassLikeMetadata, _property: &[u8]) -> bool {
+        false
+    }
+
+    fn calls_inaccessible_method(&self, _c: &Checker, _receiver: &Type, _method: &str) -> bool {
+        false
+    }
+
+    fn static_forward(
+        &self,
+        _c: &Checker,
+        _class: &ClassLikeMetadata,
+        _declaring: &str,
+    ) -> Option<Type> {
         None
     }
 }

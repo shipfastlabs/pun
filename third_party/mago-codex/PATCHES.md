@@ -1410,3 +1410,23 @@ unless the other lies inside the subtraction (for plain objects), following
 was skipped as unreachable. mago-analyzer's PATCHES.md ("Instanceof narrowing of subtracted objects") routes the
 reconciler through this intersection. `pun-analyse/tests/fixtures/object-intersections/subtraction.php` (`child`,
 `childAndInterface`, `excluded`, `excludedUnion`, `excludedArm`, `pair`) covers it.
+
+## Built-in parameter types for untyped overrides
+
+`populator/docblock.rs` `resolve_method_inheritance()`: an untyped, undocumented parameter of a method overriding a
+built-in method now takes the built-in parameter's type, marked as a PHPDoc type. PhpDocInheritanceResolver reads
+the built-in's PHPDoc from its stub, which documents the types the prelude declares natively, so
+`SessionHandlerInterface::read($id)` makes `$id` a `string`. User parents still pass on only their PHPDoc types
+(shipfastlabs/pun#100). `crates/pun-analyse/tests/built_in_parameter_types.rs` covers it against PHPStan 2.3.5.
+
+## An aggregate's own `getIterator()` before its template
+
+`ttype/mod.rs` `get_aggregate_iterator_parameters()`, called first by `get_primary_iterable_parameters()` and
+`get_primary_iterable_value_parameter()`: an `IteratorAggregate` whose `getIterator()` is declared outside the
+built-ins iterates that method's return type, before the `Traversable` template it inherits, as
+[`ObjectType::getIterableKeyType()` and `getIterableValueType()`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Type/ObjectType.php#L1278-L1360)
+ask `getIterator()` first. `Carbon\CarbonPeriod extends DatePeriod` declares `getIterator(): Generator` without
+PHPDoc, so its values are `mixed`, not `DatePeriod`'s `DateTimeInterface` (shipfastlabs/pun#138). A built-in
+`getIterator()` keeps the template, which is what PHPStan reads through the inherited
+`@return Traversable<TKey, TValue>`. `crates/pun-analyse/tests/aggregate_iterators.rs` covers it against PHPStan
+2.3.5.

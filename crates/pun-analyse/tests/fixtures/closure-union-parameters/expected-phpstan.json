@@ -1,0 +1,19 @@
+{
+ "general": [],
+ "errors": [
+  {
+   "file": "fruit.php",
+   "line": 37,
+   "identifier": "argument.type",
+   "message": "Parameter #1 of closure expects ClosureUnionParameters\\Box<ClosureUnionParameters\\Apple>|ClosureUnionParameters\\Box<ClosureUnionParameters\\Pear>, ClosureUnionParameters\\Box<ClosureUnionParameters\\Plum> given.",
+   "tip": null
+  },
+  {
+   "file": "fruit.php",
+   "line": 48,
+   "identifier": "argument.type",
+   "message": "Parameter #1 of callable callable(ClosureUnionParameters\\Box<ClosureUnionParameters\\Apple>|ClosureUnionParameters\\Box<ClosureUnionParameters\\Pear>): mixed expects ClosureUnionParameters\\Box<ClosureUnionParameters\\Apple>|ClosureUnionParameters\\Box<ClosureUnionParameters\\Pear>, ClosureUnionParameters\\Box<ClosureUnionParameters\\Plum> given.",
+   "tip": null
+  }
+ ]
+}

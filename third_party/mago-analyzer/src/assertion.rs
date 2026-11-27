@@ -120,9 +120,11 @@ where
             match call {
                 // If the function does not have any, try collecting
                 // assertions for special functions. is_array needs PHPStan's explicit parameters,
-                // not the prelude's otherwise equivalent array<array-key, mixed> annotation.
+                // not the prelude's otherwise equivalent array<array-key, mixed> annotation. A strict in_array
+                // narrows its needle even when a provider narrows its haystack.
                 Call::Function(function_call) if if_types.is_empty()
-                    || (is_function_call_to(expression, assertion_context, b"is_array")
+                    || ((is_function_call_to(expression, assertion_context, b"is_array")
+                        || is_function_call_with_arguments_to_one_of(expression, assertion_context, &[b"in_array"], 3))
                         && matches!(function_call.function, Expression::Identifier(id)
                             if assertion_context.codebase.get_function(assertion_context.resolved_names.get(id))
                                 .is_none_or(|function| function.flags.is_built_in()))) => {

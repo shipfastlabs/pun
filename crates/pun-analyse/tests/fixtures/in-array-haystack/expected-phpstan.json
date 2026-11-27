@@ -1,0 +1,35 @@
+{
+ "level": 10,
+ "errors": [
+  {
+   "line": 38,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: array<string, string>",
+   "tip": null
+  },
+  {
+   "line": 41,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: list<'b'>",
+   "tip": null
+  },
+  {
+   "line": 44,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: list<int|false>",
+   "tip": null
+  },
+  {
+   "line": 47,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-empty-list<int|false>",
+   "tip": null
+  },
+  {
+   "line": 50,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-empty-array<string, int>",
+   "tip": null
+  }
+ ]
+}

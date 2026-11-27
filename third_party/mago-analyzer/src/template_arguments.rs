@@ -300,13 +300,18 @@ pub fn unwrap_bare(t: &TUnion, codebase: &CodebaseMetadata) -> TUnion {
 /// types the closure is sent to their parameter types, as lower bounds; the second pass walks the body with the
 /// resolved types (intersected with the declared ones, as for a closure passed to a callable parameter).
 #[must_use]
-pub fn closure_signature_markers(closure: TUnion, site: Span, observed: &mut Observed) -> TUnion {
+pub fn closure_signature_markers(
+    closure: TUnion,
+    site: Span,
+    defaults: &[Option<TUnion>],
+    observed: &mut Observed,
+) -> TUnion {
     let mut closure = closure;
     for atomic in closure.types.to_mut() {
         let TAtomic::Callable(TCallable::Signature(signature)) = atomic else {
             continue;
         };
-        for parameter in signature.parameters.iter_mut() {
+        for (i, parameter) in signature.parameters.iter_mut().enumerate() {
             // a variadic parameter collects arguments of different positions into one list
             if parameter.is_by_reference() || parameter.is_variadic() {
                 continue;
@@ -318,6 +323,10 @@ pub fn closure_signature_markers(closure: TUnion, site: Span, observed: &mut Obs
             let marker = marker(site, name.0, None, declared.clone(), false);
             if let Some(m) = as_marker(&marker) {
                 observed.site(&m, declared);
+                // collectSites(): an optional parameter's default joins what the closure is invoked with
+                if let Some(Some(default)) = defaults.get(i) {
+                    observed.send(&m, default.clone(), Variance::Contravariant);
+                }
             }
             *parameter = parameter.clone().with_type_signature(Some(Arc::new(TUnion::from_atomic(marker))));
         }
@@ -555,6 +564,11 @@ impl Observed {
                 let Some(declared_argument) = declared_arguments.get(i) else {
                     continue;
                 };
+                // Pun: an argument expansion filled in for a raw class (`fn (): Models => ...`) is no target: PHPStan's
+                // declared type is an ObjectType without arguments there
+                if !call_argument && declared_argument.from_template_fallback() {
+                    continue;
+                }
                 let Some(argument) = get_specialized_template_type(
                     codebase,
                     *template,
@@ -978,6 +992,9 @@ impl Solver<'_> {
     }
 
     fn resolve_observation(&mut self, observation: &Observation) -> TUnion {
+        if is_closure_marker(&observation.marker) {
+            return self.resolve_closure_signature_observation(observation);
+        }
         let initial = observation.marker.initial.as_ref().map(|t| self.substitute(t));
         let mut lower_bounds: Vec<TUnion> =
             observation.lower_bounds.iter().map(|b| self.substitute(&unwrap_bare(b, self.codebase))).collect();
@@ -1050,6 +1067,28 @@ impl Solver<'_> {
             resolved = union(self.codebase, &resolved, part);
         }
         resolved
+    }
+
+    /// `resolveClosureSignatureObservation()`: a closure parameter is contravariant. What it is invoked with, and the
+    /// parameter types of the callables it is sent to, flow into it, with the default of an optional parameter once
+    /// anything does; their union, when the declared type accepts it, else the declared type.
+    fn resolve_closure_signature_observation(&mut self, observation: &Observation) -> TUnion {
+        let declared = observation.marker.delegate.clone();
+        if observation.unconstraining || observation.lower_bounds.is_empty() {
+            return declared;
+        }
+        let mut parts: Vec<TUnion> = observation.lower_bounds.iter().map(|b| self.substitute(b)).collect();
+        parts.extend(observation.sends.iter().map(|(sent, _)| self.substitute(sent)));
+        let mut inferred = parts[0].clone();
+        for part in &parts[1..] {
+            inferred = union(self.codebase, &inferred, part);
+        }
+        if !is_super_type(self.codebase, &declared, &inferred) {
+            return declared;
+        }
+        // an argument read from an offset that may be missing is still a value the parameter is bound to
+        inferred.set_possibly_undefined(false, None);
+        inferred
     }
 }
 

@@ -1,0 +1,54 @@
+{
+ "general": [],
+ "errors": [
+  {
+   "file": "rows.php",
+   "line": 27,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int|null",
+   "tip": null
+  },
+  {
+   "file": "rows.php",
+   "line": 28,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string|null",
+   "tip": null
+  },
+  {
+   "file": "rows.php",
+   "line": 31,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int|null",
+   "tip": null
+  },
+  {
+   "file": "rows.php",
+   "line": 32,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int<2, max>|string|null",
+   "tip": null
+  },
+  {
+   "file": "rows.php",
+   "line": 33,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int|null",
+   "tip": null
+  },
+  {
+   "file": "rows.php",
+   "line": 34,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: 1|'a'",
+   "tip": null
+  },
+  {
+   "file": "rows.php",
+   "line": 35,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string|null",
+   "tip": null
+  }
+ ]
+}

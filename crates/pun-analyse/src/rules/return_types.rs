@@ -49,6 +49,7 @@ pub(super) fn registry(
         extension.register(&mut registry, contents, names);
     }
     registry.register_function_provider(Benevolent);
+    registry.register_function_provider(ConstantSprintf);
     registry.register_function_provider(ReplaceOfMixed);
     registry.register_function_provider(GetClass);
     registry.register_function_provider(ClassRelations);
@@ -71,12 +72,15 @@ pub(super) fn registry(
     registry.register_method_provider(ClosureMethods(contents.to_vec()));
     registry.register_function_provider(super::array_fill::ArrayFill);
     registry.register_function_provider(super::array_sum::ArraySum);
+    registry.register_function_provider(super::array_merge::ArrayMerge);
+    registry.register_function_assertion_provider(super::in_array::InArray);
     registry.register_function_provider(super::date_format::DateFormat);
     registry.register_method_provider(super::date_format::DateFormat);
     registry.register_method_provider(super::randomizer::Randomizer);
     registry.register_method_provider(super::enum_methods::EnumMethods);
     registry.register_method_provider(super::exception_codes::ExceptionCodes);
     registry.register_function_provider(super::flip_intersect::FlipIntersect);
+    registry.register_function_assertion_provider(super::str_containing::StrContaining);
     registry
 }
 
@@ -129,15 +133,20 @@ impl ConstantArrayMap {
         else {
             return false;
         };
+        // ArrayMapFunctionReturnTypeExtension prices the callback with the array's values: Pun does so for constant
+        // arrays and for a callback whose return names its own templates (`$basket->get(...)`)
+        let templated = matches!(callback.types.as_ref(), [TAtomic::Callable(callable)]
+            if callable.get_signature().and_then(|s| s.get_return_type()).is_some_and(|t| t.has_template_types()));
         invocation.argument_count() == 2
             && (callback.is_null()
+                || templated
                 || invocation
                     .get_argument(1, &[b"array"])
                     .and_then(|array| context.get_expression_type(array))
                     .and_then(TUnion::get_single_array)
                     .is_some_and(|array| match array {
                         TArray::Keyed(keyed) => {
-                            keyed.known_items.is_some() && keyed.parameters.is_none()
+                            keyed.known_items.is_some() != keyed.parameters.is_some()
                         }
                         TArray::List(list) => {
                             list.known_elements.is_some() && list.element_type.is_never()
@@ -173,9 +182,31 @@ impl FunctionReturnTypeProvider for ConstantArrayMap {
         context: &ProviderContext<'_, '_, '_>,
         invocation: &InvocationInfo<'_, '_, '_>,
     ) -> Option<TUnion> {
-        Self::applies(context, invocation)
-            .then(|| ArrayMapProvider.get_return_type(context, invocation))
-            .flatten()
+        if !Self::applies(context, invocation) {
+            return None;
+        }
+        let array = invocation
+            .get_argument(1, &[b"array"])
+            .and_then(|array| context.get_expression_type(array))
+            .and_then(TUnion::get_single_array);
+        // ArrayMapFunctionReturnTypeExtension: one array that is not a shape keeps its keys and its non-emptiness,
+        // its values are the callback's return type
+        if let Some(TArray::Keyed(keyed)) = array
+            && keyed.known_items.is_none()
+            && let Some((key, value)) = keyed.parameters.as_ref()
+        {
+            let callback = invocation.get_argument(0, &[b"callback"])?;
+            let returned = context
+                .get_callback_return_type(callback, std::slice::from_ref(&**value))?
+                .clone();
+            if returned.has_template_types() {
+                return None;
+            }
+            let mapped = TKeyedArray::new_with_parameters(Arc::clone(key), Arc::new(returned))
+                .with_non_empty(keyed.is_non_empty());
+            return Some(TUnion::from_atomic(TAtomic::Array(TArray::Keyed(mapped))));
+        }
+        ArrayMapProvider.get_return_type(context, invocation)
     }
 }
 
@@ -1630,6 +1661,73 @@ impl FunctionReturnTypeProvider for ClassRelations {
             });
         }
         Some(variant)
+    }
+}
+
+/// SprintfFunctionDynamicReturnTypeExtension::getConstantType(): `sprintf()` of a constant format and constant
+/// arguments is the formatted constant string. Pun formats the plain `%s`, `%d` and `%%` conversions; any other
+/// format keeps the general return type.
+struct ConstantSprintf;
+
+impl Provider for ConstantSprintf {
+    fn meta() -> &'static ProviderMeta {
+        &META
+    }
+}
+
+impl FunctionReturnTypeProvider for ConstantSprintf {
+    fn targets() -> FunctionTarget {
+        FunctionTarget::Exact(b"sprintf")
+    }
+
+    fn get_return_type(
+        &self,
+        context: &ProviderContext<'_, '_, '_>,
+        invocation: &InvocationInfo<'_, '_, '_>,
+    ) -> Option<TUnion> {
+        let arguments = invocation.arguments();
+        let (format, values) = arguments.split_first()?;
+        if arguments.iter().any(|a| a.is_unpacked()) {
+            return None;
+        }
+        let format = context
+            .get_expression_type(format.value()?)?
+            .get_single_literal_string_value()?;
+        let mut values = values.iter();
+        let mut out = Vec::with_capacity(format.len());
+        let mut bytes = format.iter();
+        while let Some(&b) = bytes.next() {
+            if b != b'%' {
+                out.push(b);
+                continue;
+            }
+            let string = match bytes.next()? {
+                b'%' => {
+                    out.push(b'%');
+                    continue;
+                }
+                b's' => true,
+                b'd' => false,
+                _ => return None,
+            };
+            let ty = context.get_expression_type(values.next()?.value()?)?;
+            match ty.get_single_literal_string_value() {
+                Some(v) if string => out.extend_from_slice(v),
+                _ => {
+                    out.extend_from_slice(
+                        ty.get_single_literal_int_value()?.to_string().as_bytes(),
+                    );
+                }
+            }
+        }
+        // PHP's sprintf() ignores surplus arguments, but they are still evaluated: their types must be constant too
+        for value in values {
+            let ty = context.get_expression_type(value.value()?)?;
+            ty.get_single_literal_string_value()
+                .map(|_| ())
+                .or_else(|| ty.get_single_literal_int_value().map(|_| ()))?;
+        }
+        Some(mago_codex::ttype::get_literal_string(mago_word::word(&out)))
     }
 }
 

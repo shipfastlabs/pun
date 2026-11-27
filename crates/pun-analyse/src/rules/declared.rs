@@ -1624,13 +1624,23 @@ pub(super) fn inherited_property_doc(
                 .map(|t| pun_phpstan::resolve::resolve_str(t, Some(&class.name)));
         }
         let reflected = if declaring.kind.is_trait() {
-            std::iter::successors(Some(parent), |k| {
-                k.direct_parent_class
-                    .and_then(|p| c.codebase.get_class_like(p.as_bytes()))
-            })
-            .take(super::overriding::ANCESTRY)
-            .find(|k| k.used_traits.contains(&declaring.name))
-            .unwrap_or(parent)
+            // `used_traits` also holds the parents' traits: the class that declares the property is the nearest one
+            // that uses the trait itself, else (a trait that a trait uses) the farthest one that has it
+            let chain = || {
+                std::iter::successors(Some(parent), |k| {
+                    k.direct_parent_class
+                        .and_then(|p| c.codebase.get_class_like(p.as_bytes()))
+                })
+                .take(super::overriding::ANCESTRY)
+            };
+            chain()
+                .find(|k| k.direct_trait_names().any(|t| t == declaring.name))
+                .or_else(|| {
+                    chain()
+                        .filter(|k| k.used_traits.contains(&declaring.name))
+                        .last()
+                })
+                .unwrap_or(parent)
         } else {
             declaring
         };

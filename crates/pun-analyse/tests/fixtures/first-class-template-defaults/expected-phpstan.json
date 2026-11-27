@@ -1,0 +1,33 @@
+{
+ "general": [],
+ "errors": [
+  {
+   "file": "picker.php",
+   "line": 38,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: Closure<TDefault of mixed>(string, TDefault=): (FirstClassTemplateDefaults\\Apple|TDefault)",
+   "tip": null
+  },
+  {
+   "file": "picker.php",
+   "line": 39,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: list<FirstClassTemplateDefaults\\Apple|null>",
+   "tip": null
+  },
+  {
+   "file": "picker.php",
+   "line": 50,
+   "identifier": "return.type",
+   "message": "Method FirstClassTemplateDefaults\\Picker::all() should return list<FirstClassTemplateDefaults\\Apple> but returns list<FirstClassTemplateDefaults\\Apple|null>.",
+   "tip": null
+  },
+  {
+   "file": "picker.php",
+   "line": 59,
+   "identifier": "return.type",
+   "message": "Method FirstClassTemplateDefaults\\Picker::keyed() should return array<string, FirstClassTemplateDefaults\\Apple> but returns array<string, FirstClassTemplateDefaults\\Apple|null>.",
+   "tip": null
+  }
+ ]
+}

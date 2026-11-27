@@ -56,7 +56,21 @@ pub(super) fn is_argument_mutated_by_reference(
         return !argument_type.is_int();
     }
 
+    // Pun: `end()`, `reset()`, `next()` and `prev()` only read their array (PHPStan's `&rw_array_arg`,
+    // PassedByReference::readsArgument()): ArgumentsHandler writes nothing back, so the array keeps its type.
+    if declared_by_reference && moves_array_pointer(invocation_target) {
+        return false;
+    }
+
     declared_by_reference
+}
+
+fn moves_array_pointer(invocation_target: &InvocationTarget<'_>) -> bool {
+    matches!(
+        invocation_target.get_function_like_identifier(),
+        Some(FunctionLikeIdentifier::Function(name))
+            if [&b"end"[..], b"reset", b"next", b"prev"].iter().any(|f| name.as_bytes().eq_ignore_ascii_case(f))
+    )
 }
 
 fn requires_referenceable_argument(invocation_target: &InvocationTarget<'_>, declared_by_reference: bool) -> bool {

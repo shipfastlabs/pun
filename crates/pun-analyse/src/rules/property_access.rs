@@ -208,6 +208,26 @@ fn fetch_guard(e: &Expression) -> Option<Guard> {
     Some(var_guard(v.name, id.value))
 }
 
+/// The key of a variable or a chain of named property fetches on one (`$queued->job`), as `fetch_guard()` writes it.
+fn object_key(e: &Expression) -> Option<String> {
+    match unparen(e) {
+        Expression::Variable(Variable::Direct(v)) => {
+            Some(String::from_utf8_lossy(v.name).into_owned())
+        }
+        Expression::Access(Access::Property(p)) => {
+            let ClassLikeMemberSelector::Identifier(id) = &p.property else {
+                return None;
+            };
+            Some(format!(
+                "{}->{}",
+                object_key(p.object)?,
+                String::from_utf8_lossy(id.value)
+            ))
+        }
+        _ => None,
+    }
+}
+
 fn var_guard(var: &[u8], name: &[u8]) -> Guard {
     Guard::Expr(format!(
         "{}->{}",
@@ -369,14 +389,13 @@ fn property_exists(f: &FunctionCall, resolve: &dyn Fn(&Identifier) -> String) ->
     };
     let name = String::from_utf8_lossy(s.value?).into_owned();
     match unparen(object.value()) {
-        Expression::Variable(Variable::Direct(v)) => Some(var_guard(v.name, name.as_bytes())),
         Expression::Access(Access::ClassConstant(cc)) => match &cc.constant {
             ClassLikeConstantSelector::Identifier(c) if c.value.eq_ignore_ascii_case(b"class") => {
                 Some(exists_key(&class_key(cc.class, resolve)?, &name))
             }
             _ => None,
         },
-        _ => None,
+        object => Some(var_guard(object_key(object)?.as_bytes(), name.as_bytes())),
     }
 }
 
@@ -442,12 +461,10 @@ impl Checker<'_, '_> {
     }
 
     pub(super) fn has_fetch_type(&self, object: &Expression, name: &str) -> bool {
-        match unparen(object) {
-            Expression::Variable(Variable::Direct(v)) => {
-                self.guards.contains(&var_guard(v.name, name.as_bytes()))
-            }
-            _ => false,
-        }
+        object_key(object).is_some_and(|object| {
+            self.guards
+                .contains(&var_guard(object.as_bytes(), name.as_bytes()))
+        })
     }
 }
 

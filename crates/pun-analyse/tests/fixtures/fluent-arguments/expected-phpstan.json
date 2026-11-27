@@ -1,0 +1,17 @@
+{
+ "level": 10,
+ "errors": [
+  {
+   "line": 86,
+   "identifier": "method.nonObject",
+   "message": "Cannot call method label() on App\\Box|null.",
+   "tip": null
+  },
+  {
+   "line": 97,
+   "identifier": "method.nonObject",
+   "message": "Cannot call method label() on App\\Box|null.",
+   "tip": null
+  }
+ ]
+}

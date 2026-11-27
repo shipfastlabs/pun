@@ -1,0 +1,40 @@
+{
+ "general": [],
+ "errors": [
+  {
+   "file": "sql.php",
+   "line": 22,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: 'SELECT * FROM orders'",
+   "tip": null
+  },
+  {
+   "file": "sql.php",
+   "line": 29,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: 'WITH SELECT * FROM orders'",
+   "tip": null
+  },
+  {
+   "file": "sql.php",
+   "line": 35,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: '5-x%'",
+   "tip": null
+  },
+  {
+   "file": "sql.php",
+   "line": 36,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string",
+   "tip": null
+  },
+  {
+   "file": "sql.php",
+   "line": 37,
+   "identifier": "argument.type",
+   "message": "Parameter #1 $sql of method SprintfLiteralStrings\\Sql::run() expects literal-string, string given.",
+   "tip": null
+  }
+ ]
+}

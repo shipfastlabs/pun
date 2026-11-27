@@ -1,0 +1,21 @@
+{
+    "test": "Type/PunStorageFacadeReturnsTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-storage-facade-returns.php",
+            "declares": [
+                "punstoragefacadereturns\\calls"
+            ],
+            "asserts": [
+                14,
+                15,
+                16,
+                17
+            ],
+            "errors": []
+        }
+    ]
+}

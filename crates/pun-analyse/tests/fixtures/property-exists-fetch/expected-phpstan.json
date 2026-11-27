@@ -1,0 +1,17 @@
+{
+ "level": 10,
+ "errors": [
+  {
+   "line": 34,
+   "identifier": "property.notFound",
+   "message": "Access to an undefined property object::$afterCommit.",
+   "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property"
+  },
+  {
+   "line": 44,
+   "identifier": "property.notFound",
+   "message": "Access to an undefined property object::$afterCommit.",
+   "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property"
+  }
+ ]
+}

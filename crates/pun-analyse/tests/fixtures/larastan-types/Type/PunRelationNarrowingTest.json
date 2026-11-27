@@ -1,0 +1,32 @@
+{
+    "test": "Type/PunRelationNarrowingTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-relation-narrowing.php",
+            "declares": [
+                "punrelationnarrowing\\box",
+                "punrelationnarrowing\\order",
+                "punrelationnarrowing\\test",
+                "punrelationnarrowing\\label",
+                "punrelationnarrowing\\unguarded"
+            ],
+            "asserts": [
+                31,
+                33,
+                36,
+                38
+            ],
+            "errors": [
+                {
+                    "line": 50,
+                    "identifier": "method.nonObject",
+                    "message": "Cannot call method label() on PunRelationNarrowing\\Box|null.",
+                    "tip": null
+                }
+            ]
+        }
+    ]
+}

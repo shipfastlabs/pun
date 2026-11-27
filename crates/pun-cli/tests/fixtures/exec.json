@@ -142,7 +142,12 @@
    "stderr_tail": true,
    "exit": 127,
    "stdout": "",
-   "stderr": "sh: nope: command not found\nScript nope handling the __exec_command event returned with error code 127\n"
+   "linux": {
+    "stderr": "sh: 1: nope: not found\nScript nope handling the __exec_command event returned with error code 127\n"
+   },
+   "macos": {
+    "stderr": "sh: nope: command not found\nScript nope handling the __exec_command event returned with error code 127\n"
+   }
   },
   {
    "name": "binary-not-executable",
@@ -157,9 +162,15 @@
    ],
    "cwd": "",
    "stderr_tail": true,
-   "exit": 126,
    "stdout": "",
-   "stderr": "sh: {dir}/vendor/bin/tool: Permission denied\nScript tool handling the __exec_command event returned with error code 126\n"
+   "linux": {
+    "exit": 127,
+    "stderr": "sh: 1: tool: Permission denied\nScript tool handling the __exec_command event returned with error code 127\n"
+   },
+   "macos": {
+    "exit": 126,
+    "stderr": "sh: {dir}/vendor/bin/tool: Permission denied\nScript tool handling the __exec_command event returned with error code 126\n"
+   }
   },
   {
    "name": "global-before",
@@ -751,7 +762,12 @@
    "stderr_tail": true,
    "exit": 127,
    "stdout": "",
-   "stderr": "sh: call: command not found\nScript mine.bat handling the __exec_command event returned with error code 127\n"
+   "linux": {
+    "stderr": "sh: 1: call: not found\nScript mine.bat handling the __exec_command event returned with error code 127\n"
+   },
+   "macos": {
+    "stderr": "sh: call: command not found\nScript mine.bat handling the __exec_command event returned with error code 127\n"
+   }
   },
   {
    "name": "list-short",
@@ -1010,7 +1026,12 @@
    "stderr_tail": true,
    "exit": 127,
    "stdout": "",
-   "stderr": "> mine y\nsh: mine: command not found\nScript mine y handling the go event returned with error code 127\n"
+   "linux": {
+    "stderr": "> mine y\nsh: 1: mine: not found\nScript mine y handling the go event returned with error code 127\n"
+   },
+   "macos": {
+    "stderr": "> mine y\nsh: mine: command not found\nScript mine y handling the go event returned with error code 127\n"
+   }
   },
   {
    "name": "timeout",

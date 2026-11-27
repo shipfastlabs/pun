@@ -1,0 +1,29 @@
+{
+  "level": 10,
+  "errors": [
+    {
+      "line": 17,
+      "identifier": "phpstan.dumpType",
+      "message": "Dumped type: non-empty-array<int<1, max>, int>",
+      "tip": null
+    },
+    {
+      "line": 32,
+      "identifier": "phpstan.dumpType",
+      "message": "Dumped type: non-empty-array<string, bool>",
+      "tip": null
+    },
+    {
+      "line": 33,
+      "identifier": "phpstan.dumpType",
+      "message": "Dumped type: array<string, bool>",
+      "tip": null
+    },
+    {
+      "line": 34,
+      "identifier": "phpstan.dumpType",
+      "message": "Dumped type: non-empty-list<bool>",
+      "tip": null
+    }
+  ]
+}

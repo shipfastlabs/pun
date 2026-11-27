@@ -179,6 +179,31 @@ impl FunctionReturnTypeProvider for ArrayMapProvider {
 
                 Some(wrap_atomic(TAtomic::Array(TArray::List(result))))
             }
+            // Pun: ArrayMapFunctionReturnTypeExtension prices a callback whose return names its own templates
+            // (`$basket->get(...)`, `@return Apple|TDefault`) with the array's value type, so an omitted
+            // parameter's default resolves them; the declared `array_map()` signature would leave them open
+            _ if matches!(
+                callback_type.types.as_ref(),
+                [TAtomic::Callable(callable)]
+                    if callable.get_signature().and_then(|s| s.get_return_type()).is_some_and(|t| t.has_template_types())
+            ) =>
+            {
+                match array {
+                    TArray::List(list) if !list.element_type.is_never() => {
+                        let mut result = TList::new(Arc::new(resolve_for(&list.element_type)?));
+                        result.non_empty = list.non_empty;
+                        Some(wrap_atomic(TAtomic::Array(TArray::List(result))))
+                    }
+                    TArray::Keyed(keyed) => {
+                        let (key_type, value_type) = keyed.parameters.as_ref()?;
+                        let result = TKeyedArray::new()
+                            .with_parameters(Arc::clone(key_type), Arc::new(resolve_for(value_type)?))
+                            .with_non_empty(keyed.is_non_empty());
+                        Some(wrap_atomic(TAtomic::Array(TArray::Keyed(result))))
+                    }
+                    TArray::List(_) => None,
+                }
+            }
             _ => None,
         }
     }

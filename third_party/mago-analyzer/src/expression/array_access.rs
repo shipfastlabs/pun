@@ -145,6 +145,19 @@ impl<'ast, 'arena> Analyzable<'ast, 'arena> for ArrayAccess<'arena> {
                 );
                 access_type = narrowed_type;
             }
+            // Pun: an offset of a nullsafe chain's result is null only where the chain short-circuited when every
+            // array's value is non-nullable, so the next link may skip it as MethodCallHandler does for `?->`.
+            if container_type.has_nullsafe_null()
+                && access_type.has_null()
+                && container_type.types.iter().filter(|atomic| !atomic.is_null()).all(|atomic| match atomic {
+                    TAtomic::Array(array) => {
+                        !mago_codex::ttype::get_array_value_parameter(array, context.codebase).has_null()
+                    }
+                    _ => false,
+                })
+            {
+                access_type.set_nullsafe_null(true);
+            }
             let access_type = Rc::new(access_type);
 
             // A derived read is not a specified scope expression. Retain explicit

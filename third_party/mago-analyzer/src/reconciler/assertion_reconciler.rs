@@ -510,6 +510,20 @@ where
             && context.codebase.is_inheritable(first_name.as_bytes()))
 }
 
+/// Pun: whether `child` is an instance of `parent` for `CodebaseMetadata::is_instance_of()` only through its
+/// `require_extends` / `require_implements`, not through its real ancestry.
+fn only_required_by(codebase: &CodebaseMetadata, child: &TNamedObject, parent: &TNamedObject) -> bool {
+    let parent_name = mago_word::ascii_lowercase_word(parent.name.as_bytes());
+    let Some(metadata) = codebase.get_class_like(child.name.as_bytes()) else {
+        return false;
+    };
+    (metadata.require_extends.contains(&parent_name) || metadata.require_implements.contains(&parent_name))
+        && metadata.name != parent_name
+        && !metadata.all_parent_classes.contains(&parent_name)
+        && !metadata.all_parent_interfaces.contains(&parent_name)
+        && !metadata.used_traits.contains(&parent_name)
+}
+
 pub(crate) fn intersect_atomic_with_atomic<A>(
     context: &mut Context<'_, '_, A>,
     first_type: &TAtomic,
@@ -548,6 +562,22 @@ where
     } else {
         second_type
     };
+
+    // Pun: `@phpstan-require-extends` / `@phpstan-require-implements` make no subtype in PHPStan (ObjectType's
+    // isSuperTypeOf() reads the real ancestry), so a class narrowed by an interface that only requires it is their
+    // intersection, `Model&Seoable`, not the interface alone.
+    if let (TAtomic::Object(TObject::Named(first_object)), TAtomic::Object(TObject::Named(second_object))) =
+        (first_type, second_type)
+        && first_object.intersection_types.is_none()
+        && second_object.intersection_types.is_none()
+        && (only_required_by(context.codebase, second_object, first_object)
+            || only_required_by(context.codebase, first_object, second_object))
+    {
+        let mut intersection = first_type.clone();
+        intersection.add_intersection_type(second_type.clone());
+
+        return Some(intersection);
+    }
 
     // Pun: `$this` and `static` narrowed by their own class or an ancestor stay `$this` and `static`, as in PHPStan.
     // Mago 1.61 asserts `instanceof self` as the plain class, which the check below also finds containing `$this`.

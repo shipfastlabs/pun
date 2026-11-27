@@ -24,6 +24,7 @@ use mago_codex::scanner::inference::infer_initializer_with_codebase;
 use mago_codex::scanner::inference::initializer_class_names;
 use mago_codex::scanner::scan_program;
 use mago_codex::ttype::atomic::TAtomic;
+use mago_codex::ttype::atomic::callable::TCallable;
 use mago_codex::ttype::atomic::scalar::TScalar;
 use mago_codex::ttype::get_empty;
 use mago_codex::ttype::get_error;
@@ -447,6 +448,107 @@ fn build_prelude(php_version: u32) -> (CodebaseMetadata, SymbolReferences) {
             let span = declared.span;
             function.return_type_metadata = Some(TypeMetadata::new(reflected, span));
         }
+    }
+    use mago_codex::ttype::{TType, TypeRef};
+    // a callable parameter of a built-in function takes PHPStan's signature (`spl_autoload_register()`'s callback
+    // takes a `string`, not Mago's `class-string`), which a closure sent to it is typed from
+    for ((scope, name), function) in &mut metadata.function_likes {
+        if !scope.is_empty() || !function.flags.is_built_in() {
+            continue;
+        }
+        let Some([variant]) = builtins
+            .functions
+            .get(&String::from_utf8_lossy(name.as_bytes()).to_ascii_lowercase())
+            .map(|function| function.variants.as_slice())
+        else {
+            continue;
+        };
+        for (parameter, reflected) in function.parameters.iter_mut().zip(&variant.params) {
+            let Some(declared) = &parameter.type_metadata else {
+                continue;
+            };
+            let signature = |t: &TUnion| {
+                t.types
+                    .iter()
+                    .any(|a| matches!(a, TAtomic::Callable(TCallable::Signature(_))))
+                    && t.types.iter().all(|a| {
+                        matches!(
+                            a,
+                            TAtomic::Callable(TCallable::Signature(_)) | TAtomic::Null
+                        )
+                    })
+            };
+            // Mago's templated signatures (array_map()'s `callable(T): U`) say more than PHPStan's map
+            if !signature(&declared.type_union) || declared.type_union.has_template_types() {
+                continue;
+            }
+            // a class name in PHPStan's signature may be one of its function map's templates
+            if let Some(reflected) =
+                crate::larastan::config::type_from_text(reflected.ty.as_bytes())
+                    .filter(signature)
+                    .filter(|t| {
+                        t.types.iter().any(|a| {
+                            matches!(a, TAtomic::Callable(TCallable::Signature(s)) if !s.get_parameters().is_empty())
+                        })
+                    })
+                    .filter(|t| {
+                        !t.any_child_node(|node| {
+                            matches!(node, TypeRef::Atomic(TAtomic::Object(_)))
+                        })
+                    })
+            {
+                let span = declared.span;
+                parameter.type_metadata = Some(TypeMetadata::new(reflected, span));
+            }
+        }
+    }
+    // A built-in method whose stub returns `array<T>` where PHPStan's functionMap says `list<T>`
+    // (`ReflectionFunctionAbstract::getParameters()`) returns a list of the stub's `T`.
+    for ((class, name), method) in &mut metadata.function_likes {
+        if class.is_empty() || !method.flags.is_built_in() {
+            continue;
+        }
+        let Some(declared) = method
+            .return_type_metadata
+            .as_ref()
+            .or(method.return_type_declaration_metadata.as_ref())
+        else {
+            continue;
+        };
+        let [TAtomic::Array(mago_codex::ttype::atomic::array::TArray::Keyed(array))] =
+            declared.type_union.types.as_ref()
+        else {
+            continue;
+        };
+        if array.known_items.is_some() || array.non_empty {
+            continue;
+        }
+        let Some([variant]) = builtins
+            .classes
+            .get(&String::from_utf8_lossy(class.as_bytes()).to_ascii_lowercase())
+            .and_then(|class| {
+                class
+                    .methods
+                    .get(&String::from_utf8_lossy(name.as_bytes()).to_ascii_lowercase())
+            })
+            .map(|method| method.variants.as_slice())
+        else {
+            continue;
+        };
+        if !variant.ret.starts_with("list<") {
+            continue;
+        }
+        let Some((_, value)) = &array.parameters else {
+            continue;
+        };
+        let list = mago_codex::ttype::atomic::array::list::TList::new(value.clone());
+        let span = declared.span;
+        method.return_type_metadata = Some(TypeMetadata::new(
+            TUnion::from_atomic(TAtomic::Array(
+                mago_codex::ttype::atomic::array::TArray::List(list),
+            )),
+            span,
+        ));
     }
     for ((class, name), constructor) in &mut metadata.function_likes {
         if !name.as_bytes().eq_ignore_ascii_case(b"__construct") {

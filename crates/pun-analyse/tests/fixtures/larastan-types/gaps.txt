@@ -43,11 +43,6 @@ tests/Type/data/eloquent-builder-l11-42.php:207
 tests/Type/data/eloquent-builder-l12-19.php:45
 tests/Type/data/eloquent-builder-l12-19.php:46
 tests/Type/data/eloquent-where.php:27
-tests/Type/data/eloquent-where.php:31
-tests/Type/data/eloquent-where.php:39
-tests/Type/data/eloquent-where.php:59
-tests/Type/data/eloquent-where.php:67
-tests/Type/data/eloquent-where.php:71
 tests/Type/data/model-l11-42.php
 tests/Type/data/model-l11-42.php:28
 tests/Type/data/model-l11-42.php:29

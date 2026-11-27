@@ -1,0 +1,35 @@
+{
+ "level": 10,
+ "errors": [
+  {
+   "line": 39,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-falsy-string",
+   "tip": null
+  },
+  {
+   "line": 42,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-empty-string",
+   "tip": null
+  },
+  {
+   "line": 45,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string",
+   "tip": null
+  },
+  {
+   "line": 48,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string|null",
+   "tip": null
+  },
+  {
+   "line": 51,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-falsy-string",
+   "tip": null
+  }
+ ]
+}

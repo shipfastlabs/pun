@@ -203,7 +203,9 @@ pub fn reconcile_keyed_types<'ctx, A>(
         // turn a variable PHPStan already knows absent into a declaration. An uncached access
         // on an existing root is not absence evidence: get_value_for_key resolves that path below.
         if has_isset || has_inverted_isset {
-            let root = word(borrow_path_parts(key_str)[0]);
+            // A nullsafe path's first part keeps its `?` (`$item?` of `$item?->names`); the root is the variable.
+            let first = borrow_path_parts(key_str)[0];
+            let root = word(first.strip_suffix(b"?").unwrap_or(first));
             let absent_root = key_str.starts_with(b"$") && block_context.variable_certainty(root).is_absent();
             if absent_root || block_context.variable_state.absent.contains(key) {
                 if absent_root {

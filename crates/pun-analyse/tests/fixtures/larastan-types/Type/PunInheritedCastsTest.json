@@ -1,0 +1,34 @@
+{
+    "test": "Type/PunInheritedCastsTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-inherited-casts.php",
+            "declares": [
+                "puninheritedcasts\\hasflags",
+                "puninheritedcasts\\basemodel",
+                "puninheritedcasts\\middlemodel",
+                "puninheritedcasts\\event",
+                "puninheritedcasts\\deep",
+                "puninheritedcasts\\direct"
+            ],
+            "asserts": [],
+            "errors": [
+                {
+                    "line": 30,
+                    "identifier": "missingType.iterableValue",
+                    "message": "Property PunInheritedCasts\\Event::$flags type has no value type specified in iterable type array.",
+                    "tip": "See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type"
+                },
+                {
+                    "line": 39,
+                    "identifier": "missingType.iterableValue",
+                    "message": "Property PunInheritedCasts\\Deep::$flags type has no value type specified in iterable type array.",
+                    "tip": "See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type"
+                }
+            ]
+        }
+    ]
+}

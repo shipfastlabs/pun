@@ -83,6 +83,25 @@
 //! Type/PunContainerBindingsTest.json (`resolve()` and `app()` of a string the framework's providers bind to a closure
 //! returning one `new` instance, such as `db.transactions`) has its assertions from PHPStan 2.3.7 with Larastan 3.15.0
 //! at level 8 in a Laravel 13.44.1 app.
+//! Type/PunRelationNarrowingTest.json (a relation property without a `@property` tag narrowed by `instanceof` and
+//! `!== null`) has its assertions and errors from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13 app.
+//! Type/PunMixinModelPropertiesTest.json (a relation and its `_count` read through a resource's `@mixin` model) has its
+//! assertions from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
+//! Type/PunStorageFacadeReturnsTest.json (Storage facade calls typed by the filesystem adapter's method, which
+//! StorageMethodsClassReflectionExtension finds before the facade's `@method` tag) has its assertions from PHPStan
+//! 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
+//! Type/PunStorageFacadeCallablesTest.json (`Storage::get(...)`, the facade's `@method` tag because the filesystem
+//! manager's `get()` is protected) has its assertion from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel
+//! 13.44.1 app.
+//! Type/PunInheritedCastsTest.json (`$casts` redeclared below a base model that doesn't, typed by Larastan's Model stub
+//! and not HasAttributes' `@var array`) has its errors from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel
+//! 13.44.1 app.
+//! Type/PunRelationWhereHasTest.json (an untyped closure parameter of `whereHas()` and its kin forwarded by a relation,
+//! the stub's `$relation is string` conditional resolved from the argument) has its assertions from PHPStan 2.3.7 with
+//! Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
+//! Type/PunRequireExtendsNarrowingTest.json (a model narrowed by `instanceof` on an interface with
+//! `@phpstan-require-extends Model`) has its assertions from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel
+//! 13.44.1 app.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};

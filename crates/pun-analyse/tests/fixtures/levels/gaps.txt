@@ -75,7 +75,6 @@
 5 Methods/CallMethodsRuleTest::testBug3465
 5 Methods/CallMethodsRuleTest::testBug5536
 5 Methods/CallMethodsRuleTest::testBug8048
-5 Methods/CallMethodsRuleTest::testBug8888
 5 Methods/CallMethodsRuleTest::testSiblingMethodPrototype
 5 Methods/CallMethodsRuleTest::testTypedClassConstants
 5 Methods/CallStaticMethodsRuleTest::testBug5536
@@ -89,7 +88,6 @@
 9 Methods/CallMethodsRuleTest::testBug3465
 9 Methods/CallMethodsRuleTest::testBug5536
 9 Methods/CallMethodsRuleTest::testBug8048
-9 Methods/CallMethodsRuleTest::testBug8888
 9 Methods/CallMethodsRuleTest::testSiblingMethodPrototype
 9 Methods/CallMethodsRuleTest::testTypedClassConstants
 9 Methods/CallStaticMethodsRuleTest::testBug5536

@@ -281,6 +281,8 @@ impl Larastan {
 
 /// StorageMethodsClassReflectionExtension: the Storage facade has the methods of the filesystem manager, then of the
 /// filesystem adapter, each in a StaticMethodReflection. It runs before the facade's own `@method` tags.
+/// ClassReflection::getMethod() moves on to the next extension when the scope cannot call the method found, so the
+/// manager's protected `get()` leaves `Storage::get()` to the facade's `@method` tag.
 fn storage_method(c: &Checker, k: &ClassLikeMetadata, name: &[u8]) -> Option<MethodAnswer> {
     if !declared::original_name(k).eq_ignore_ascii_case("Illuminate\\Support\\Facades\\Storage") {
         return None;
@@ -290,8 +292,17 @@ fn storage_method(c: &Checker, k: &ClassLikeMetadata, name: &[u8]) -> Option<Met
         "Illuminate\\Filesystem\\FilesystemAdapter",
     ]
     .into_iter()
+    .find(|class| {
+        c.has_method(&Type::Object((*class).into(), vec![], false), name)
+            .yes()
+    })
+    .filter(|class| {
+        c.class_like(class)
+            .found()
+            .and_then(|root| members::method(c, root, name))
+            .is_none_or(|m| m.visibility().is_public())
+    })
     .map(|class| Type::Object(class.into(), vec![], false))
-    .find(|t| c.has_method(t, name).yes())
     .map(|t| MethodAnswer::Forward(t, Reflected::StaticDeclared))
 }
 

@@ -1,0 +1,29 @@
+{
+ "level": 10,
+ "errors": [
+  {
+   "line": 26,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "line": 27,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "line": 28,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: array|null",
+   "tip": null
+  },
+  {
+   "line": 29,
+   "identifier": "method.notFound",
+   "message": "Call to an undefined method App\\Magic::download().",
+   "tip": null
+  }
+ ]
+}

@@ -1,0 +1,23 @@
+{
+    "test": "Type/PunRelationWhereHasTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-relation-where-has.php",
+            "declares": [
+                "punrelationwherehas\\tag",
+                "punrelationwherehas\\comment",
+                "punrelationwherehas\\post"
+            ],
+            "asserts": [
+                44,
+                47,
+                50,
+                53
+            ],
+            "errors": []
+        }
+    ]
+}

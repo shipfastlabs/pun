@@ -1845,6 +1845,13 @@ fn get_primary_iterable_parameters(
                     break 'parameters None;
                 }
 
+                if !is_iterator_interface
+                    && let Some(parameters) =
+                        get_aggregate_iterator_parameters(codebase, class_metadata, object, visited_aggregates)
+                {
+                    return Some(parameters);
+                }
+
                 let traversable_metadata = codebase.get_class_like(traversable.as_bytes())?;
                 let key_template = traversable_metadata.template_types.get_index(0).map(|(name, _)| *name)?;
                 let value_template = traversable_metadata.template_types.get_index(1).map(|(name, _)| *name)?;
@@ -2064,6 +2071,12 @@ fn get_primary_iterable_value_parameter(
             let class_metadata = codebase.get_class_like(name.as_bytes())?;
             if !codebase.is_instance_of(class_metadata.name.as_bytes(), traversable.as_bytes()) {
                 return None;
+            }
+
+            if let Some((_, value)) =
+                get_aggregate_iterator_parameters(codebase, class_metadata, object, visited_aggregates)
+            {
+                return Some(value);
             }
 
             let traversable_metadata = codebase.get_class_like(traversable.as_bytes())?;
@@ -2294,6 +2307,42 @@ fn is_unbound_class_template(
             .template_extended_parameters
             .get(&defining_class)
             .is_some_and(|parameters| parameters.contains_key(&parameter.parameter_name))
+}
+
+/// Pun: PHPStan's `ObjectType::getIterableKeyType()` and `getIterableValueType()` ask an `IteratorAggregate`'s
+/// `getIterator()` first and keep its iterable types unless they are an implicit `mixed`, before the class's
+/// `Traversable` template. So a class whose `getIterator(): Generator` has no PHPDoc iterates `mixed`, whatever its
+/// parent's template says (`Carbon\CarbonPeriod` and its `DatePeriod`). A built-in `getIterator()` is left to the
+/// template: PHPStan reads its return through the inherited `@return Traversable<TKey, TValue>`.
+fn get_aggregate_iterator_parameters(
+    codebase: &CodebaseMetadata,
+    class_metadata: &ClassLikeMetadata,
+    object: &TObject,
+    visited_aggregates: &[Word],
+) -> Option<(TUnion, TUnion)> {
+    if !class_metadata.all_parent_interfaces.contains(&word("iteratoraggregate"))
+        || visited_aggregates.contains(&class_metadata.name)
+        || codebase
+            .get_declaring_method(class_metadata.name.as_bytes(), b"getiterator")
+            .is_none_or(|method| method.flags.is_built_in())
+    {
+        return None;
+    }
+
+    let iterator =
+        get_iterator_method_return_type(codebase, class_metadata, object.get_type_parameters(), b"getiterator")?;
+    let mut visited = Vec::with_capacity(visited_aggregates.len() + 1);
+    visited.extend_from_slice(visited_aggregates);
+    visited.push(class_metadata.name);
+
+    iterator.types.iter().try_fold((get_never(), get_never()), |(key, value), atomic| {
+        let (inner_key, inner_value) = get_iterable_parameters_impl(atomic, codebase, &visited)?;
+
+        Some((
+            add_union_type(key, &inner_key, codebase, combiner::CombinerOptions::default()),
+            add_union_type(value, &inner_value, codebase, combiner::CombinerOptions::default()),
+        ))
+    })
 }
 
 /// Gets the specialized return type of an iterator protocol method.

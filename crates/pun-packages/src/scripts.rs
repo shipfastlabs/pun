@@ -204,9 +204,14 @@ impl Runner {
             self.root_binary(&callable, with_args(&callable))
         };
         self.announce(event, &with_args(&callable));
-        // `/bin/sh`, as Symfony's Process starts it for Composer: the child's PATH puts the bin dir first.
+        // `/bin/sh`, as Symfony's Process starts it for Composer: the child's PATH puts the bin dir first. PHP's
+        // proc_open names it `sh` (`execl("/bin/sh", "sh", "-c", ...)`), which the shell's own errors start with.
         let mut command = self.command("/bin/sh");
-        let status = wait(command.arg("-c").arg(&exec), &exec, self.timeout)?;
+        std::os::unix::process::CommandExt::arg0(&mut command, "sh");
+        // Composer gives the script the terminal only when its own output is one; otherwise it reads the script's
+        // output through pipes and forwards it (ProcessExecutor::executeTty())
+        let pipe = !self.quiet && !std::io::IsTerminal::is_terminal(&std::io::stdout());
+        let status = wait(command.arg("-c").arg(&exec), &exec, self.timeout, pipe)?;
         failed(&callable, event, status)
     }
 
@@ -315,30 +320,95 @@ pub const SCRIPT_EVENTS: [&str; 12] = [
 
 /// Runs `command` to its end, or stops it after `timeout` seconds (0, or more than the clock can hold, for never) as
 /// Symfony's Process does: SIGTERM, then SIGKILL when it is still running a moment later. Composer then fails with the
-/// Process's message.
-fn wait(command: &mut Command, exec: &str, timeout: u64) -> Result<std::process::ExitStatus> {
+/// Process's message. With `pipe`, the child's output goes through Pun, which forwards it until the child ends, as
+/// the Process reads its pipes only while it waits: a process the child left running writes nowhere afterwards.
+fn wait(
+    command: &mut Command,
+    exec: &str,
+    timeout: u64,
+    pipe: bool,
+) -> Result<std::process::ExitStatus> {
     use std::time::{Duration, Instant};
     let limit = Duration::from_secs(timeout);
-    if timeout == 0 || Instant::now().checked_add(limit).is_none() {
-        return Ok(command.status()?);
+    let limit = (timeout != 0 && Instant::now().checked_add(limit).is_some()).then_some(limit);
+    if pipe {
+        command
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped());
     }
     let mut child = command.spawn()?;
+    let forwarding = pipe.then(|| forward(&mut child));
     let exited = exit_signal(child.id());
-    if exited.recv_timeout(limit).is_ok() {
-        return Ok(child.wait()?);
+    let timed_out = limit.is_some_and(|limit| exited.recv_timeout(limit).is_err());
+    if timed_out {
+        if let Ok(pid) = libc::pid_t::try_from(child.id()) {
+            // SAFETY: `kill` takes any pid and signal; only this thread reaps the child, which it hasn't yet, so the
+            // pid is still the child's.
+            unsafe { libc::kill(pid, libc::SIGTERM) };
+        }
+        if exited.recv_timeout(Duration::from_millis(1)).is_err() {
+            let _ = child.kill();
+        }
     }
-    if let Ok(pid) = libc::pid_t::try_from(child.id()) {
-        // SAFETY: `kill` takes any pid and signal; only this thread reaps the child, which it hasn't yet, so the pid
-        // is still the child's.
-        unsafe { libc::kill(pid, libc::SIGTERM) };
+    let status = child.wait();
+    if let Some((stop, done)) = forwarding {
+        // the output the child wrote before it ended, which the Process reads once more after it exits
+        for _ in 0..2 {
+            if done.recv_timeout(Duration::from_millis(100)).is_err() {
+                break;
+            }
+        }
+        stop.store(true, std::sync::atomic::Ordering::SeqCst);
     }
-    if exited.recv_timeout(Duration::from_millis(1)).is_err() {
-        let _ = child.kill();
+    if !timed_out {
+        return Ok(status?);
     }
-    let _ = child.wait();
     eprintln!("The following exception is caused by a process timeout");
     eprintln!("Check https://getcomposer.org/doc/06-config.md#process-timeout for details");
     bail!("The process \"{exec}\" exceeded the timeout of {timeout} seconds.")
+}
+
+/// Copies the child's piped stdout and stderr to Pun's own until the returned flag is set. Each copy reports on the
+/// channel when its pipe closes.
+fn forward(
+    child: &mut std::process::Child,
+) -> (
+    std::sync::Arc<std::sync::atomic::AtomicBool>,
+    std::sync::mpsc::Receiver<()>,
+) {
+    use std::io::{Read, Write};
+    let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let (sender, done) = std::sync::mpsc::channel();
+    let pipes = [
+        child
+            .stdout
+            .take()
+            .map(|p| Box::new(p) as Box<dyn Read + Send>),
+        child
+            .stderr
+            .take()
+            .map(|p| Box::new(p) as Box<dyn Read + Send>),
+    ];
+    for (pipe, is_stderr) in pipes.into_iter().zip([false, true]) {
+        let Some(mut pipe) = pipe else { continue };
+        let (stop, sender) = (stop.clone(), sender.clone());
+        std::thread::spawn(move || {
+            let mut buffer = [0; 8192];
+            while let Ok(n @ 1..) = pipe.read(&mut buffer) {
+                if stop.load(std::sync::atomic::Ordering::SeqCst) {
+                    break;
+                }
+                let mut out: Box<dyn Write> = if is_stderr {
+                    Box::new(std::io::stderr())
+                } else {
+                    Box::new(std::io::stdout())
+                };
+                let _ = out.write_all(&buffer[..n]).and_then(|()| out.flush());
+            }
+            let _ = sender.send(());
+        });
+    }
+    (stop, done)
 }
 
 /// A message when process `pid` exits, from a thread that waits for it without reaping it (`WNOWAIT`): the caller

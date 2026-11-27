@@ -4445,6 +4445,129 @@ joins it with an isset-success scope that is never. `statement/loop/assignment_m
 also walks an assignment nested in the right side (`$r[] = $seen[$k] ??= $v`), so the loop analysis sees its target
 assigned. Without both, `$first[$key] ??= $box` in a loop typed the array's values as `mixed`
 (shipfastlabs/pun#113). `crates/pun-analyse/tests/coalesce_offset_values.rs` covers it against PHPStan 2.3.5.
+## Fluent methods keep their arguments' narrowings
+
+`invocation/post_process.rs` `clear_object_property_narrowings()`: a method whose declared return type is `static` or
+`$this` of its declaring class, and that is not `@phpstan-impure`, no longer invalidates the narrowings of its object
+arguments, as ArgumentsHandler checks `ThisType($declaringClass)->isSuperTypeOf($returnType)` and `isPure()->no()`
+before invalidating one. So `$order->box !== null` survives `$shipment->add($order)` (shipfastlabs/pun#109).
+`crates/pun-analyse/tests/fluent_arguments.rs` covers it against PHPStan 2.3.5.
+## Plugin assertions through a null coalesce
+
+`invocation/post_process.rs` `resolve_invocation_assertion()`: a plugin assertion whose argument is `$a ?? $b` and has
+no expression ID now targets `$a` when every assertion is a type that `$b` can never be, as TypeSpecifier's
+`createForExpr()` does in a true context. So `str_starts_with($a ?? '', 'sk_')` makes `$a` a `non-falsy-string`
+(shipfastlabs/pun#110). `crates/pun-analyse/tests/str_containing.rs` covers it against PHPStan 2.3.5.
+## Ternary arm remainders of mixed and possibly empty arrays
+
+`expression/assignment/mod.rs` `ternary_assignment_conditions()`: an arm typed `mixed` against a `null` arm now
+leaves `mixed~null` (`TMixed::subtract()`, so the guard does not contain `null`), and a possibly empty array that is not a shape against an empty-array arm leaves the non-empty
+array, as `TypeCombinator::remove()` does in AssignHandler. Before, any `mixed` arm skipped the holders, and the array
+overlapped `[]`. So after `$end = is_array($ends) ? ($ends[$k] ?? null) : null`, `is_array($end)` makes `$ends` an array,
+and after `$verbs = is_array($body) ? array_keys($body) : []`, `count($verbs) !== 1` returning does too
+(shipfastlabs/pun#111). `crates/pun-analyse/tests/ternary_arm_remainders.rs` covers it against PHPStan 2.3.5.
+## array_map() prices a template callback with the array's values
+
+`plugin/libraries/stdlib/array/array_map.rs`: for an array without known items, a callback whose return type names
+templates (`$basket->get(...)` returning `Apple|TDefault`) is invoked with the array's value type, as
+ArrayMapFunctionReturnTypeExtension does for every array, so an omitted parameter's default resolves the template
+(`list<Apple|null>`); the declared `array_map()` signature left `TDefault` open (shipfastlabs/pun#115). Other
+callbacks keep the declared signature. Pun's `ConstantArrayMap` (`crates/pun-analyse/src/rules/return_types.rs`) runs the
+provider for such callbacks as it does for constant arrays. `crates/pun-analyse/tests/first_class_template_defaults.rs` covers a list and a
+keyed array against PHPStan 2.3.5.
+## Closure parameters inferred from their call sites (bleeding edge)
+
+`template_arguments.rs` `Solver::resolve_observation()`: a closure parameter's marker now resolves through
+`resolve_closure_signature_observation()`, a port of PHPStan's `resolveClosureSignatureObservation()`. The parameter
+is contravariant: what the closure is invoked with and the parameter types of the callables it is sent to are joined,
+and the result applies only when the declared type accepts it (else the declared type). `closure_signature_markers()`
+takes the parameter defaults, which `expression/closure.rs` and `expression/arrow_function.rs` pass, and sends an
+optional parameter's default as a contravariant observation, as `collectSites()` does; an argument read from a
+possibly-missing offset no longer leaves the parameter possibly undefined (shipfastlabs/pun#123).
+`crates/pun-analyse/tests/bleeding_edge_closure_parameters.rs` covers it against PHPStan 2.3.5 with `bleedingEdge.neon`.
+## A raw declared class is no template-argument send target
+
+`template_arguments.rs` `Observed::observe_send()`: a declared object's argument that type expansion filled in for a
+raw class name (`from_template_fallback()`, as in a closure's `: Models` return type) is skipped for returns,
+assignments and `@var` sends. PHPStan's declared type there is an ObjectType without arguments, so the observation
+pass learns nothing from it; Mago sent the markers to the template bounds and resolved
+`fn (): Models => new Models([new Apple])` to `Models<int|string, object>` when `Models` inherits its constructor
+(shipfastlabs/pun#124). `crates/pun-analyse/tests/bleeding_edge_inherited_constructors.rs` covers it against PHPStan
+2.3.5 with `bleedingEdge.neon`.
+## Array pointer functions read their array
+
+`invocation/arguments.rs` `is_argument_mutated_by_reference()`: `end()`, `reset()`, `next()` and `prev()` take their
+array by reference only to move its internal pointer. PHPStan's function map marks it `&rw_array_arg`
+(PassedByReference::readsArgument()), so ArgumentsHandler writes nothing back and the array keeps its type; Mago
+widened a `non-empty-list<string>` back to `list<string>` after `end($columns)` (shipfastlabs/pun#126). `crates/pun-analyse/tests/array_pointer_functions.rs`
+covers it against PHPStan 2.3.5.
+
+## Offsets of a nullsafe chain keep its short-circuit null
+
+`expression/array_access.rs`: reading an offset of a value whose `null` comes only from a nullsafe short-circuit
+(`$message?->envelope()->recipients()[0]`) keeps that `null` marked as the short-circuit's when every array's value
+type is non-nullable, so the next `->` link skips it as PHPStan's chain does; Mago made the next call's result
+nullable (shipfastlabs/pun#129). An
+array whose values may be null still reports. `crates/pun-analyse/tests/nullsafe_offset_chains.rs` covers both against
+PHPStan 2.3.5.
+
+## array_find() narrows through its callback
+
+`invocation/array_filter.rs`: the array_filter() helper also serves `array_find()`, as PHPStan's
+ArrayFindFunctionReturnTypeExtension runs ArrayFilterFunctionReturnTypeHelper without a mode. The result is the
+filtered arrays' value type, plus `null` unless the filtered array is non-empty, so `array_find($rows, fn (mixed
+$row): bool => is_array($row))` is `array|null`, not `mixed` (shipfastlabs/pun#130). `crates/pun-analyse/tests/array_find_narrowing.rs` covers it
+against PHPStan 2.3.5.
+
+## A strict in_array() narrows its needle beside a provider
+
+`assertion.rs`: a strict `in_array()` call still gets Mago's needle assertion when an assertion provider also
+narrows its haystack (Pun's port of InArrayFunctionTypeSpecifyingExtension, shipfastlabs/pun#101); Mago skipped the
+special-function assertions whenever a provider returned any. `formula.rs`: `!in_array(...)` whose truthy assertions
+name several variables becomes the negated formula of those assertions, as `!isset($a, $b)` already did, instead of
+no assertions, so `if (!in_array($level, $this->levels, true)) { $level = ...; }` keeps the narrowed `$level` after the
+`if`. PHPStan's `Methods/data/bug-12884.php` level fixture and `crates/pun-analyse/tests/in_array_haystack.rs` cover it.
+
+## Instanceof of `$this` in a trait is not constant
+
+`expression/binary/mod.rs` `compute_instanceof_type()`: in a method of a trait (the scope's reference origin names a
+trait, also while it is analysed in the context of a using class), `instanceof` on an expression whose type holds
+`$this`, in a union or an intersection, is `bool`, as PHPStan's InstanceofHandler gives it
+(`$isInTrait && TypeUtils::findThisType()`). Mago made `$this instanceof Publishable` constant for each using class,
+so Pun reported `instanceof.alwaysTrue`, `instanceof.alwaysFalse` and `booleanOr.alwaysTrue` where PHPStan reports
+nothing (shipfastlabs/pun#134). Narrowing by the check is unchanged. `crates/pun-analyse/tests/fixtures/coverage/trait-this-instanceof`
+covers it against PHPStan 2.3.5.
+
+## Instanceof narrowing by an interface that requires the class
+
+`reconciler/assertion_reconciler.rs` `intersect_atomic_with_atomic()`: a named object narrowed by another that is its
+instance only through `@phpstan-require-extends` / `@phpstan-require-implements` (Mago's `is_instance_of()` counts
+those, PHPStan's ObjectType::isSuperTypeOf() does not) is the intersection of both, so `Model $record` narrowed by
+`instanceof Seoable`, an interface requiring `Model`, is `Model&Seoable`, not `Seoable` alone, in either direction
+(shipfastlabs/pun#137). `crates/pun-analyse/tests/fixtures/larastan-types/Type/PunRequireExtendsNarrowingTest.json`
+covers it against PHPStan 2.3.7 with Larastan 3.15.0.
+
+## The root of a nullsafe isset path
+
+`reconciler/mod.rs` `reconcile_keyed_types()`: the absence check of an isset or `!isset` assertion reads the root
+variable of a nullsafe path without its `?`. The path splitter cuts `$item?->names` into `$item?` and `->names`, and
+`$item?` is never defined, so after `if (empty($item?->names)) return;` the continuing edge was marked impossible
+and the join after the `if` dropped every variable, parameters included (shipfastlabs/pun#140). PHPStan's
+IssetHandler specifies `$item` itself. `formula.rs` `negate_or_synthesize()`: the negation of an `empty()` condition
+gets the access's base clauses, as `get_formula()` already gives a `!empty()`, so the continuing edge has `$item`
+an `Item` and `$item->names` a `non-empty-list<string>`, not `Item|null` and `list<string>`.
+`crates/pun-analyse/tests/nullsafe_empty.rs` covers `empty()` and `!isset()` on a nullsafe property against PHPStan
+2.3.5.
+
+## Every method of a `SoapClient`
+
+`expression/call/method_call.rs` `analyze_undocumented_method_return_type()`: a call that only `__call()` handles,
+on a `SoapClient` or a subclass, returns an explicit `mixed` instead of adding nothing to the call's type (an
+`ErrorType`). PHPStan's
+[`SoapClientMethodsClassReflectionExtension`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Reflection/Php/Soap/SoapClientMethodReflection.php)
+reflects every method of such a class as public, not static, variadic and returning `mixed` (shipfastlabs/pun#141);
+a user class's `__call()` still gives no method. Pun's `rules/class_reflection.rs` `SoapClientMethods` makes the
+method exist for `method.notFound`. `crates/pun-analyse/tests/soap_client.rs` covers it against PHPStan 2.3.5.
 ## Closure-this type from a function provider
 
 `plugin/provider/function.rs` adds `FunctionReturnTypeProvider::get_parameter_closure_this_type()` (`None` by default),

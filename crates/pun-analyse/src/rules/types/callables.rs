@@ -214,7 +214,9 @@ fn of_signature(c: &Checker, s: &Signature, source: Span) -> Acceptor {
                     if sourced {
                         p.ty.clone()
                     } else {
-                        outer_arguments(&p.ty, &s.templates)
+                        // the traversal rebuilds unions, whose members compare by the classes' template variance
+                        // (`Box<Apple>|Box<Pear>` keeps both members)
+                        declared::with_classes(c, || outer_arguments(&p.ty, &s.templates))
                     }
                 }))
             })

@@ -1,0 +1,22 @@
+{
+    "test": "Type/PunRequireExtendsNarrowingTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-require-extends-narrowing.php",
+            "declares": [
+                "punrequireextendsnarrowing\\narrowed",
+                "punrequireextendsnarrowing\\plain",
+                "punrequireextendsnarrowing\\requireseoable",
+                "punrequireextendsnarrowing\\seoable"
+            ],
+            "asserts": [
+                35,
+                46
+            ],
+            "errors": []
+        }
+    ]
+}

@@ -1,0 +1,33 @@
+{
+ "general": [],
+ "errors": [
+  {
+   "file": "signatures.php",
+   "line": 17,
+   "identifier": "missingType.generics",
+   "message": "Method ReflectionParameterLists\\Signature::dumps() has parameter $class with generic class ReflectionClass but does not specify its types: T",
+   "tip": null
+  },
+  {
+   "file": "signatures.php",
+   "line": 19,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: list<ReflectionParameter>",
+   "tip": null
+  },
+  {
+   "file": "signatures.php",
+   "line": 20,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: list<ReflectionParameter>",
+   "tip": null
+  },
+  {
+   "file": "signatures.php",
+   "line": 21,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: list<class-string>",
+   "tip": null
+  }
+ ]
+}

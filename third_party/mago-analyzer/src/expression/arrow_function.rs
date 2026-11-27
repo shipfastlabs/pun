@@ -221,9 +221,15 @@ impl<'ast, 'arena> Analyzable<'ast, 'arena> for ArrowFunction<'arena> {
         let resulting_closure = if context_free
             && context.settings.template_arguments == crate::template_arguments::TemplateArgumentMode::Observe
         {
+            let defaults: Vec<_> = function_metadata
+                .parameters
+                .iter()
+                .map(|p| p.get_default_type().map(|t| t.type_union.clone()))
+                .collect();
             crate::template_arguments::closure_signature_markers(
                 resulting_closure,
                 self.span(),
+                &defaults,
                 &mut context.template_arguments.borrow_mut(),
             )
         } else if let Some(resolved) = &resolved_signature {

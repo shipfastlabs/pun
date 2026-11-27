@@ -1,0 +1,29 @@
+{
+ "level": 10,
+ "errors": [
+  {
+   "line": 28,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string",
+   "tip": null
+  },
+  {
+   "line": 48,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string",
+   "tip": null
+  },
+  {
+   "line": 61,
+   "identifier": "missingType.parameter",
+   "message": "Method App\\Memory::put() has parameter $key with no type specified.",
+   "tip": null
+  },
+  {
+   "line": 63,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  }
+ ]
+}

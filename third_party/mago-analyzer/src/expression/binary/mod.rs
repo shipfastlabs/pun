@@ -1,4 +1,5 @@
 use mago_allocator::Arena;
+use mago_codex::reference::ReferenceOrigin;
 use mago_codex::ttype::atomic::TAtomic;
 use mago_codex::ttype::atomic::object::TObject;
 use mago_codex::ttype::atomic::object::named::TNamedObject;
@@ -128,6 +129,20 @@ where
     };
 
     if lhs_type.is_mixed() {
+        return get_bool();
+    }
+
+    // Pun: InstanceofHandler: in a trait, an expression whose type holds `$this` gives `bool`, so the check is not
+    // constant for one using class (TypeUtils::findThisType() looks through unions and intersections)
+    if let ReferenceOrigin::Symbol((declaring, _)) = block_context.scope.get_reference_origin()
+        && context.codebase.get_class_like(declaring.as_bytes()).is_some_and(|k| k.kind.is_trait())
+        && lhs_type.types.iter().any(|atomic| {
+            matches!(atomic, TAtomic::Object(TObject::Named(named)) if named.is_this
+                || named.intersection_types.iter().flat_map(|types| types.iter()).any(|inner| {
+                    matches!(inner, TAtomic::Object(TObject::Named(inner)) if inner.is_this)
+                }))
+        })
+    {
         return get_bool();
     }
 

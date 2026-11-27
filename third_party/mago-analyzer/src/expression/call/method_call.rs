@@ -14,6 +14,7 @@ use mago_codex::ttype::atomic::TAtomic;
 use mago_codex::ttype::atomic::object::TObject;
 use mago_codex::ttype::expander::StaticClassType;
 use mago_codex::ttype::get_error;
+use mago_codex::ttype::get_explicit_mixed;
 use mago_codex::ttype::get_mixed;
 use mago_codex::ttype::get_mixed_maybe_from_loop;
 use mago_codex::ttype::get_never;
@@ -773,19 +774,26 @@ where
                     );
                 }
 
-                if !signature_handled {
+                if !signature_handled
+                    && context.codebase.is_instance_of(undocumented_method.classname.as_bytes(), b"soapclient")
+                {
+                    // Pun: PHPStan's SoapClientMethodsClassReflectionExtension reflects every method of a
+                    // `SoapClient` as one returning an explicit `mixed`.
+                    get_explicit_mixed()
+                } else if !signature_handled {
                     // MethodCallHandler::resolveReturnType(): PHPStan reflects no method that `__call()` or
                     // `__callStatic()` alone would handle. UnionType::getMethod() keeps only the members that
                     // have the method, so this member adds nothing unless no member has it (an ErrorType).
                     continue;
+                } else {
+                    fetch_declared_invocation_return_type(
+                        context,
+                        &invocation,
+                        &invocation_template_result,
+                        &parameter_types,
+                        block_context.scope.get_function_like().is_some(),
+                    )
                 }
-                fetch_declared_invocation_return_type(
-                    context,
-                    &invocation,
-                    &invocation_template_result,
-                    &parameter_types,
-                    block_context.scope.get_function_like().is_some(),
-                )
             }
         };
 

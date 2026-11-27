@@ -541,11 +541,27 @@ where
     if let Expression::UnaryPrefix(unary_prefix) = expression
         && unary_prefix.operator.is_not()
     {
-        if let Expression::Construct(Construct::Isset(isset_construct)) = unary_prefix.operand
-            && isset_construct.values.len() > 1
-        {
-            let scraped_assertions = scrape_assertions(unary_prefix.operand, artifacts, assertion_context);
-
+        // `!isset($a, $b)`, and `!in_array(...)` whose truthy facts narrow both its needle and its haystack: the
+        // negation is a disjunction, which scrape_assertions() cannot return. Other calls' facts about several
+        // variables (`is_null($a = f())` of `$a` and `f()`) describe one value, and stay unnegated.
+        let scraped_assertions = match unwrap_expression(unary_prefix.operand) {
+            Expression::Construct(Construct::Isset(isset_construct)) if isset_construct.values.len() > 1 => {
+                Some(scrape_assertions(unary_prefix.operand, artifacts, assertion_context))
+            }
+            Expression::Call(Call::Function(call))
+                if crate::resolver::function::is_builtin_function_call(
+                    call,
+                    b"in_array",
+                    assertion_context.resolved_names,
+                    assertion_context.codebase,
+                ) =>
+            {
+                Some(scrape_assertions(unary_prefix.operand, artifacts, assertion_context))
+                    .filter(|scraped| matches!(scraped.as_slice(), [assertions] if assertions.len() > 1))
+            }
+            _ => None,
+        };
+        if let Some(scraped_assertions) = scraped_assertions {
             let mut clauses = Vec::new();
 
             for assertions in scraped_assertions {
@@ -1492,6 +1508,19 @@ where
                 artifacts,
                 formula_size_threshold,
             );
+
+            // Pun: a false `empty($x?->p)` is the `!empty()` that get_formula() gives the access's bases, so its
+            // object is not null and the nullsafe holder is the plain access, as IssetHandler specifies them.
+            if let Expression::Construct(Construct::Empty(empty)) = unwrap_expression(conditional) {
+                add_access_base_clauses(
+                    empty.value,
+                    &mut negated_clauses,
+                    conditional.span(),
+                    conditional.span(),
+                    assertion_context,
+                    artifacts,
+                );
+            }
 
             negated_clauses
         }

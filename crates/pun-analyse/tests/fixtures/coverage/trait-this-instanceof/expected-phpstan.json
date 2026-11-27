@@ -1,0 +1,19 @@
+{
+ "general": [],
+ "errors": [
+  {
+   "file": "checks.php",
+   "line": 35,
+   "identifier": "instanceof.alwaysTrue",
+   "message": "Instanceof between TraitThisInstanceof\\Page and TraitThisInstanceof\\Publishable will always evaluate to true.",
+   "tip": null
+  },
+  {
+   "file": "checks.php",
+   "line": 54,
+   "identifier": "instanceof.alwaysTrue",
+   "message": "Instanceof between $this(TraitThisInstanceof\\Page) and TraitThisInstanceof\\Publishable will always evaluate to true.",
+   "tip": null
+  }
+ ]
+}

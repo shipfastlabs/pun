@@ -3,7 +3,8 @@
 //! case a small project, the words after `composer`, and Composer's exit code, stdout and stderr. Pun must print the
 //! same bytes and exit the same way, except where Composer stops with an error of its own (exit 1): that is a run
 //! error, which Pun prints in its own form with Composer's lines, in order, and exits 2. Where stderr starts with what
-//! /bin/sh itself says (`stderr_tail`), which differs between systems, only Composer's lines after it count.
+//! /bin/sh itself says (`stderr_tail`), which differs between systems, only Composer's lines after it count. A result
+//! that differs between macOS (bash as /bin/sh) and Linux (dash) is under the case's `macos` and `linux`.
 
 mod common;
 
@@ -107,7 +108,25 @@ fn exec_matches_composer() {
     let fixture: Value = serde_json::from_str(FIXTURE).unwrap();
     let cases = fixture["cases"].as_array().unwrap();
     let mut failures = vec![];
+    let system = if cfg!(target_os = "macos") {
+        "macos"
+    } else {
+        "linux"
+    };
     for case in cases {
+        // This system's results over the shared ones; a null drops one (a `message` the other system has).
+        let mut case = case.clone();
+        if let Some(Value::Object(results)) = case.as_object_mut().unwrap().remove(system) {
+            let case = case.as_object_mut().unwrap();
+            for (key, value) in results {
+                if value.is_null() {
+                    case.remove(&key);
+                } else {
+                    case.insert(key, value);
+                }
+            }
+        }
+        let case = &case;
         let got = run(case);
         let difference = match case.get("message").and_then(Value::as_array) {
             Some(message) => {

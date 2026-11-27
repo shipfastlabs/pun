@@ -1,0 +1,35 @@
+{
+ "level": 10,
+ "errors": [
+  {
+   "line": 39,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: array<mixed, mixed>",
+   "tip": null
+  },
+  {
+   "line": 42,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "line": 46,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: array<mixed, mixed>",
+   "tip": null
+  },
+  {
+   "line": 50,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string",
+   "tip": null
+  },
+  {
+   "line": 53,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-empty-array<string, int>",
+   "tip": null
+  }
+ ]
+}
