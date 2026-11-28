@@ -32,6 +32,7 @@ mod builtin_method_effects;
 mod builtin_returns;
 mod call_scope_observations;
 mod call_site_variance;
+mod call_site_variance_callbacks;
 mod callable_array_description;
 mod callable_array_values;
 mod callable_branches;

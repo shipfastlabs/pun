@@ -1,0 +1,12 @@
+{
+ "phpstan": "2.3.5",
+ "level": 6,
+ "errors": [
+  {
+   "file": "callbacks.php",
+   "line": 56,
+   "identifier": "argument.type",
+   "message": "Parameter #1 $callback of method CallSiteVarianceCallbacks\\Items<covariant CallSiteVarianceCallbacks\\Animal>::map() expects callable(CallSiteVarianceCallbacks\\Animal): bool, Closure(stdClass): bool given."
+  }
+ ]
+}

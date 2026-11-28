@@ -195,7 +195,12 @@ pub(in super::super) fn with_args(t: &Type, scope: &str, names: &[String], args:
             .iter()
             .position(|n| *n == tpl.name)
             .and_then(|i| args.get(i))
-            .cloned()
+            // a call-site variance (`Items<covariant Animal>`) belongs to the receiver's type argument, not to the
+            // member's type it fills in: TemplateTypeHelper::resolveTemplateTypes() gives the type itself
+            .map(|a| match a {
+                Type::Projection(_, inner) => (**inner).clone(),
+                a => a.clone(),
+            })
             .unwrap_or_else(|| t.clone()),
         _ => t.traverse(&|i| with_args(i, scope, names, args)),
     }
