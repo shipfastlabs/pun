@@ -132,7 +132,8 @@ fn reads_sets_rules_and_skips() {
 /// 2.8.4's `SimplifyUselessVariableRector` skips a commented assignment and `StringClassNameToClassConstantRector` a
 /// global name (`'Throwable'`), and `StrlenZeroToIdenticalEmptyStringRector` changes only `=== 0` and `> 0`, where
 /// `return_assignment`, `class_keyword` and `string_length_to_empty` change all of them. `TernaryToNullCoalescingRector`
-/// rewrites `$a !== null ? $a : $b`, which `ternary_to_null_coalescing` leaves.
+/// rewrites `$a !== null ? $a : $b`, which `ternary_to_null_coalescing` leaves, and `TernaryToElvisRector` rewrites
+/// `return $a ? $a : $b`, which `ternary_to_elvis_operator` leaves.
 #[test]
 fn rector_rules_merged_with_a_fixer_keep_to_rector() {
     let config = RectorConfig {
@@ -141,6 +142,7 @@ fn rector_rules_merged_with_a_fixer_keep_to_rector() {
             "Rector\\Php55\\Rector\\String_\\StringClassNameToClassConstantRector",
             "Rector\\CodeQuality\\Rector\\Identical\\StrlenZeroToIdenticalEmptyStringRector",
             "Rector\\Php70\\Rector\\Ternary\\TernaryToNullCoalescingRector",
+            "Rector\\Php53\\Rector\\Ternary\\TernaryToElvisRector",
             FOREACH,
         ]),
         ..RectorConfig::default()
@@ -167,6 +169,10 @@ fn rector_rules_merged_with_a_fixer_keep_to_rector() {
             (
                 "lint/style/prefer-empty-string-compare",
                 "identical-or-greater-only = true".to_string()
+            ),
+            (
+                "lint/style/prefer-short-ternary",
+                "all-contexts = true".to_string()
             ),
         ]
     );

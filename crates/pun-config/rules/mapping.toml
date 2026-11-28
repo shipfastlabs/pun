@@ -1008,7 +1008,7 @@ lumen = "Lumen routes: the Lumen framework's own route syntax"
 "style/prefer-random-int" = { fix = "unsafe", preset = "strict", ported = true, status = "decided", summary = "Replaces `rand`, `srand`, `getrandmax` functions calls with their `mt_*` analogs or `random_int`." }
 "style/prefer-readonly-keyword" = { fix = "unsafe", preset = "strict", ported = true, status = "decided", summary = "Converts readonly comment on classes to the readonly keyword." }
 "style/prefer-self-reference" = { fix = "unsafe", ported = true, status = "decided", summary = "Inside class or interface element `self` should be preferred to the class name itself." }
-"style/prefer-short-ternary" = { fix = "unsafe", ported = true, status = "decided", merged = ["php-cs-fixer:ternary_to_elvis_operator", "rector:TernaryToElvis"], note = "Rector's TernaryToElvisRector drops the parentheses around the condition (`($a - $b) ? $a - $b : $c` becomes `$a - $b ?: $c`); PHP-CS-Fixer's `ternary_to_elvis_operator`, which this rule runs, keeps them.", summary = "Use the Elvis operator `?:` where possible." }
+"style/prefer-short-ternary" = { fix = "unsafe", ported = true, status = "decided", merged = ["php-cs-fixer:ternary_to_elvis_operator", "rector:TernaryToElvis"], note = "PHP-CS-Fixer's `ternary_to_elvis_operator` only rewrites a ternary whose condition follows `=` or another assignment operator except `??=`, `(`, `,`, `;`, a brace, an index `[` or an open tag. Rector's TernaryToElvisRector rewrites it in any context, such as after `return`, `echo`, `print`, `yield`, `throw`, `include`, `=>`, `??=`, `and` or `or`, in a short array, as a spread or named argument, in the middle of another ternary, after a `case` and as the body of a control structure without braces; `all-contexts = true` adds them, and `pun migrate` sets it when the rule comes from rector.php. Rector also rewrites `$a++ ? $a++ : $b`, which Pun leaves, since `$a++ ?: $b` increments `$a` once, and drops the parentheses around the condition (`($a - $b) ? $a - $b : $c` becomes `$a - $b ?: $c`), which this rule keeps.", summary = "Use the Elvis operator `?:` where possible." }
 "style/prefer-spread" = { fix = "safe", preset = "strict", ported = true, status = "decided", summary = "Replace `call_user_func_array()` with variadic" }
 "style/prefer-static-private-method" = { fix = "unsafe", ported = true, status = "decided", summary = "Converts private methods to `static` where possible." }
 "style/prefer-str-contains" = { fix = "unsafe", preset = "strict", ported = true, status = "decided", merged = ["php-cs-fixer:modernize_strpos", "rector:StrContains"], note = "Rector's StrContainsRector also rewrites `strstr()` comparisons, loose `!= false` comparisons and a `strpos()` with a zero offset; PHP-CS-Fixer's `modernize_strpos`, which this rule runs, only rewrites strict comparisons of `strpos()` and `stripos()` without an offset.", summary = "Replace `strpos()` and `stripos()` calls with `str_starts_with()` or `str_contains()` if possible." }
@@ -2028,6 +2028,9 @@ checks = { upstream = "checks", type = "list", origin = "pun", default = ["class
 
 [options."lint/style/prefer-random-int"]
 replacements = { upstream = "replacements", type = "map" }
+
+[options."lint/style/prefer-short-ternary"]
+all-contexts = { upstream = "all_contexts", type = "bool", origin = "pun", default = false }
 
 [options."lint/style/prefer-str-contains"]
 modernize-stripos = { upstream = "modernize_stripos", type = "bool" }

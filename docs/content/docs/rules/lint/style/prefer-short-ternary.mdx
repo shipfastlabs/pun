@@ -22,6 +22,12 @@ Use the Elvis operator `?:` where possible.
 
 To skip it in some files, add an [override](/docs/configuration/pun-toml#lint) or a [`@pun-ignore-file`](/docs/configuration/ignore-comments) comment.
 
+## Options
+
+| Name | Type | Allowed values | Default | Upstream name |
+| --- | --- | --- | --- | --- |
+| `all-contexts` | `bool` | Any | `false` | None (Pun's own) |
+
 ## Replaces
 
 - [`ternary_to_elvis_operator`](https://cs.symfony.com/doc/rules/operator/ternary_to_elvis_operator.html) (php-cs-fixer, risky)
