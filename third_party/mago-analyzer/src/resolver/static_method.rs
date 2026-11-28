@@ -63,6 +63,7 @@ pub fn resolve_static_method_targets<'ctx, 'ast, 'arena, A>(
     class_expr: &'ast Expression<'arena>,
     method_selector: &'ast ClassLikeMemberSelector<'arena>,
     access_span: Span,
+    constant_names_only: bool,
 ) -> Result<MethodResolutionResult, AnalysisError>
 where
     A: Arena,
@@ -87,6 +88,17 @@ where
         } else {
             result.has_invalid_target = true;
         }
+    }
+
+    // StaticCallHandler calls a dynamic name only through getConstantStrings(): those names, or a mixed call when
+    // there are none (`'name'|null`, a template bounded by a template bounded by one constant string). Mago's own
+    // partial application (`self::{$name}(?)`), which PHPStan does not parse, keeps the selector's names and its
+    // invalid arms; a first-class callable with a dynamic name is a Closure before it gets here.
+    if constant_names_only
+        && let Some(names) = crate::resolver::selector::dynamic_constant_names(method_selector, artifacts)
+    {
+        result.has_dynamic_selector = names.is_empty();
+        method_names = names;
     }
 
     for resolved_classname in &class_resolutions {

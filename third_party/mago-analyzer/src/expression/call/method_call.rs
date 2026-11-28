@@ -367,13 +367,24 @@ where
             operator_span,
             span,
             Some(&receiver.receiver_type),
+            true,
         )?;
         // The plain twin resolves on a non-null device. Only the receiver's
         // original value determines the nullsafe expression's short-circuit.
         resolution.encountered_null = receiver.original_type.is_nullable();
         resolution
     } else {
-        resolve_method_targets(context, block_context, artifacts, object, selector, is_null_safe, operator_span, span)?
+        resolve_method_targets(
+            context,
+            block_context,
+            artifacts,
+            object,
+            selector,
+            is_null_safe,
+            operator_span,
+            span,
+            true,
+        )?
     };
     if let Some(outer) = outer_bind_scope {
         artifacts.closure_bind_scope = outer;

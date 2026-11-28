@@ -1,0 +1,439 @@
+{
+ "general": [],
+ "errors": [
+  {
+   "file": "reads.php",
+   "line": 36,
+   "identifier": "property.notFound",
+   "message": "Access to an undefined property InstancePropertyReads\\Holder::$missing.",
+   "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property"
+  },
+  {
+   "file": "reads.php",
+   "line": 36,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: *ERROR*",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 42,
+   "identifier": "property.notFound",
+   "message": "Access to an undefined property InstancePropertyReads\\Holder::$missing.",
+   "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property"
+  },
+  {
+   "file": "reads.php",
+   "line": 53,
+   "identifier": "property.notFound",
+   "message": "Access to an undefined property InstancePropertyReads\\Holder::$missing.",
+   "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property"
+  },
+  {
+   "file": "reads.php",
+   "line": 53,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: *ERROR*",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 59,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 62,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 65,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 74,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 83,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: InstancePropertyReads\\Item|null",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 100,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 101,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 111,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: InstancePropertyReads\\Item|null",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 121,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: InstancePropertyReads\\Item|null",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 132,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 142,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 152,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 162,
+   "identifier": "argument.type",
+   "message": "Parameter #1 $value of method InstancePropertyReads\\Holder::nullable() expects int, string given.",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 184,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 185,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 186,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 187,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 188,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 189,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 190,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: 'aa'",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 191,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 192,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 193,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 199,
+   "identifier": "method.notFound",
+   "message": "Call to an undefined method InstancePropertyReads\\Holder::InstancePropertyReads\\Item().",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 204,
+   "identifier": "property.notFound",
+   "message": "Access to an undefined property InstancePropertyReads\\WithCount|InstancePropertyReads\\WithoutCount::$count.",
+   "tip": "Learn more: https://phpstan.org/blog/solving-phpstan-access-to-undefined-property"
+  },
+  {
+   "file": "reads.php",
+   "line": 204,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 209,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: InstancePropertyReads\\Item|null",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 216,
+   "identifier": "identical.alwaysTrue",
+   "message": "Strict comparison using === between null and null will always evaluate to true.",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 220,
+   "identifier": "deadCode.unreachable",
+   "message": "Unreachable statement - code above always terminates.",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 237,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 259,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 260,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 270,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 286,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: Closure",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 289,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: Closure",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 295,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: mixed",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 321,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int<1, max>",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 322,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-falsy-string",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 323,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: 1",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 323,
+   "identifier": "argument.type",
+   "message": "Parameter #1 $string of function strlen expects string, bool&T given.",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 324,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: 3",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 324,
+   "identifier": "argument.type",
+   "message": "Parameter #1 $string of function strlen expects string, float&T given.",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 325,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: 1",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 326,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: 'aa'",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 327,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: int<1, max>",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 328,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-falsy-string",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 329,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: literal-string&lowercase-string&non-falsy-string",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 330,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: 'aa'",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 331,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: 'aa'|'bb'",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 350,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: 1",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 350,
+   "identifier": "argument.type",
+   "message": "Parameter #1 $string of function strlen expects string, UTrue of bool&T given.",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 351,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: 3",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 351,
+   "identifier": "argument.type",
+   "message": "Parameter #1 $string of function strlen expects string, UInt of int&T given.",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 352,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: 1",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 353,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: literal-string&lowercase-string&non-falsy-string",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 354,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: 1",
+   "tip": null
+  },
+  {
+   "file": "reads.php",
+   "line": 355,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: 'aa'",
+   "tip": null
+  }
+ ]
+}

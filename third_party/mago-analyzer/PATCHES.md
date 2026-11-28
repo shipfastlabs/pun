@@ -2856,6 +2856,25 @@ This is a shared scope-join correction, not a nullsafe or assignment-specific re
 An alternative without constant strings vetoes the whole union. Template parameters use their
 bound, and intersections concatenate the constant strings supplied by their members, matching
 [`IntersectionType::getConstantStrings()`](https://github.com/phpstan/phpstan-src/blob/cb3b7e99489b2e3789ee2eec10501cb7a72580ea/src/Type/IntersectionType.php#L254-L264).
+A literal class string (`Foo::class`) counts as a constant string, as PHPStan's `ConstantStringType` holds it, so
+`$m = Foo::class; $this->$m()` reports `method.notFound`. A template bounded by a template that is bounded by a single
+constant string has none: PHPStan's `TemplateTypeFactory::create()` makes it a `TemplateStringType`, while a union
+bound stays a `TemplateUnionType` with its constant strings. `resolver/selector.rs`'s `name_bound()` holds that rule,
+as `pun-phpstan`'s `Type::constant_strings()` does, and both `constant_strings()` and `resolve_selector_from_type()`
+use it, so `@template U of T` with `T of 'name'` reads and calls through `$this->$name` as `mixed` and resolves no
+method. The same name rule now decides every dynamic member name: `resolver/method.rs` and `resolver/static_method.rs`
+call exactly the names `constant_strings()` gives a dynamic name (`selector.rs`'s `dynamic_constant_names()`), and a
+mixed call when there are none (`U|'name'`, `'name'|null`), as MethodCallHandler and StaticCallHandler do; a static
+first-class callable with a dynamic name (`C::$name(...)`) is a plain `Closure` before any resolution, as
+`expression/partial_application/static_method_partial_application.rs` now mirrors the instance form's shortcut, while
+Mago's own `{$name}(?)` partial application, which PHPStan does not parse, passes `constant_names_only: false` to
+both resolvers and keeps the selector's names and invalid-target verdict as before (`'known'|null` resolves `known`;
+`crates/pun-analyse/tests/failed_method_callables.rs` covers it), and `resolver/static_property.rs` resolves `self::${$name}` through
+`constant_strings()` and reads any other name as `mixed`, as StaticPropertyFetchHandler::composeResult() does (the
+string cast still runs for its own diagnostics). On Pun's side, `crates/pun-analyse/src/rules/names.rs`
+(`classConstant.notFound`) and `include_file.rs` call `pun-phpstan`'s `Type::constant_strings()` instead of their own
+copies, which followed template bounds without that rule (shipfastlabs/pun#34's `crates/pun-analyse/tests/fixtures/instance-property-reads` covers both against
+PHPStan 2.3.5).
 The public selector fixture covers literal unions, integer alternatives, unknown strings,
 callable strings, class strings, literal-bound templates and template intersections.
 From `crates/pun-analyse/tests/fixtures/call-scope-observations`, regenerate its capture with
@@ -4640,3 +4659,30 @@ is `bool` when the property is declared without a native type, whatever its PHPD
 [`RicherScopeGetTypeHelper::getIdenticalResult()`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Analyser/RicherScopeGetTypeHelper.php#L56).
 A promoted `public $user` documented `@param \Stringable $user` gave `identical.alwaysFalse` (shipfastlabs/pun#170).
 PHPStan's static property fetches are not covered.
+
+## Failed instance property reads
+
+`expression/access/property_access.rs`: a property read that no receiver arm resolves is an `ErrorType`, not
+`null`, as PHPStan's
+[`PropertyFetchHandler::composeResult()`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Analyser/ExprHandler/PropertyFetchHandler.php)
+returns when it finds no property reflection. Here that means an undeclared property on a final class without
+`__get`, or a receiver that is not an object. Upstream gave such a read `null`. That made `$user = $this->user;
+if ($user === null) { return; }` always true, so `pun analyse` reported `identical.alwaysTrue` and
+`deadCode.unreachable` there. `pun lint --fix` also removed the guard and everything after it through
+`lint/dead-code/no-always-true-if` (shipfastlabs/pun#34). A read where some arm resolves the property keeps that
+type with no `null` added, as PHPStan does. A nullsafe or null receiver still adds `null`, as before.
+
+`resolver/property.rs` marks with `has_invalid_selector` a dynamic selector whose own type, before the string
+coercion `resolve_member_selector()` applies, has no constant strings by `observations.rs`'s `constant_strings()`
+(`resolver/selector.rs`'s `has_no_constant_name()`)
+(`$this->$n` with `$n = 1`, `'name'|null`, a template bounded by `'name'|null`, or a template bounded by a template
+bounded by `'name'`), and the read adds `mixed` for it:
+composeResult() reads a name that getConstantStrings() does not cover as `MixedType`. A nullsafe fetch on a receiver that is only `null` stays `null`,
+as NullsafePropertyFetchHandler returns it before reading the name. Assignments keep reading `has_invalid_path`
+alone.
+
+Not changed: on a class that is not final, the missing property is still `has_possibly_defined_property`, so the
+read stays `mixed` where PHPStan gives `ErrorType`. It was `mixed` before this patch too.
+
+`crates/pun-analyse/tests/fixtures/instance-property-reads` covers it against PHPStan 2.3.5, and
+`RemoveAlwaysTrueIfConditionRector/Oracle/skip_undefined_property.php.inc` covers it against Rector 2.9.2.

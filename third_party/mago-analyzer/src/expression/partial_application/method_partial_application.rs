@@ -79,6 +79,7 @@ impl<'ast, 'arena> Analyzable<'ast, 'arena> for MethodPartialApplication<'arena>
             false,
             self.arrow.span(),
             self.span(),
+            false,
         )?;
 
         for resolved_method in &method_resolution.resolved_methods {

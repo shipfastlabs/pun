@@ -5,14 +5,17 @@ use mago_codex::ttype::atomic::callable::TCallable;
 use mago_codex::ttype::expander::get_parameter_dependent_signature_of_function_like_identifier;
 use mago_codex::ttype::expander::get_signature_of_function_like_identifier;
 use mago_codex::ttype::get_mixed_closure;
+use mago_codex::ttype::get_named_object;
 use mago_codex::ttype::get_never;
 use mago_codex::ttype::template::TemplateResult;
 use mago_codex::ttype::union::TUnion;
 use mago_span::HasSpan;
+use mago_syntax::cst::ClassLikeMemberSelector;
 use mago_syntax::cst::Expression;
 use mago_syntax::cst::StaticMethodPartialApplication;
 use mago_word::WordMap;
 use mago_word::ascii_lowercase_word;
+use mago_word::word;
 
 use crate::analyzable::Analyzable;
 use crate::artifacts::AnalysisArtifacts;
@@ -39,8 +42,45 @@ impl<'ast, 'arena> Analyzable<'ast, 'arena> for StaticMethodPartialApplication<'
     where
         A: Arena,
     {
-        let method_resolution =
-            resolve_static_method_targets(context, block_context, artifacts, self.class, &self.method, self.span())?;
+        // PHPStan's StaticMethodCallableNode handling gives a first-class callable with a dynamic name a plain Closure,
+        // whatever the name or the class, as the instance form does (MethodPartialApplication). A class written as a
+        // name is not an expression to analyze; its operands still run once, class before name.
+        if self.argument_list.is_first_class_callable()
+            && matches!(&self.method, ClassLikeMemberSelector::Expression(_) | ClassLikeMemberSelector::Variable(_))
+        {
+            let was_inside_general_use = block_context.flags.inside_general_use();
+            block_context.flags.set_inside_general_use(true);
+            let result = (|| -> Result<(), AnalysisError> {
+                if !matches!(
+                    self.class,
+                    Expression::Identifier(_) | Expression::Self_(_) | Expression::Static(_) | Expression::Parent(_)
+                ) {
+                    self.class.analyze(context, block_context, artifacts)?;
+                }
+                if let ClassLikeMemberSelector::Expression(selector) = &self.method {
+                    selector.expression.analyze(context, block_context, artifacts)?;
+                }
+                if let ClassLikeMemberSelector::Variable(selector) = &self.method {
+                    selector.analyze(context, block_context, artifacts)?;
+                }
+                Ok(())
+            })();
+            block_context.flags.set_inside_general_use(was_inside_general_use);
+            result?;
+
+            artifacts.set_expression_type(self, get_named_object(word("Closure"), None));
+            return Ok(());
+        }
+
+        let method_resolution = resolve_static_method_targets(
+            context,
+            block_context,
+            artifacts,
+            self.class,
+            &self.method,
+            self.span(),
+            false,
+        )?;
 
         let mut identifiers = vec![];
         for resolved_method in &method_resolution.resolved_methods {

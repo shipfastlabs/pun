@@ -686,6 +686,37 @@ macro_rules! scalar_forwarding_getters {
 }
 
 impl TAtomic {
+    /// Whether this member of a benevolent union is a string by PHPStan's `isString()->yes()`, the test
+    /// `BenevolentUnionType::pickFromTypes()` vetoes a member without constant values by. A `scalar`, `numeric` or
+    /// `array-key` member counts, as PHPStan flattens each into a union with a string member; a template counts when
+    /// every member of its bound is a string, following bounds that are templates themselves (inside a bound,
+    /// `array-key`, `numeric` and `scalar` are only maybe strings).
+    #[must_use]
+    pub fn is_benevolent_string_member(&self) -> bool {
+        match self {
+            TAtomic::Scalar(TScalar::Generic | TScalar::Numeric | TScalar::ArrayKey) => true,
+            _ => self.is_definitely_string(),
+        }
+    }
+
+    fn is_definitely_string(&self) -> bool {
+        // IntersectionType::isString() is yes when any member is (`T&string`).
+        if self.get_intersection_types().is_some_and(|types| types.iter().any(TAtomic::is_definitely_string)) {
+            return true;
+        }
+
+        match self {
+            TAtomic::Scalar(TScalar::String(_) | TScalar::ClassLikeString(_)) => true,
+            TAtomic::GenericParameter(parameter) => {
+                !parameter.constraint.types.is_empty()
+                    && parameter.constraint.types.iter().all(TAtomic::is_definitely_string)
+            }
+            _ => false,
+        }
+    }
+}
+
+impl TAtomic {
     scalar_forwarding_predicates! {
         is_any_string => is_any_string,
         is_string => is_string,

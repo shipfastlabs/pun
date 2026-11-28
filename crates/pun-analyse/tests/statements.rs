@@ -179,6 +179,13 @@ fn static_property_operand_reads() {
     check_in("static-property-names", "phpstan-operands-level10");
 }
 
+/// A failed instance property read is ErrorType, not null, so a guard on it is neither always true nor followed by
+/// unreachable code. A real `null` property keeps both findings; `__get` with a `@property-read` reads the tag.
+#[test]
+fn instance_property_failed_reads() {
+    check_in("instance-property-reads", "phpstan");
+}
+
 #[test]
 fn static_property_increment_writes() {
     check_in("static-property-names", "phpstan-writes");

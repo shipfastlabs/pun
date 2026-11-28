@@ -793,19 +793,33 @@ pub(crate) fn enter_nullsafe_twin<'ctx, 'arena, A: Arena>(
     }
 }
 
-// UnionType::pickFromTypes vetoes an alternative with no constant strings;
+// UnionType::pickFromTypes vetoes an alternative with no constant strings (a benevolent union, only a string one);
 // IntersectionType concatenates its members, and template types use their bound.
-fn constant_strings(ty: &TUnion) -> Vec<Word> {
+// A literal class string (`Foo::class`) is a ConstantStringType too, and a template bounded by a template
+// bounded by a single constant string has none (`resolver::selector::name_bound()`).
+pub(crate) fn constant_strings(ty: &TUnion) -> Vec<Word> {
+    let benevolent = ty.ignore_nullable_issues() && ty.ignore_falsable_issues();
     let mut names = Vec::new();
     for atomic in ty.types.iter() {
         let mut strings = match atomic {
-            TAtomic::GenericParameter(parameter) => constant_strings(&parameter.constraint),
-            _ => atomic.get_literal_string_value().map(word).into_iter().collect(),
+            TAtomic::GenericParameter(parameter) => {
+                crate::resolver::selector::name_bound(parameter).map(constant_strings).unwrap_or_default()
+            }
+            _ => atomic
+                .get_literal_string_value()
+                .map(word)
+                .or_else(|| atomic.get_class_string_value())
+                .into_iter()
+                .collect(),
         };
         for member in atomic.get_intersection_types().unwrap_or_default() {
             strings.extend(constant_strings(&TUnion::from_atomic(member.clone())));
         }
         if strings.is_empty() {
+            // BenevolentUnionType::pickFromTypes() vetoes only a member that is a string.
+            if benevolent && !atomic.is_benevolent_string_member() {
+                continue;
+            }
             return Vec::new();
         }
         names.extend(strings);

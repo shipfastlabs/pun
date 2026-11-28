@@ -21,6 +21,7 @@ use mago_codex::ttype::atomic::array::keyed::KnownItems;
 use mago_codex::ttype::atomic::array::keyed::TKeyedArray;
 use mago_codex::ttype::atomic::array::list::TList;
 use mago_codex::ttype::atomic::callable::TCallable;
+use mago_codex::ttype::atomic::generic::TGenericParameter;
 use mago_codex::ttype::atomic::scalar::TScalar;
 use mago_codex::ttype::atomic::scalar::string::{TString, TStringCasing};
 use mago_codex::ttype::cast::cast_atomic_to_callable;
@@ -946,7 +947,18 @@ impl StrRepeat {
         for atomic in input.types.iter() {
             match atomic {
                 TAtomic::GenericParameter(template) => {
-                    values.extend(Self::strings(&template.constraint, depth + 1)?);
+                    let mut found = Self::strings(&template.constraint, depth + 1);
+                    for member in intersection_members(template) {
+                        if let Some(strings) = Self::strings(&member, 0) {
+                            found.get_or_insert_with(Vec::new).extend(strings);
+                        }
+                    }
+                    match found {
+                        Some(found) => values.extend(found),
+                        // BenevolentUnionType::pickFromTypes() vetoes only a member that is a string.
+                        None if is_benevolent(input) && !atomic.is_benevolent_string_member() => {}
+                        None => return None,
+                    }
                 }
                 TAtomic::Scalar(TScalar::String(string)) if depth <= 1 => {
                     values.push(string.get_known_literal_atom()?);
@@ -954,7 +966,7 @@ impl StrRepeat {
                 TAtomic::Scalar(TScalar::ClassLikeString(string)) if depth <= 1 => {
                     values.push(string.literal_value()?);
                 }
-                _ if is_benevolent(input) && !atomic.is_any_string() => {}
+                _ if is_benevolent(input) && !atomic.is_benevolent_string_member() => {}
                 _ => return None,
             }
         }
@@ -966,6 +978,8 @@ impl StrRepeat {
         input.types.iter().all(|atomic| match atomic {
             TAtomic::GenericParameter(template) => {
                 Self::property(&template.constraint, depth + 1, query)
+                    || intersection_members(template)
+                        .any(|member| Self::property(&member, 0, query))
             }
             TAtomic::Scalar(TScalar::String(string)) => {
                 if depth > 1 && string.is_known_literal() {
@@ -986,6 +1000,18 @@ impl StrRepeat {
             _ => false,
         })
     }
+}
+
+/// The members a template is intersected with (`T&'a'`), each as a type: PHPStan's (Template)IntersectionType holds
+/// them as concrete types beside the template, never as a template's bound, so a walk reads them at depth 0.
+/// Constant strings and lengths concatenate across members (getConstantStrings()); a query is yes when any member's
+/// is (intersectResults()).
+fn intersection_members(template: &TGenericParameter) -> impl Iterator<Item = TUnion> + '_ {
+    template
+        .intersection_types
+        .iter()
+        .flatten()
+        .map(|member| TUnion::from_atomic(member.clone()))
 }
 
 struct Strlen;
@@ -1023,7 +1049,13 @@ impl Strlen {
         for atomic in input.types.iter() {
             let length = match atomic {
                 TAtomic::GenericParameter(parameter) => {
-                    lengths.extend(Self::lengths(&parameter.constraint, depth + 1)?);
+                    let mut found = Self::lengths(&parameter.constraint, depth + 1);
+                    for member in intersection_members(parameter) {
+                        if let Some(member_lengths) = Self::lengths(&member, 0) {
+                            found.get_or_insert_with(Vec::new).extend(member_lengths);
+                        }
+                    }
+                    lengths.extend(found?);
                     continue;
                 }
                 TAtomic::Scalar(TScalar::Bool(boolean)) => {
@@ -1062,6 +1094,7 @@ impl Strlen {
         input.types.iter().all(|atomic| match atomic {
             TAtomic::GenericParameter(parameter) => {
                 Self::positive(&parameter.constraint, depth + 1)
+                    || intersection_members(parameter).any(|member| Self::positive(&member, 0))
             }
             TAtomic::Scalar(TScalar::Integer(_) | TScalar::Numeric) => true,
             TAtomic::Scalar(TScalar::Float(float)) => depth == 0 || float.is_general(),

@@ -84,6 +84,8 @@ pub struct PropertyResolutionResult {
     pub has_ambiguous_path: bool,
     pub has_error_path: bool,
     pub has_invalid_path: bool,
+    /// True when a dynamic selector's own type is not only constant strings, so the read is mixed.
+    pub has_invalid_selector: bool,
     pub encountered_null: bool,
     pub encountered_mixed: bool,
     pub has_possibly_defined_property: bool,
@@ -139,6 +141,13 @@ where
         report_redundant_nullsafe(context, operator_span, object_expression, &object_type, false);
     }
 
+    // PropertyFetchHandler::composeResult() reads a dynamic name without constant strings as mixed. A nullsafe fetch on
+    // a null receiver is null before its name is read (NullsafePropertyFetchHandler).
+    let reads_name = !(is_null_safe && is_all_null);
+    if reads_name && crate::resolver::selector::has_no_constant_name(property_selector, artifacts) {
+        result.has_invalid_selector = true;
+    }
+
     let mut property_names = Vec::new();
     for selector in selectors {
         if selector.is_dynamic() {
@@ -149,6 +158,7 @@ where
             property_names.push(concat_word!("$", &name));
         } else {
             result.has_invalid_path = true;
+            result.has_invalid_selector |= reads_name;
         }
     }
 
