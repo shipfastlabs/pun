@@ -16,7 +16,8 @@ use mago_syntax::parser::parse_file;
 use pun_phpstan::resolve::resolve_in;
 use pun_phpstan::symbols::{self, Class, Template};
 use pun_phpstan::types::{
-    NeverKind, Template as TemplateType, Type, decide_type, intersect, mixed, to_phpdoc, union,
+    NeverKind, Template as TemplateType, Type, decide_type, intersect, is_super_type_of, mixed,
+    to_phpdoc, union,
 };
 
 use super::Checker;
@@ -1351,7 +1352,26 @@ fn method_resolved(
         .iter()
         .map(|p| text(&p.variable.name[1..]))
         .collect();
-    inherit(c, context, m.name.value, own, &positional, 0).unwrap_or_default()
+    let own_return = own.as_ref().is_some_and(|own| own.ret.is_some());
+    let mut resolved = inherit(c, context, m.name.value, own, &positional, 0).unwrap_or_default();
+    // PhpClassReflectionExtension::getPhpDocReturnType(): an inherited `@return` union keeps the members the native
+    // return type accepts, so a child narrowing `array|\Stringable|null` to `array` gets `array<string, mixed>`
+    if !own_return
+        && let (Some(Type::Union(members)), Some(hint)) = (&resolved.ret, &m.return_type_hint)
+    {
+        let native = native(c, &hint.hint, Some(context));
+        if !is_super_type_of(&native, &Type::Union(members.clone())).yes() {
+            let kept: Vec<Type> = members
+                .iter()
+                .filter(|t| is_super_type_of(&native, t).yes())
+                .cloned()
+                .collect();
+            if !kept.is_empty() {
+                resolved.ret = Some(union(kept));
+            }
+        }
+    }
+    resolved
 }
 
 pub(super) fn function(c: &Checker, f: &Function) -> Signature {

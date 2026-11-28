@@ -1,0 +1,12 @@
+{
+ "phpstan": "2.3.5",
+ "level": 6,
+ "errors": [
+  {
+   "file": "widgets.php",
+   "line": 42,
+   "identifier": "return.type",
+   "message": "Method InheritedNarrowedReturn\\Chart::first() should return string but returns int."
+  }
+ ]
+}
