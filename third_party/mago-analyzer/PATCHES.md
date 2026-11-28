@@ -4594,3 +4594,12 @@ assertion to `$a` when `$b` can never be one of its types. Pun's port of StrCont
 `InArray`, which the false branch does not negate, as PHPStan narrows the haystack only in a true context
 (shipfastlabs/pun#147, shipfastlabs/pun#188). `crates/pun-analyse/tests/str_containing.rs` and
 `crates/pun-analyse/tests/str_containing_false.rs` cover it against PHPStan 2.3.5.
+## A `@property` narrowing a parent's templated property
+
+`resolver/property.rs` `DeclaredProperty::declared_type_impl()`: the annotation of a real property comes with the
+class whose docblock carries the tag, and the parent's declared type is resolved in that class, its class templates
+replaced by the class's `@extends` arguments or their defaults, before the check that the annotation narrows it.
+Filament's `CreateRecord` declares `/** @var ?TModel */ public ?Model $record` with `TModel of Model = Model`, so a
+subclass's `@property Product $record` narrows `?Model` and governs the read, as PHPStan's resolved property does
+(shipfastlabs/pun#155). `crates/pun-analyse/tests/fixtures/larastan-types/Type/PunPropertyWriteTest.json` covers it
+against PHPStan 2.3.7 with Larastan 3.15.0.

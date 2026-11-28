@@ -505,7 +505,6 @@
 2 Operators/InvalidBinaryOperationRuleTest::testBug1452
 2 PhpDoc/WrongVariableNameInVarTagRuleTest::testAssignOperator
 # an-types: a property's type is not checked against a write through its offset (`$this->items[$k] = ...`)
-3 Arrays/OffsetAccessAssignmentRuleTest::testBug14054
 3 Arrays/OffsetAccessAssignmentRuleTest::testBug14054Hook
 # PHPStan 2.3.1: get_class()/sprintf() calls get explicit throw points from the new DynamicFunctionThrowTypeExtensions
 # (GetClass, Printf, ArrayChunk, MinMax, Round, StrSplit, TriggerError, Unserialize, FilterFunctions), so the calls are

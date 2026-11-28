@@ -1,0 +1,30 @@
+{
+    "test": "Type/PunPropertyWriteTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-property-write.php",
+            "declares": [
+                "punpropertywrite\\createproduct",
+                "punpropertywrite\\module",
+                "punpropertywrite\\page",
+                "punpropertywrite\\product",
+                "punpropertywrite\\rename"
+            ],
+            "asserts": [
+                23,
+                42
+            ],
+            "errors": [
+                {
+                    "line": 22,
+                    "identifier": "assign.propertyType",
+                    "message": "Property PunPropertyWrite\\Module::$title (array<string, string>|string|null) does not accept int.",
+                    "tip": null
+                }
+            ]
+        }
+    ]
+}

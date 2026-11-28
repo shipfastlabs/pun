@@ -655,7 +655,8 @@ fn is_backing_store_access(object_expr: &Expression, prop_name: Word, block_cont
 pub(crate) enum DeclaredPropertyKind<'ctx> {
     /// A real declaration governs the access.  The annotation of the same name on the accessed
     /// class, when one exists, may refine the declared type (see [`DeclaredProperty::declared_type`]).
-    Real { annotation: Option<&'ctx PropertyMetadata> },
+    /// The annotation comes with the class whose docblock carries the tag.
+    Real { annotation: Option<(&'ctx ClassLikeMetadata, &'ctx PropertyMetadata)> },
     /// A magic annotation governs the access, which goes through `__get`/`__set`.
     Magic,
 }
@@ -719,22 +720,43 @@ impl DeclaredProperty<'_> {
         self.declared_type_impl(codebase, for_assignment).into_owned()
     }
 
+    /// The declared type as `class` sees it: PHPStan compares a subclass's `@property` with the parent's property type
+    /// resolved in the subclass, its class templates replaced by the subclass's `@extends` arguments or their defaults.
+    fn in_class<'t>(&self, codebase: &CodebaseMetadata, ty: &'t TUnion, class: &ClassLikeMetadata) -> Cow<'t, TUnion> {
+        let declaring = self.declaring_class;
+        if !ty.has_template_types() || declaring.template_types.is_empty() {
+            return Cow::Borrowed(ty);
+        }
+        let extended = class.template_extended_parameters.get(&declaring.name);
+        let mut lower_bounds: HashMap<Word, HashMap<GenericParent, TUnion>> = HashMap::default();
+        for (name, template) in &declaring.template_types {
+            let ty = extended
+                .and_then(|parameters| parameters.get(name))
+                .or(template.default.as_ref())
+                .unwrap_or(&template.constraint)
+                .clone();
+            lower_bounds.entry(*name).or_default().insert(GenericParent::ClassLike(declaring.name), ty);
+        }
+        Cow::Owned(inferred_type_replacer::replace(ty, &TemplateResult::new(IndexMap::default(), lower_bounds), codebase))
+    }
+
     fn declared_type_impl(&self, codebase: &CodebaseMetadata, for_write: bool) -> Cow<'_, TUnion> {
         fn annotation_type_metadata(annotation: &PropertyMetadata, for_write: bool) -> Option<&TypeMetadata> {
             if for_write { annotation.get_write_type_metadata() } else { annotation.type_metadata.as_ref() }
         }
 
-        if let DeclaredPropertyKind::Real { annotation: Some(annotation) } = self.kind
+        if let DeclaredPropertyKind::Real { annotation: Some((tag_class, annotation)) } = self.kind
             && let Some(annotation_type) = annotation_type_metadata(annotation, for_write).map(|tm| &tm.type_union)
         {
             let narrows = match self.property.type_metadata.as_ref().map(|tm| &tm.type_union) {
                 None => true,
                 Some(real_type) => {
+                    let real_type = self.in_class(codebase, real_type, tag_class);
                     real_type.is_mixed()
                         || union_comparator::is_contained_by(
                             codebase,
                             annotation_type,
-                            real_type,
+                            &real_type,
                             false,
                             false,
                             false,
@@ -847,7 +869,7 @@ pub(crate) fn resolve_declared_property<'ctx>(
     Some(DeclaredProperty {
         declaring_class: declaring_metadata,
         property: real_property,
-        kind: DeclaredPropertyKind::Real { annotation: annotation.map(|(_, annotation)| annotation) },
+        kind: DeclaredPropertyKind::Real { annotation },
     })
 }
 

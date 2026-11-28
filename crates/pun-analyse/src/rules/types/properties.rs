@@ -380,7 +380,9 @@ fn find_on<'a>(
             Some((declaring, native)) => {
                 overlay_write_type(c, f, declaring, native, meta, readable)
             }
-            None => readable,
+            // AnnotationPropertyReflection::getWritableType(): a `@property-write` tag beside a `@property-read` one
+            None => (meta.write_type_metadata.as_ref())
+                .map_or(readable, |t| c.to_phpstan(&t.type_union)),
         }
     } else {
         declared::property_of(c, declaring, meta, &f.name[1..])

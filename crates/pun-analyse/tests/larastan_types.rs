@@ -116,6 +116,9 @@
 //! Type/PunFeatureMacrosTest.json (a View macro registered by a feature class the provider of
 //! root/vendor/pun/vendor-view-features names with `::class`, as Livewire's does) has its assertion from PHPStan 2.3.7
 //! with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
+//! Type/PunPropertyWriteTest.json (a `@property-write` type for assignments, and a `@property` narrowing a parent's
+//! native property typed by a class template) has its assertions and errors from PHPStan 2.3.7 with Larastan 3.15.0 at
+//! level 8 in a Laravel 13.44.1 app.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
