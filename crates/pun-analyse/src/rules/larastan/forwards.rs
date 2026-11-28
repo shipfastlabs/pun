@@ -916,7 +916,13 @@ fn storage_method(
     method: &[u8],
     invocation: &InvocationInfo<'_, '_, '_>,
 ) -> Option<TUnion> {
-    if !class.eq_ignore_ascii_case(b"Illuminate\\Support\\Facades\\Storage") {
+    // StorageDynamicStaticMethodReturnTypeExtension types `disk()`, `drive()` and `cloud()` as the adapter
+    // (`AppMethods`), over the manager's `Filesystem` contract
+    if !class.eq_ignore_ascii_case(b"Illuminate\\Support\\Facades\\Storage")
+        || [&b"disk"[..], b"drive", b"cloud"]
+            .iter()
+            .any(|name| method.eq_ignore_ascii_case(name))
+    {
         return None;
     }
     let codebase = context.codebase();

@@ -15,6 +15,9 @@ final class Calls
         assertType('array<string>', Storage::allFiles());
         assertType('string|null', Storage::get('a'));
         assertType('bool', Storage::delete('a'));
+        assertType('Illuminate\\Filesystem\\FilesystemAdapter', Storage::disk('local'));
+        assertType('Illuminate\\Filesystem\\FilesystemAdapter', Storage::drive());
+        assertType('Illuminate\\Filesystem\\FilesystemAdapter', Storage::cloud());
 
         return Storage::delete(array_diff(Storage::files('screens'), $keep));
     }
