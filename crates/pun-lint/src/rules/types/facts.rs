@@ -638,6 +638,8 @@ impl Facts {
         let names = NameResolver::new(&arena).resolve(program);
         let mut functions: Vec<(u32, u32)> = Vec::new();
         let mut assigned: Vec<(&[u8], u32, Option<&TUnion>)> = Vec::new();
+        // the end of a plain `$v = ...` and the span of its value
+        let mut copies: HashMap<u32, (u32, u32)> = HashMap::new();
         let mut builtin_calls: Vec<(mago_span::Span, Option<mago_span::Span>)> = Vec::new();
         let mut widened: Vec<(u32, u32)> = Vec::new();
 
@@ -655,6 +657,10 @@ impl Facts {
                         _ => None,
                     };
                     assigned.push((v.name, a.span().end.offset, declared));
+                    if a.operator.is_assign() {
+                        let value = crate::syntax::unparenthesize(a.rhs).span();
+                        copies.insert(a.span().end.offset, (value.start.offset, value.end.offset));
+                    }
                 }
             }
             Node::Binary(b) if b.operator.is_arithmetic() => {
@@ -1029,6 +1035,34 @@ impl Facts {
                     untyped.insert(key(span));
                 }
             }
+        }
+        // A variable assigned a value with a mixed native type has a mixed native type itself, until it is assigned again.
+        if !untyped.is_empty() {
+            let mut copied = Vec::new();
+            any_node(Node::Program(program), &mut |n| {
+                let Node::DirectVariable(v) = n else {
+                    return;
+                };
+                let at = v.span.start.offset;
+                let function = (functions.iter())
+                    .filter(|(s, e)| *s <= at && at <= *e)
+                    .min_by_key(|(s, e)| e - s)
+                    .copied()
+                    .unwrap_or((0, u32::MAX));
+                let last = (assigned.iter())
+                    .filter(|(name, after, _)| {
+                        *name == v.name && function.0 <= *after && *after <= at
+                    })
+                    .max_by_key(|(_, after, _)| *after);
+                if let Some((_, after, _)) = last
+                    && copies
+                        .get(after)
+                        .is_some_and(|value| untyped.contains(value))
+                {
+                    copied.push((at, v.span.end.offset));
+                }
+            });
+            untyped.extend(copied);
         }
         let mut holders: Vec<(&[u8], mago_span::Span, Vec<u8>)> = Vec::new();
         any_node(Node::Program(program), &mut |n| {

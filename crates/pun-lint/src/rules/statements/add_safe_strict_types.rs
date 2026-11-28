@@ -341,6 +341,23 @@ impl At<'_, '_, '_> {
     }
 
     fn single_class(&self, expr: &Expression<'_>) -> Option<String> {
+        // Rector's PropertyFetchTypeResolver types a fetch on a known class's property by the property's readable type,
+        // so an `instanceof` that narrowed `$event->account` does not reach the call made on it.
+        if let Expression::Access(Access::Property(p)) = crate::syntax::unparenthesize(expr)
+            && let ClassLikeMemberSelector::Identifier(id) = &p.property
+            && let Some(class) = self.single_class(p.object)
+            && let Some(t) = (self.facts.documented())
+                .get_declaring_property(class.as_bytes(), &[b"$", id.value].concat())
+                .and_then(|property| property.type_metadata.as_ref())
+        {
+            return match t.type_union.types.as_ref() {
+                [TAtomic::Object(TObject::Named(n))] if n.intersection_types.is_none() => {
+                    Some(n.name.to_string())
+                }
+                [TAtomic::Object(TObject::Enum(e))] => Some(e.name.to_string()),
+                _ => None,
+            };
+        }
         let span = mago_span::HasSpan::span(expr);
         let span = crate::problem::Span::new(span.start.offset as usize, span.end.offset as usize);
         self.facts.native_type(span)?;
