@@ -7,11 +7,11 @@ pagination: false
 
 <RuleId id="lint/pest/prefer-specific-expectations" />
 
-In the [`lint-recommended`](/docs/rules/presets/lint-recommended) preset and every stricter one. In Rector's [`pest/coding-style`](/docs/rules/sets/pest/coding-style) set. Needs the [`pest` extension](/docs/configuration/pun-toml#extensions). Safe fix.
+In the [`lint-recommended`](/docs/rules/presets/lint-recommended) preset and every stricter one. In Rector's [`pest/coding-style`](/docs/rules/sets/pest/coding-style) set. Needs the [`pest` extension](/docs/configuration/pun-toml#extensions). Unsafe fix: it can change behavior.
 
 ## What it does
 
-Use toBeTrue()/toBeFalse()/toBeNull() instead of toBe(true&#124;false&#124;null).
+Use dedicated Pest matchers for literal comparisons.
 
 ## Configuration
 
@@ -34,6 +34,6 @@ These old IDs are now this rule. A config that still names one stops with an err
 
 - `lint/pest/prefer-to-be-true-false`
 
-Pest Rector's toEqual() and toBe([]) to toBeEmpty() rewrites are not covered yet.
+Loose boolean comparisons and comparisons to an empty array or string are rewritten only when the subject is known to have the corresponding type. Empty-string rewrites are unsafe: Pest's `toBeEmpty()` also accepts the string `"0"`.
 
 [More lint/pest rules](/docs/rules/lint/pest) · [Edit this page](https://github.com/shipfastlabs/pun/edit/main/crates/pun-config/rules/mapping.toml)

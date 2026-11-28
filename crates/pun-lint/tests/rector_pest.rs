@@ -293,6 +293,11 @@ fn use_to_be_empty() {
 }
 
 #[test]
+fn simplify_to_literal_boolean() {
+    check(PreferSpecificExpectations, "SimplifyToLiteralBooleanRector");
+}
+
+#[test]
 fn use_to_be_json() {
     check(PreferToBeJson, "UseToBeJsonRector");
 }
@@ -671,7 +676,7 @@ fn pest_rules_ignore_nodes_outside_their_targets() {
             .into_iter()
             .filter(|r| r.id().starts_with("lint/pest/"))
     };
-    assert_eq!(pest().count(), 56);
+    assert_eq!(pest().count(), 57);
     let targeted = Linter::new(pest().collect(), pun_lint::PhpVersion::from_id(80400));
     let everywhere = Linter::new(
         pest()

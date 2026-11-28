@@ -10826,13 +10826,13 @@
       "id": "lint/pest/prefer-specific-expectations",
       "command": "lint",
       "group": "pest",
-      "summary": "Use toBeTrue()/toBeFalse()/toBeNull() instead of toBe(true|false|null).",
+      "summary": "Use dedicated Pest matchers for literal comparisons.",
       "enabled": [
         "lint-recommended",
         "lint-strict",
         "pest/coding-style"
       ],
-      "fix": "safe",
+      "fix": "unsafe",
       "ecosystem": "pest",
       "tools": [
         "mago",

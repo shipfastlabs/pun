@@ -14,6 +14,7 @@ mod prefer_filesystem_matchers;
 mod prefer_not_modifier;
 mod prefer_separate_expects;
 mod prefer_sequence;
+mod prefer_specific_expectations;
 mod prefer_strict_equality_matchers;
 mod prefer_to_be_alpha;
 mod prefer_to_be_alpha_numeric;
@@ -90,6 +91,7 @@ rules! {
         prefer_filesystem_matchers => PreferFilesystemMatchers,
         prefer_not_modifier => PreferNotModifier,
         prefer_sequence => PreferSequence,
+        prefer_specific_expectations => PreferSpecificExpectations,
         prefer_strict_equality_matchers => PreferStrictEqualityMatchers,
         prefer_to_be_alpha => PreferToBeAlpha,
         prefer_to_be_alpha_numeric => PreferToBeAlphaNumeric,

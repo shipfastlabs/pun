@@ -136,9 +136,9 @@ In the `lint-recommended` preset and every stricter one. In Rector's `pest/codin
 </Card>
 <Card title="prefer-specific-expectations" href="/docs/rules/lint/pest/prefer-specific-expectations">
 
-Use toBeTrue()/toBeFalse()/toBeNull() instead of toBe(true&#124;false&#124;null).
+Use dedicated Pest matchers for literal comparisons.
 
-In the `lint-recommended` preset and every stricter one. In Rector's `pest/coding-style` set. Needs the `pest` extension. Safe fix.
+In the `lint-recommended` preset and every stricter one. In Rector's `pest/coding-style` set. Needs the `pest` extension. Unsafe fix: it can change behavior.
 
 </Card>
 <Card title="prefer-strict-equality-matchers" href="/docs/rules/lint/pest/prefer-strict-equality-matchers">
