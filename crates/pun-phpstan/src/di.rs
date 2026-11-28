@@ -241,6 +241,11 @@ pub(crate) fn dirname(path: &str) -> String {
 pub trait Files {
     fn read(&self, path: &str) -> Option<Vec<u8>>;
     fn is_file(&self, path: &str) -> bool;
+
+    /// Whether a PHP config [`crate::phpfile`] can't run loads as empty instead of failing the whole config.
+    fn skip_unsupported_php(&self, _path: &str, _error: &crate::phpfile::Error) -> bool {
+        false
+    }
 }
 
 pub fn load_neon(
@@ -458,9 +463,15 @@ pub(crate) fn load_file(
                 .read(file)
                 .ok_or_else(|| Error::Unreadable(file.to_string()))?;
             crate::phpfile::load_config(&String::from_utf8_lossy(&contents), &dirname(file), files)
-                .map_err(|error| Error::UnsupportedPhp {
-                    file: file.to_string(),
-                    error,
+                .or_else(|error| {
+                    if files.skip_unsupported_php(file, &error) {
+                        Ok(Array::new())
+                    } else {
+                        Err(Error::UnsupportedPhp {
+                            file: file.to_string(),
+                            error,
+                        })
+                    }
                 })
         }
         _ => Err(Error::UnknownExtension(file.to_string())),

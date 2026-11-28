@@ -967,3 +967,64 @@ parameters:
     );
     std::fs::remove_dir_all(d).unwrap();
 }
+
+/// An include Pun's PHP reader can't run is named with the reason and skipped once, not also as the project's own
+/// config; a PHP baseline is emptied on purpose and only gets the baseline note.
+#[test]
+fn names_and_skips_a_php_include_it_cant_read() {
+    let d = project(
+        "includes:\n    - bad.php\n    - phpstan-baseline.php\nparameters:\n    level: 5\n",
+        &[
+            (
+                "bad.php",
+                "<?php\n\nreturn ['parameters' => ['level' => dirname(__DIR__)]];\n",
+            ),
+            (
+                "phpstan-baseline.php",
+                "<?php\n\nreturn ['parameters' => ['ignoreErrors' => []]];\n",
+            ),
+        ],
+    );
+    let p = from_phpstan(&d, &d.join("phpstan.neon")).unwrap();
+    assert_eq!(p.level, 5);
+    assert_eq!(p.baselines, ["phpstan-baseline.php"]);
+    assert_eq!(
+        p.unsupported,
+        [(
+            "bad.php".to_string(),
+            "a PHP config Pun can't read (unexpected \"dirname(__DIR__)]];\\n\" on line 3); its parameters are not migrated".to_string()
+        )]
+    );
+}
+
+/// A parameter only the skipped PHP include defines can't resolve: the error names the skipped file.
+#[test]
+fn a_missing_parameter_names_the_skipped_php_include() {
+    let d = project(
+        "includes:\n    - dirs.php\nparametersSchema:\n    supportDir: string()\nparameters:\n    level: 5\n    scanDirectories:\n        - %supportDir%\n",
+        &[(
+            "dirs.php",
+            "<?php\n\nreturn ['parameters' => ['supportDir' => dirname(__DIR__).'/support']];\n",
+        )],
+    );
+    let e = from_phpstan(&d, &d.join("phpstan.neon"))
+        .unwrap_err()
+        .to_string();
+    assert_eq!(
+        e,
+        "Missing parameter 'supportDir'. Pun skipped dirs.php (unexpected \"dirname(__DIR__).'/s\" on line 3), a PHP config it can't read."
+    );
+}
+
+/// A package include whose path holds a quote is written to the defaults config as NEON, not cut at the quote.
+#[test]
+fn reads_a_package_include_with_a_quote_in_its_path() {
+    let d = project(
+        "includes:\n    - \"vendor/acme/team's/extension.neon\"\nparameters:\n    level: 5\n",
+        &[(
+            "vendor/acme/team's/extension.neon",
+            "parameters:\n    level: 5\n",
+        )],
+    );
+    assert_eq!(from_phpstan(&d, &d.join("phpstan.neon")).unwrap().level, 5);
+}

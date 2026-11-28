@@ -295,14 +295,33 @@ pub fn resolve(o: &Options) -> Result<Resolved, Error> {
     resolve_with(&Options { phar, ..o.clone() }, &files)
 }
 
-pub fn resolve_with(o: &Options, files: &dyn Files) -> Result<Resolved, Error> {
-    let cwd = normalize_path(&o.cwd);
+/// The parameters PHPStan's loader expands in `includes` before the config's own: `rootDir`,
+/// `currentWorkingDirectory` and `env`.
+fn loader_params(o: &Options) -> Array {
     let mut env = Array::new();
     for (k, v) in &o.env {
         if !SENSITIVE_ENV.contains(&k.as_str()) {
             env.set(Key::from_string(k.clone()), s(v));
         }
     }
+    arr(vec![
+        ("rootDir", s(&normalize_path(&dirname(&o.phar)))),
+        ("currentWorkingDirectory", s(&normalize_path(&o.cwd))),
+        ("env", Value::Array(env)),
+    ])
+}
+
+/// An `includes` entry with the loader's parameters expanded, as the loader reads it; the entry as written when it
+/// uses any other parameter.
+pub fn expand_include(o: &Options, include: &str) -> String {
+    expand(&s(include), &loader_params(o), None)
+        .ok()
+        .and_then(|v| v.to_php_string())
+        .unwrap_or_else(|| include.to_string())
+}
+
+pub fn resolve_with(o: &Options, files: &dyn Files) -> Result<Resolved, Error> {
+    let cwd = normalize_path(&o.cwd);
     let config = match &o.config {
         None => [
             ".phpstan.neon",
@@ -333,11 +352,7 @@ pub fn resolve_with(o: &Options, files: &dyn Files) -> Result<Resolved, Error> {
     let root_dir = normalize_path(&dirname(&o.phar));
     let phar_root = normalize_path(&format!("phar://{}", o.phar));
     let config_dir = format!("{phar_root}/conf");
-    let loader_params = arr(vec![
-        ("rootDir", s(&root_dir)),
-        ("currentWorkingDirectory", s(&cwd)),
-        ("env", Value::Array(env.clone())),
-    ]);
+    let loader_params = loader_params(o);
 
     let mut tmp_dir = None;
     let mut paths_from_config: Vec<String> = Vec::new();
@@ -488,7 +503,10 @@ pub fn resolve_with(o: &Options, files: &dyn Files) -> Result<Resolved, Error> {
             list(&attribute_services_directories),
         ),
         ("attributeServicesClasses", list(&[])),
-        ("env", Value::Array(env)),
+        (
+            "env",
+            loader_params.get_str("env").cloned().unwrap_or_default(),
+        ),
     ]);
     let dynamic = arr(vec![
         ("singleReflectionFile", Value::Null),

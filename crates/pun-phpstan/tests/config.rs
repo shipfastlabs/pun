@@ -5,7 +5,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::common::{dumped, fixture, placeholders};
-use pun_phpstan::config::{Options, resolve};
+use pun_phpstan::config::{Options, ProjectFiles, expand_include, resolve, resolve_with};
 use serde_json::{Value as J, json};
 
 const ROOT: &str = "/pun-root";
@@ -255,4 +255,85 @@ fn pun_only_config_errors() {
     );
     assert_eq!(generated, "no EXTENSIONS constant");
     assert_eq!(schema, "structure() expects an array");
+}
+
+/// An include written with the loader's own parameters, as PHPStan's loader expands it: `rootDir` is the phar's
+/// directory, `currentWorkingDirectory` the project root, `env.*` the environment; any other parameter is left as
+/// written.
+#[test]
+fn expand_include_uses_the_loader_parameters() {
+    let o = Options {
+        cwd: "/p".into(),
+        phar: "/p/vendor/phpstan/phpstan/phpstan.phar".into(),
+        env: vec![("HOME".into(), "/h".into())],
+        ..Options::default()
+    };
+    assert_eq!(
+        [
+            "%currentWorkingDirectory%/a.php",
+            "%rootDir%/conf/x.neon",
+            "%env.HOME%/x.neon",
+            "%unknown%/x.neon",
+        ]
+        .map(|i| expand_include(&o, i)),
+        [
+            "/p/a.php",
+            "/p/vendor/phpstan/phpstan/conf/x.neon",
+            "/h/x.neon",
+            "%unknown%/x.neon",
+        ]
+    );
+}
+
+/// A PHP include the `Files` chooses to skip loads as an empty config: the rest of phpstan.neon still resolves.
+#[test]
+fn a_php_include_the_files_skip_loads_as_empty() {
+    use pun_phpstan::di::Files;
+    struct Skipping(ProjectFiles, std::cell::RefCell<Vec<String>>);
+    impl Files for Skipping {
+        fn read(&self, path: &str) -> Option<Vec<u8>> {
+            self.0.read(path)
+        }
+        fn is_file(&self, path: &str) -> bool {
+            self.0.is_file(path)
+        }
+        fn skip_unsupported_php(&self, path: &str, _: &pun_phpstan::phpfile::Error) -> bool {
+            self.1.borrow_mut().push(path.to_string());
+            true
+        }
+    }
+    let dir = std::env::temp_dir().join(format!("pun-phpstan-skip-php-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let dir = dir.canonicalize().unwrap();
+    let cwd = dir.to_string_lossy().into_owned();
+    std::fs::write(
+        dir.join("phpstan.neon"),
+        "includes:\n  - bad.php\nparameters:\n  level: 5\n",
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("bad.php"),
+        "<?php return ['parameters' => ['level' => dirname(__DIR__)]];",
+    )
+    .unwrap();
+    let phar = format!("{ROOT}/phpstan.phar");
+    let files = Skipping(
+        ProjectFiles::new(&phar, &cwd),
+        std::cell::RefCell::default(),
+    );
+    let o = Options {
+        cwd: cwd.clone(),
+        phar,
+        ..Options::default()
+    };
+    let level = resolve_with(&o, &files).map(|r| {
+        r.parameters
+            .get_str("level")
+            .and_then(pun_phpstan::Value::to_php_string)
+    });
+    let mut skipped = files.1.take();
+    skipped.dedup();
+    std::fs::remove_dir_all(&dir).unwrap();
+    assert_eq!(level.unwrap().as_deref(), Some("5"));
+    assert_eq!(skipped, [format!("{cwd}/bad.php")]);
 }

@@ -557,6 +557,130 @@ fn phpstan_without_vendor_is_left() {
 }
 
 #[test]
+fn phpstan_php_include_pun_cant_read_is_named_and_skipped() {
+    let d = project(
+        "unreadable-php-include",
+        &[
+            (
+                "phpstan.neon",
+                "includes:\n    - ./dirs.php\nparameters:\n    level: 5\n",
+            ),
+            (
+                "dirs.php",
+                "<?php\n\nreturn ['parameters' => ['laravel' => ['migrationDirectories' => [dirname(__DIR__).'/m']]]];\n",
+            ),
+        ],
+    );
+    let (out, err, code) = pun(&d, &["migrate", "--yes"]);
+    assert_eq!((err.as_str(), code), ("", Some(0)), "{out}");
+    assert!(
+        out.starts_with(" ok phpstan.neon  -> [analyse] preset phpstan/level_5, "),
+        "{out}"
+    );
+    assert!(
+        out.contains("\n ! Not migrated\n   a PHP config Pun can't read (unexpected \"dirname(__DIR__).'/m\" on line 3); its parameters are not migrated\n     dirs.php\n"),
+        "{out}"
+    );
+    assert!(read(&d, "pun.toml").contains("preset = \"phpstan/level_5\"\n"));
+
+    let d = project(
+        "unreadable-nested-php-include",
+        &[
+            (
+                "phpstan.neon",
+                "includes:\n    - a.php\nparameters:\n    level: 5\n",
+            ),
+            (
+                "a.php",
+                "<?php\n\nreturn ['includes' => [__DIR__.'/b.php']];\n",
+            ),
+            (
+                "b.php",
+                "<?php\n\nreturn ['parameters' => ['laravel' => ['migrationDirectories' => [dirname(__DIR__).'/m']]]];\n",
+            ),
+        ],
+    );
+    let (out, err, code) = pun(&d, &["migrate", "--yes"]);
+    assert_eq!((err.as_str(), code), ("", Some(0)), "{out}");
+    assert!(
+        out.contains("\n   a PHP config Pun can't read (unexpected \"dirname(__DIR__).'/m\" on line 3); its parameters are not migrated\n     b.php\n"),
+        "{out}"
+    );
+}
+
+#[test]
+fn phpstan_parameter_from_a_skipped_php_include_names_it() {
+    let d = project(
+        "parameter-from-unreadable-php",
+        &[
+            (
+                "phpstan.neon",
+                "includes:\n    - dirs.php\nparametersSchema:\n    supportDir: string()\nparameters:\n    level: 5\n    scanDirectories:\n        - %supportDir%\n",
+            ),
+            (
+                "dirs.php",
+                "<?php\n\nreturn ['parameters' => ['supportDir' => dirname(__DIR__).'/support']];\n",
+            ),
+        ],
+    );
+    let (_, err, code) = pun(&d, &["migrate", "--yes"]);
+    assert_eq!(
+        (err.as_str(), code),
+        (
+            "x can't read phpstan.neon as a PHPStan config: Missing parameter 'supportDir'. Pun skipped dirs.php (unexpected \"dirname(__DIR__).'/s\" on line 3), a PHP config it can't read.\n",
+            Some(2)
+        )
+    );
+}
+
+#[test]
+fn phpstan_php_baseline_is_not_reported_as_unreadable() {
+    let d = project(
+        "php-baseline",
+        &[
+            (
+                "phpstan.neon",
+                "includes:\n    - phpstan-baseline.php\nparameters:\n    level: 5\n",
+            ),
+            (
+                "phpstan-baseline.php",
+                "<?php\n\nreturn ['parameters' => ['ignoreErrors' => []]];\n",
+            ),
+        ],
+    );
+    let (out, err, code) = pun(&d, &["migrate", "--yes"]);
+    assert_eq!((err.as_str(), code), ("", Some(0)), "{out}");
+    assert!(
+        out.contains("phpstan-baseline.php was not copied") && !out.contains("can't read"),
+        "{out}"
+    );
+}
+
+#[test]
+fn phpstan_parameter_in_an_unreadable_php_include_path_is_named_once() {
+    let d = project(
+        "unreadable-php-include-parameter-path",
+        &[
+            (
+                "phpstan.neon",
+                "includes:\n    - %currentWorkingDirectory%/dirs.php\nparameters:\n    level: 5\n",
+            ),
+            (
+                "dirs.php",
+                "<?php\n\nreturn ['parameters' => ['laravel' => ['migrationDirectories' => [dirname(__DIR__).'/m']]]];\n",
+            ),
+        ],
+    );
+    let (out, err, code) = pun(&d, &["migrate", "--yes"]);
+    assert_eq!((err.as_str(), code), ("", Some(0)), "{out}");
+    assert!(
+        out.contains("\n   a PHP config Pun can't read (unexpected \"dirname(__DIR__).'/m\" on line 3); its parameters are not migrated\n     dirs.php\n")
+            && !out.contains("%currentWorkingDirectory%"),
+        "{out}"
+    );
+}
+
+#[test]
 fn agent_mode() {
     let unknown = (
         "app/Unknown.php",
