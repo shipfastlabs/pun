@@ -12,7 +12,7 @@ mago-phpdoc-syntax = { path = "third_party/mago-phpdoc-syntax" }
 oxc_allocator = { git = "https://github.com/oxc-project/oxc", rev = "846e62abbbf7c646844a4b8729210dbe2317f5c7" }
 
 [workspace.package]
-version = "0.4.5"
+version = "0.4.6"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/shipfastlabs/pun"
