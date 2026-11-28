@@ -14,9 +14,13 @@ use mago_codex::ttype::union::TUnion;
 use mago_reporting::Annotation;
 use mago_reporting::Issue;
 use mago_span::HasSpan;
+use mago_codex::ttype::atomic::TAtomic;
+use mago_codex::ttype::atomic::object::TObject;
+use mago_syntax::cst::Access;
 use mago_syntax::cst::ArrayElement;
 use mago_syntax::cst::Binary;
 use mago_syntax::cst::BinaryOperator;
+use mago_syntax::cst::ClassLikeMemberSelector;
 use mago_syntax::cst::Expression;
 use mago_syntax::cst::Literal;
 use mago_syntax::cst::Parenthesized;
@@ -38,6 +42,7 @@ use crate::expression::binary::utils::is_always_greater_than_or_equal;
 use crate::expression::binary::utils::is_always_identical_to;
 use crate::expression::binary::utils::is_always_less_than;
 use crate::expression::binary::utils::is_always_less_than_or_equal;
+use crate::resolver::property::resolve_declared_property;
 use crate::utils::expression::get_literal_array_key;
 use crate::utils::misc::unwrap_expression;
 
@@ -371,7 +376,9 @@ where
                 let should_be_specific =
                     should_use_specific_equality_inference(block_context, binary.lhs, binary.rhs, true);
 
-                if !should_be_specific {
+                if !should_be_specific
+                    || compares_untyped_property_with_null(context, block_context, artifacts, binary, lhs_type, rhs_type)
+                {
                     get_bool()
                 } else if are_expressions_always_identical(binary.lhs, binary.rhs, lhs_type, rhs_type, artifacts) {
                     if !block_context.flags.inside_loop_expressions() {
@@ -393,7 +400,9 @@ where
                 let should_be_specific =
                     should_use_specific_equality_inference(block_context, binary.lhs, binary.rhs, true);
 
-                if !should_be_specific {
+                if !should_be_specific
+                    || compares_untyped_property_with_null(context, block_context, artifacts, binary, lhs_type, rhs_type)
+                {
                     get_bool()
                 } else if are_expressions_always_identical(binary.lhs, binary.rhs, lhs_type, rhs_type, artifacts) {
                     if !block_context.flags.inside_loop_expressions() {
@@ -424,6 +433,45 @@ where
     artifacts.set_rc_expression_type(binary, Rc::new(result_type));
 
     Ok(())
+}
+
+/// Pun: RicherScopeGetTypeHelper::getIdenticalResult() gives `bool` for a property fetch compared with `null` when the
+/// property is declared without a native type: its PHPDoc type is not certain to hold (a promoted
+/// `public $user` documented `@param \Stringable $user` may still be given `null`).
+fn compares_untyped_property_with_null<A>(
+    context: &Context<'_, '_, A>,
+    block_context: &BlockContext<'_>,
+    artifacts: &AnalysisArtifacts,
+    binary: &Binary<'_>,
+    lhs_type: &TUnion,
+    rhs_type: &TUnion,
+) -> bool
+where
+    A: Arena,
+{
+    [(binary.lhs, rhs_type), (binary.rhs, lhs_type)].into_iter().any(|(fetch, other)| {
+        let Expression::Access(Access::Property(access)) = unwrap_expression(fetch) else {
+            return false;
+        };
+        let ClassLikeMemberSelector::Identifier(name) = &access.property else {
+            return false;
+        };
+        if !other.is_null() {
+            return false;
+        }
+        let Some(object) = artifacts.get_expression_type(access.object) else {
+            return false;
+        };
+        let name = mago_word::concat_word!(b"$", name.value);
+        object.types.iter().any(|atomic| {
+            let TAtomic::Object(TObject::Named(object)) = atomic else {
+                return false;
+            };
+            context.codebase.get_class_like(object.name.as_bytes()).and_then(|class| {
+                resolve_declared_property(context.codebase, class, name, true, block_context.scope.get_class_like_name())
+            }).is_some_and(|property| !property.is_magic() && property.property.type_declaration_metadata.is_none())
+        })
+    })
 }
 
 /// Attempts to extract a boolean literal from an expression, looking through parentheses.

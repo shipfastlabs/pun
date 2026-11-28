@@ -4587,6 +4587,7 @@ from a receiver that may be null. IssetabilityResolution::isSet() finds no prope
 link is maybe set whatever the property's own type, and `$inner->key ?? $fallback` is `string|null`, not `string`
 (shipfastlabs/pun#145, shipfastlabs/pun#174). `crates/pun-analyse/tests/coalesce_nullable_receiver.rs` covers it against
 PHPStan 2.3.5.
+
 ## Plugin assertions through a null coalesce accept `InArray`
 
 `invocation/post_process.rs` `resolve_invocation_assertion()`: the coalesce rule above also moves an `InArray`
@@ -4594,6 +4595,7 @@ assertion to `$a` when `$b` can never be one of its types. Pun's port of StrCont
 `InArray`, which the false branch does not negate, as PHPStan narrows the haystack only in a true context
 (shipfastlabs/pun#147, shipfastlabs/pun#188). `crates/pun-analyse/tests/str_containing.rs` and
 `crates/pun-analyse/tests/str_containing_false.rs` cover it against PHPStan 2.3.5.
+
 ## A `@property` narrowing a parent's templated property
 
 `resolver/property.rs` `DeclaredProperty::declared_type_impl()`: the annotation of a real property comes with the
@@ -4602,6 +4604,8 @@ replaced by the class's `@extends` arguments or their defaults, before the check
 Filament's `CreateRecord` declares `/** @var ?TModel */ public ?Model $record` with `TModel of Model = Model`, so a
 subclass's `@property Product $record` narrows `?Model` and governs the read, as PHPStan's resolved property does
 (shipfastlabs/pun#155). `crates/pun-analyse/tests/fixtures/larastan-types/Type/PunPropertyWriteTest.json` covers it
+against PHPStan 2.3.7 with Larastan 3.15.0.
+
 ## Forwarded callbacks of an undocumented call on a union
 
 `expression/call/method_call.rs` `analyze_undocumented_method_return_type()`: when a receiver is a union with more than
@@ -4613,6 +4617,7 @@ closure took `Builder<Report>` alone where PHPStan's
 gives `Builder<Report>|Builder<Review>` (shipfastlabs/pun#172). The magic method's target is built by the new
 `undocumented_target()`. `crates/pun-analyse/tests/fixtures/larastan-types/Type/PunNestedEagerLoadTest.json` covers it
 against PHPStan 2.3.7 with Larastan 3.15.0.
+
 ## Unpacking a value of unknown keys into an array literal
 
 `expression/array.rs` `handle_variadic_array_element()`: unpacking a value with no iterable parameters (`mixed`, such
@@ -4620,9 +4625,18 @@ as `...config('x', [])`) makes the literal no list. It was `list`, so string key
 rejected where `array<string, ...>` is expected, and `$merged['react'] ?? null` was reported as an offset that does
 not exist (shipfastlabs/pun#160). PHPStan's InitializerExprTypeResolver::getArrayType() gives `[...$mixed]`
 `array<mixed>`.
+
 ## Class-string narrowing by an interface that requires the class
 
 `reconciler/assertion_reconciler.rs` `intersect_atomic_with_atomic()`: as for objects (shipfastlabs/pun#137), `class-string<Model>`
 narrowed by `class-string<Commentable>`, an interface marked `@phpstan-require-extends Model`, is
 `class-string<Model&Commentable>`, not `class-string<Commentable>` alone, so two `is_a($class, ..., true)` checks keep
 both classes (shipfastlabs/pun#166).
+
+## A property without a native type compared with `null`
+
+`expression/binary/comparison.rs` `compares_untyped_property_with_null()`: `$object->property === null` (and `!==`)
+is `bool` when the property is declared without a native type, whatever its PHPDoc says, as in PHPStan's
+[`RicherScopeGetTypeHelper::getIdenticalResult()`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Analyser/RicherScopeGetTypeHelper.php#L56).
+A promoted `public $user` documented `@param \Stringable $user` gave `identical.alwaysFalse` (shipfastlabs/pun#170).
+PHPStan's static property fetches are not covered.

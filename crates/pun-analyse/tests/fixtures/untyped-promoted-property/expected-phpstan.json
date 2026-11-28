@@ -1,0 +1,18 @@
+{
+ "phpstan": "2.3.5",
+ "level": 6,
+ "errors": [
+  {
+   "file": "untyped-promoted.php",
+   "line": 47,
+   "identifier": "identical.alwaysFalse",
+   "message": "Strict comparison using === between Stringable and null will always evaluate to false."
+  },
+  {
+   "file": "untyped-promoted.php",
+   "line": 57,
+   "identifier": "identical.alwaysFalse",
+   "message": "Strict comparison using === between Stringable and 1 will always evaluate to false."
+  }
+ ]
+}
