@@ -690,10 +690,14 @@ pub(crate) fn build(
     let migrations: Vec<PathBuf> = (project.larastan.iter())
         .flat_map(|l| crate::laravel::migration_files(&l.migration_directories))
         .collect();
-    // Larastan resolves a string the framework's providers bind through the booted container, which loads the
-    // bound class: Pun reads the class even when no analysed name reaches it.
+    // Larastan resolves a string the framework's providers bind, or a class a package's provider binds, through the
+    // booted container, which loads the bound class: Pun reads the class even when no analysed name reaches it.
     let bound: HashSet<String> = (project.larastan.iter())
-        .map(|l| crate::larastan::app::framework_bindings(&l.root))
+        .map(|l| {
+            let mut bound = crate::larastan::app::framework_bindings(&l.root);
+            bound.extend(crate::larastan::app::bootstrap_bindings(&l.root));
+            bound
+        })
         .next()
         .unwrap_or_default()
         .into_iter()

@@ -140,3 +140,92 @@ fn self_aliased_contract() {
         )]
     );
 }
+
+/// Larastan asks the booted container for `app(ExceptionHandler::class)`: bootstrap/app.php's `withExceptions()` binds
+/// the framework's handler, and a discovered package's provider (Collision's) binds its own over it. PHPStan 2.3.7
+/// with Larastan 3.15.0 in a Laravel 13.44.1 app dumps `Illuminate\Foundation\Exceptions\Handler` without Collision
+/// and `NunoMaduro\Collision\Adapters\Laravel\ExceptionHandler` with it.
+#[test]
+fn bootstrap_container_bindings() {
+    let analyse = |package: bool| {
+        let root = std::env::temp_dir().join(format!(
+            "pun-bootstrap-bindings-{package}-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&root);
+        let framework = root.join("vendor/laravel/framework/src/Illuminate/Foundation");
+        std::fs::create_dir_all(&framework).unwrap();
+        std::fs::create_dir_all(root.join("bootstrap")).unwrap();
+        std::fs::create_dir_all(root.join("app")).unwrap();
+        std::fs::write(
+            framework.join("Application.php"),
+            "<?php\n\nnamespace Illuminate\\Foundation;\n\nclass Application\n{\n    const VERSION = '13.44.1';\n}\n",
+        )
+        .unwrap();
+        std::fs::write(
+            root.join("bootstrap/app.php"),
+            "<?php\n\nreturn Application::configure(basePath: dirname(__DIR__))\n    ->withExceptions(function ($exceptions): void {\n    })->create();\n",
+        )
+        .unwrap();
+        std::fs::write(
+            root.join("laravel.php"),
+            "<?php\n\nnamespace Illuminate\\Contracts\\Debug {\n    interface ExceptionHandler {}\n}\n\nnamespace Illuminate\\Foundation\\Exceptions {\n    class Handler implements \\Illuminate\\Contracts\\Debug\\ExceptionHandler\n    {\n        public function renderable(callable $renderUsing): static\n        {\n            return $this;\n        }\n    }\n}\n\nnamespace {\n    function app($abstract = null, array $parameters = []) {}\n}\n",
+        )
+        .unwrap();
+        std::fs::create_dir_all(root.join("vendor/composer")).unwrap();
+        if package {
+            let src = root.join("vendor/nunomaduro/collision/src/Adapters/Laravel");
+            std::fs::create_dir_all(&src).unwrap();
+            std::fs::write(
+                root.join("vendor/composer/installed.json"),
+                r#"{"packages": [{"name": "nunomaduro/collision", "install-path": "../nunomaduro/collision", "autoload": {"psr-4": {"NunoMaduro\\Collision\\": "src/"}}, "extra": {"laravel": {"providers": ["NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider"]}}}]}"#,
+            )
+            .unwrap();
+            std::fs::write(
+                src.join("CollisionServiceProvider.php"),
+                "<?php\n\nnamespace NunoMaduro\\Collision\\Adapters\\Laravel;\n\nuse Illuminate\\Contracts\\Debug\\ExceptionHandler as ExceptionHandlerContract;\n\nclass CollisionServiceProvider\n{\n    public function register(): void\n    {\n        $this->app->singleton(\n            ExceptionHandlerContract::class,\n            function ($app) {\n                return new ExceptionHandler($app);\n            }\n        );\n    }\n}\n",
+            )
+            .unwrap();
+            std::fs::write(
+                src.join("ExceptionHandler.php"),
+                "<?php\n\nnamespace NunoMaduro\\Collision\\Adapters\\Laravel;\n\nfinal class ExceptionHandler implements \\Illuminate\\Contracts\\Debug\\ExceptionHandler\n{\n    public function renderable(callable $renderUsing): void {}\n}\n",
+            )
+            .unwrap();
+        }
+        std::fs::write(
+            root.join("app/Probe.php"),
+            "<?php\n\nuse Illuminate\\Contracts\\Debug\\ExceptionHandler;\n\nfunction probe(): void\n{\n    \\PHPStan\\dumpType(app(ExceptionHandler::class));\n    app(ExceptionHandler::class)->renderable(fn (): string => 'down');\n}\n",
+        )
+        .unwrap();
+        let mut parameters = Array::new();
+        parameters.set(Key::from("level"), Parameter::Str("6".into()));
+        parameters.set(Key::from("noModelMake"), Parameter::Bool(true));
+        parameters.set(
+            Key::from("fileExtensions"),
+            Parameter::Array(Array::list([Parameter::str("php")])),
+        );
+        let mut project = Project::from_config(&root, &parameters);
+        project.analysed = vec![root.join("app/Probe.php")];
+        project.scanned = vec![root.join("laravel.php"), framework.join("Application.php")];
+        let got: Vec<_> = (run(&project).unwrap().into_iter())
+            .map(|e| (e.line, e.identifier, e.message))
+            .collect();
+        std::fs::remove_dir_all(&root).unwrap();
+        got
+    };
+    let dumped = |class: &str| {
+        vec![(
+            7,
+            "phpstan.dumpType".to_string(),
+            format!("Dumped type: {class}"),
+        )]
+    };
+    assert_eq!(
+        analyse(false),
+        dumped("Illuminate\\Foundation\\Exceptions\\Handler")
+    );
+    assert_eq!(
+        analyse(true),
+        dumped("NunoMaduro\\Collision\\Adapters\\Laravel\\ExceptionHandler")
+    );
+}

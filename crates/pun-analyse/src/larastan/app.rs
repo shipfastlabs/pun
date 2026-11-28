@@ -97,6 +97,11 @@ impl App {
                 .entry(key.to_ascii_lowercase())
                 .or_insert(concrete);
         }
+        for (key, concrete) in bootstrap_bindings(root) {
+            app.container
+                .entry(key.to_ascii_lowercase())
+                .or_insert(concrete);
+        }
         app
     }
 
@@ -275,13 +280,36 @@ pub(crate) fn framework_bindings(root: &Path) -> Vec<(String, String)> {
     crate::php_files(&framework, &["php".to_string()])
         .iter()
         .filter(|path| path.to_string_lossy().ends_with("ServiceProvider.php"))
-        .flat_map(|path| provider_bindings(path))
+        .flat_map(|path| provider_bindings(path, false))
+        .collect()
+}
+
+/// The class bindings of booting: the discovered packages' providers, which register after bootstrap/app.php and so
+/// replace its bindings, then ApplicationBuilder::withExceptions()'s handler when bootstrap/app.php calls it.
+pub(crate) fn bootstrap_bindings(root: &Path) -> Vec<(String, String)> {
+    let mut bindings = package_bindings(root);
+    if std::fs::read_to_string(root.join("bootstrap/app.php"))
+        .is_ok_and(|app| app.contains("->withExceptions("))
+    {
+        bindings.push((
+            "Illuminate\\Contracts\\Debug\\ExceptionHandler".to_string(),
+            "Illuminate\\Foundation\\Exceptions\\Handler".to_string(),
+        ));
+    }
+    bindings
+}
+
+/// The bindings of the discovered packages' providers (Collision's `singleton(ExceptionHandler::class, fn () => new
+/// ExceptionHandler(...))`), with a class constant or a string as the abstract.
+fn package_bindings(root: &Path) -> Vec<(String, String)> {
+    (super::macros::discovered_providers(root).iter())
+        .flat_map(|path| provider_bindings(path, true))
         .collect()
 }
 
 /// A provider's `bind()`, `singleton()` and `scoped()` calls whose abstract is a string and whose closure returns one
 /// `new` instance.
-fn provider_bindings(path: &Path) -> Vec<(String, String)> {
+fn provider_bindings(path: &Path, class_keys: bool) -> Vec<(String, String)> {
     let Some(file) = read(path, FileType::Vendored).ok().flatten() else {
         return Vec::new();
     };
@@ -289,6 +317,7 @@ fn provider_bindings(path: &Path) -> Vec<(String, String)> {
     let (program, names) = parse(&arena, &file);
     struct Find<'n, 'arena> {
         names: &'n ResolvedNames<'arena>,
+        class_keys: bool,
         found: Vec<(String, String)>,
     }
     impl<'ast, 'arena> MutWalker<'ast, 'arena, ()> for Find<'_, 'arena> {
@@ -305,11 +334,17 @@ fn provider_bindings(path: &Path) -> Vec<(String, String)> {
             let [abstract_, concrete] = call.argument_list.arguments.as_slice() else {
                 return;
             };
-            let Expression::Literal(Literal::String(LiteralString {
-                value: Some(key), ..
-            })) = abstract_.value()
-            else {
-                return;
+            let key = match abstract_.value() {
+                Expression::Literal(Literal::String(LiteralString {
+                    value: Some(key), ..
+                })) => String::from_utf8_lossy(key).into_owned(),
+                e if self.class_keys => {
+                    let Some(key) = class_constant(self.names, e) else {
+                        return;
+                    };
+                    key
+                }
+                _ => return,
             };
             let returned = match concrete.value() {
                 Expression::Closure(c) => match c.body.statements.as_slice().last() {
@@ -325,7 +360,7 @@ fn provider_bindings(path: &Path) -> Vec<(String, String)> {
             }) = returned
             {
                 self.found.push((
-                    String::from_utf8_lossy(key).into_owned(),
+                    key,
                     String::from_utf8_lossy(self.names.get(&id.span())).into_owned(),
                 ));
             }
@@ -333,6 +368,7 @@ fn provider_bindings(path: &Path) -> Vec<(String, String)> {
     }
     let mut find = Find {
         names: &names,
+        class_keys,
         found: Vec::new(),
     };
     find.walk_program(program, &mut ());
