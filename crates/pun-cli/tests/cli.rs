@@ -1073,7 +1073,7 @@ fn migrates_php_cs_fixer_config() {
     );
     assert_eq!(
         std::fs::read_to_string(dir.join("pun.toml")).unwrap(),
-        "# Written by `pun migrate` from .php-cs-fixer.php.\n[files]\nexclude = [\"legacy\"]\n\n[format]\npreset = \"empty\"\nnot-name = [\"*.inc\"]\n\n[format.rules]\n\"strings/single-quote\" = true\n\n[lint.rules]\n\"style/no-alias-function\" = \"error\"\n"
+        "# Written by `pun migrate` from .php-cs-fixer.php.\n[files]\nexclude = [\"legacy\"]\n\n[format]\npreset = \"empty\"\nnot-name = [\"*.inc\"]\n\n[format.rules]\n\"strings/single-quote\" = true\n\n[lint.rules]\n\"style/no-alias-function\" = \"error\"\n\n[[lint.overrides]]\nfiles = [\"**/*.inc\"]\n\n[lint.overrides.rules]\n\"style/no-alias-function\" = \"off\"\n"
     );
     pun(&dir, &["format"]);
     let a = || std::fs::read_to_string(dir.join("app/A.php")).unwrap();
