@@ -811,7 +811,8 @@ impl<'a> IssetCheck<'_, 'a, '_> {
                         .c
                         .on(crate::rules::Switches::TREAT_PHP_DOC_TYPES_AS_CERTAIN),
                 )?;
-                if !offset_accessible(&holder).yes() {
+                // a class's ArrayAccess is known only with the classes in scope
+                if !declared::with_classes(self.c, || offset_accessible(&holder)).yes() {
                     return error.or_else(|| self.undefined(a.array));
                 }
                 let offset = self.ty(a.index)?;

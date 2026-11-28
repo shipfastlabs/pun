@@ -5,6 +5,7 @@ mod argument_contracts;
 mod argument_names;
 mod argument_reasons;
 mod argument_settings;
+mod array_access_coalesce;
 mod array_assignment_certainty;
 mod array_find_narrowing;
 mod array_map_keys;
