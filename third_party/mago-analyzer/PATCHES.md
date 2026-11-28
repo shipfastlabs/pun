@@ -4579,3 +4579,11 @@ comparison was always true and the rest of the file unreachable (shipfastlabs/pu
 finds no property reflection on an unknown class and gives `ErrorType`. Pun's `rules/types/access.rs`
 `property_fetch()` reports `Access to property $x on an unknown class X.`, as PHPStan's `AccessPropertiesCheck` does.
 `crates/pun-analyse/tests/unknown_class_property.rs` covers it against PHPStan 2.3.5 at level max.
+
+## A coalesce on a property of a nullable receiver keeps its right side
+
+`expression/binary/null_coalesce.rs`: the left side of `??` is not surely set when it fetches a property, at any link,
+from a receiver that may be null. IssetabilityResolution::isSet() finds no property reflection on `Inner|null`, so the
+link is maybe set whatever the property's own type, and `$inner->key ?? $fallback` is `string|null`, not `string`
+(shipfastlabs/pun#145, shipfastlabs/pun#174). `crates/pun-analyse/tests/coalesce_nullable_receiver.rs` covers it against
+PHPStan 2.3.5.

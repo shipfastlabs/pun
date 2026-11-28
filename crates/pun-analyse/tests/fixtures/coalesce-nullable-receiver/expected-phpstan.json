@@ -1,0 +1,66 @@
+{
+ "phpstan": "2.3.5",
+ "level": 8,
+ "errors": [
+  {
+   "file": "coalesce.php",
+   "line": 33,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string|null"
+  },
+  {
+   "file": "coalesce.php",
+   "line": 38,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string|null"
+  },
+  {
+   "file": "coalesce.php",
+   "line": 39,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string|null"
+  },
+  {
+   "file": "coalesce.php",
+   "line": 40,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string"
+  },
+  {
+   "file": "coalesce.php",
+   "line": 41,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string|null"
+  },
+  {
+   "file": "coalesce.php",
+   "line": 42,
+   "identifier": "nullsafe.neverNull",
+   "message": "Using nullsafe property access \"?->ro\" on left side of ?? is unnecessary. Use -> instead."
+  },
+  {
+   "file": "coalesce.php",
+   "line": 42,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string|null"
+  },
+  {
+   "file": "coalesce.php",
+   "line": 43,
+   "identifier": "nullCoalesce.property",
+   "message": "Property CoalesceNullableReceiver\\Inner::$ro (string) on left side of ?? is not nullable."
+  },
+  {
+   "file": "coalesce.php",
+   "line": 43,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string"
+  },
+  {
+   "file": "coalesce.php",
+   "line": 44,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string|null"
+  }
+ ]
+}

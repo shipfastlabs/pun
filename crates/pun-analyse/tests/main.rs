@@ -51,6 +51,7 @@ mod closure_from_callable;
 mod closure_union_parameters;
 mod coalesce_assignment_target_scopes;
 mod coalesce_inputs;
+mod coalesce_nullable_receiver;
 mod coalesce_offset_values;
 mod coalesce_scope;
 mod compound_assignment_reads;

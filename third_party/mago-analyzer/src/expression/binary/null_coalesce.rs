@@ -14,6 +14,7 @@ use mago_codex::ttype::union::TUnion;
 use mago_reporting::Annotation;
 use mago_reporting::Issue;
 use mago_span::HasSpan;
+use mago_syntax::cst::Access;
 use mago_syntax::cst::Binary;
 use mago_syntax::cst::Expression;
 use mago_syntax::cst::Literal;
@@ -203,6 +204,7 @@ where
 
     let left_is_set = !left_is_absent
         && !may_be_null(lhs_type)
+        && !has_nullable_property_receiver(binary.lhs, artifacts)
         && !lhs_type.possibly_undefined()
         && !lhs_type.possibly_undefined_from_try()
         && !is_static_var;
@@ -428,6 +430,23 @@ where
     }
 
     Ok(())
+}
+
+/// IssetabilityResolution::isSet() finds no property reflection for a fetch on a receiver that may be null
+/// (`findPropertyReflectionFromNode()` on `Inner|null`), so the link is maybe set whatever the property's type:
+/// `$inner->key ?? $fallback` and `$run->review->mergeRequest ?? null` keep their right side.
+fn has_nullable_property_receiver(expression: &Expression<'_>, artifacts: &AnalysisArtifacts) -> bool {
+    match unwrap_expression(expression) {
+        Expression::Access(Access::Property(access)) => {
+            artifacts.get_expression_type(access.object).is_some_and(may_be_null)
+                || has_nullable_property_receiver(access.object, artifacts)
+        }
+        Expression::Access(Access::NullSafeProperty(access)) => {
+            has_nullable_property_receiver(access.object, artifacts)
+        }
+        Expression::ArrayAccess(access) => has_nullable_property_receiver(access.array, artifacts),
+        _ => false,
+    }
 }
 
 fn get_variable_name(expr: &Expression<'_>) -> Option<Word> {
