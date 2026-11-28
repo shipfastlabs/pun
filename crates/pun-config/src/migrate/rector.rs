@@ -246,6 +246,17 @@ fn relative(root: &Path, path: &str) -> String {
     }
 }
 
+/// A skip path as pun.toml globs. Rector's `FileInfoMatcher` runs `fnmatch()` on the absolute path, where the `*` of a
+/// leading `*/` also covers the project root, so `*/tests/*` skips the top-level `tests/` too; Pun matches the path
+/// relative to the root, which needs `tests/*` beside it.
+fn skip_globs(root: &Path, path: &str) -> Vec<String> {
+    let glob = relative(root, path);
+    match glob.strip_prefix("*/") {
+        Some(rest) if !rest.is_empty() => vec![rest.to_string(), glob],
+        _ => vec![glob],
+    }
+}
+
 pub fn from_rector(root: &Path, r: &RectorConfig) -> Rector {
     let mut out = Rector::default();
     for set in &r.sets {
@@ -315,7 +326,7 @@ pub fn from_rector(root: &Path, r: &RectorConfig) -> Rector {
             && id.starts_with("lint/")
         {
             let paths = (paths.iter().filter_map(Value::as_str))
-                .map(|p| relative(root, p))
+                .flat_map(|p| skip_globs(root, p))
                 .collect();
             out.overrides.push((paths, id.clone()));
         }
@@ -335,7 +346,9 @@ pub fn from_rector(root: &Path, r: &RectorConfig) -> Rector {
             out.unsupported.push(item);
         }
     }
-    out.exclude = r.skip_paths.iter().map(|p| relative(root, p)).collect();
+    out.exclude = (r.skip_paths.iter())
+        .flat_map(|p| skip_globs(root, p))
+        .collect();
     out.paths = r.paths.iter().map(|p| relative(root, p)).collect();
     out
 }

@@ -500,7 +500,7 @@ def translation(tool: str) -> str:
 | Explicit rules and set differences | `[lint.rules]` at `\"error\"` or `\"off\"` |
 | `->withConfiguredRule()` | Rule options with kebab-case keys; lists under `items` |
 | Some of the Rector rules of one Pun rule, such as `ForeachToArrayFindRector` without the other `ForeachToArray*Rector` rules | The Pun rule with its option that limits it to those rewrites, such as `functions = [\"array-find\"]` |
-| `->withPaths()`, path skips | `[lint] exclude` and `[[lint.overrides]]` |
+| `->withPaths()`, path skips | `[lint] exclude` and `[[lint.overrides]]`. Rector matches a skip against the absolute path, so `*/tests/*` becomes `["tests/*", "*/tests/*"]` |
 | Closures, null values, custom rules, excluded sets | Reported and skipped |
 | `->withImportNames()`, `->withTreatClassesAsFinal()`, `->withPhpVersion()`, `->withFileExtensions()`, `->withIndent()`, `->withFluentCallNewLine()`, `->withTypeGuardedClasses()` | Reported under "Not migrated": pun.toml has no project-wide equivalent. Lint fixes write class names fully qualified |
 

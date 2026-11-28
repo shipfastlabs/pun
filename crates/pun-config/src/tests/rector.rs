@@ -119,7 +119,7 @@ fn reads_sets_rules_and_skips() {
             "lint/dead-code/no-and-true".to_string()
         )]
     );
-    assert_eq!(r.exclude, ["legacy", "*/Fixtures/*"]);
+    assert_eq!(r.exclude, ["legacy", "Fixtures/*", "*/Fixtures/*"]);
     assert_eq!(r.paths, ["app", "tests"]);
     let whole = RectorConfig {
         paths: vec![root.display().to_string(), "/elsewhere/src/".into()],
@@ -656,6 +656,30 @@ fn rules_merged_into_one_are_skipped_once_per_override() {
     );
     let cfg = from_toml(&root, &parts.render()).unwrap();
     assert_eq!(cfg.lint.overrides.len(), 1);
+}
+
+/// Issue #176: Rector fnmatch()es `*/tests/*` against the absolute path, so it skips the top-level `tests/` as well as
+/// `packages/billing/tests/` (Rector 2.9.2 changes neither file); Pun's override matches the root-relative path.
+#[test]
+fn a_leading_star_slash_skip_also_covers_the_top_level_directory() {
+    let root = dir(&[]);
+    let config = RectorConfig {
+        rules: strings(&[
+            "Rector\\TypeDeclaration\\Rector\\ArrowFunction\\AddArrowFunctionReturnTypeRector",
+        ]),
+        skip_rules: serde_json::from_value(json!({
+            "Rector\\TypeDeclaration\\Rector\\ArrowFunction\\AddArrowFunctionReturnTypeRector": ["*/tests/*", "**/stubs/*", "*"],
+        }))
+        .unwrap(),
+        ..RectorConfig::default()
+    };
+    assert_eq!(
+        from_rector(&root, &config).overrides,
+        [(
+            strings(&["tests/*", "*/tests/*", "**/stubs/*", "*"]),
+            "lint/types/add-arrow-function-return-type".to_string()
+        )]
+    );
 }
 
 fn rule_meta_ported(id: &str) -> bool {
