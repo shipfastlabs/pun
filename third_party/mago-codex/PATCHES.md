@@ -1441,3 +1441,39 @@ return `Attribute<TMakeGet, TMakeSet>`, which PHPStan drops for the native `stat
 set: ...)` is the plain `Attribute` and accepted as any declared `Attribute<...>` (shipfastlabs/pun#152).
 `crates/pun-analyse/tests/fixtures/larastan-types/Type/PunAttributeMakeTest.json` covers it against PHPStan 2.3.7 with
 Larastan 3.15.0.
+
+## Recorded codebase reads
+
+`reads.rs` (new) lets Pun's analyse result cache learn what one file's analysis read from the codebase. A thread-local
+stack of recordings collects the lowercase names of the class-likes, functions, constants and descendant sets looked
+up, found or not, plus the source files and other paths the caller reports; a lookup with no
+recording active costs one thread-local read. `recording_alone()` keeps a unit's reads out of the recordings around it,
+for work a thread pool may run inside another unit, and `setup_recording()` collects the paths any thread reads outside
+a recording while an analysis is prepared.
+
+`metadata/recorded.rs` (new): `CodebaseMetadata::class_likes`, `constants`, `all_class_like_descendants` and
+`direct_classlike_descendants` are a `Recorded` map instead of a bare `WordMap`. Its inherent `get`,
+`get_key_value`, `contains_key` and `Index` record the key; every other read goes through `Deref` to the map and
+records `Reads::all` (the result depends on every declaration), so a read nobody taught to record still counts; writes
+go through `DerefMut` and record nothing. `populator/mod.rs` wraps the descendant maps it builds, and
+`with_file_closures()` stores an edited file's anonymous classes as a plain map again.
+
+`metadata/function_likes.rs` `get()` records a method's class or a function's name, `iter()` records `all` and
+`iter_in_file()` the file. `symbol.rs` `get_kind()` and `contains()` record the class-like and `contains_namespace()`
+records `all` (a namespace exists while any declaration is in it). Behaviour is unchanged when nothing records. mago-analyzer's PATCHES.md ("Recorded subclass reads")
+records the two reads of `child_class_likes`.
+
+`scanner/inference/mod.rs` `infer_initializer_with_codebase()` passes the codebase's constants without recording the
+whole table, and each constant lookup in `infer_constant_access()` records that constant instead.
+
+## Class-likes by file
+
+`metadata/mod.rs` `index_class_likes_by_file()` (new) indexes the populated class-likes by the file that declares them,
+and `class_likes_in_file()` (new) answers from that index, recording a read of the file's outline for the analyse
+result cache. Pun's `initializer_class()` asked which class-like contains a span by scanning every class-like, once
+per `self::`/`parent::` constant in every analysed file; it now asks the index, which Pun builds after population.
+The index is not serialized and stays empty until built, when `class_likes_in_file()` answers none.
+
+`metadata/trait_adaptation.rs`: `TraitMethodAdaptations.excluded_methods` and `.modifiers` were `foldhash` collections
+seeded at random per process; they are fixed-seeded (`foldhash::fast::FixedState`, as `WordMap` is), so Pun's analyse
+result cache hashes a class that adapts trait methods alike in every run. Lookups are unchanged.

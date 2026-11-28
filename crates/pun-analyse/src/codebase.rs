@@ -87,8 +87,9 @@ impl std::error::Error for CouldNotReadFile {
     }
 }
 
+/// A PHP file as the codebase reads it, through `crate::io` so a recording sees the read (a missing file included).
 pub(crate) fn read(path: &Path, file_type: FileType) -> Result<Option<File>, CouldNotReadFile> {
-    let contents = match std::fs::read(path) {
+    let contents = match crate::io::read(path) {
         Ok(contents) => contents,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(source) => {
@@ -148,12 +149,20 @@ fn scan(
     let (mut scanned, facts) = {
         let arena = &*arena;
         let (program, names) = parse(arena, file);
-        let facts = Facts::of(&file.contents, program, file.file_type == FileType::Host);
+        let mut facts = Facts::of(&file.contents, program, file.file_type == FileType::Host);
         let scanned = if !crate::parser::errors(file, program, version).is_empty() {
             CodebaseMetadata::default()
         } else {
             if let Some((index, wanted, declarations)) = reachable {
                 index.wanted(&file.contents, program, &names, wanted, declarations);
+            }
+            if file.file_type == FileType::Host {
+                let mut refs = ConstantRefs {
+                    names: &names,
+                    out: Vec::new(),
+                };
+                refs.walk_program(program, &mut ());
+                facts.constant_refs = refs.out;
             }
             crate::mago::contained("scanner", file, || {
                 scan_program(arena, file, program, &names, version)
@@ -656,14 +665,56 @@ pub(crate) struct Sources {
 
 impl Sources {
     pub(crate) fn scanned(&self, id: FileId) -> Option<&Scanned> {
+        mago_codex::reads::record_file(id);
         self.scanned.get(&id).or_else(|| self.api.get(&id))
+    }
+
+    /// [`Self::scanned`] for a reader of the file's declarations and doc comments only, not its bodies.
+    pub(crate) fn scanned_outline(&self, id: FileId) -> Option<&Scanned> {
+        mago_codex::reads::record_outline(id);
+        self.scanned.get(&id).or_else(|| self.api.get(&id))
+    }
+
+    /// A source file, recorded as read by the active recording (`mago_codex::reads`).
+    pub(crate) fn get(&self, path: &Path) -> Option<&Arc<File>> {
+        let file = self.files.get(path);
+        if let Some(file) = file {
+            mago_codex::reads::record_file(file.id);
+        } else if mago_codex::reads::active() {
+            // a path that is no source: what the file system holds there now is what decides
+            let read = mago_codex::reads::PathRead::Contents;
+            let answer = crate::io::fingerprint(path, read);
+            mago_codex::reads::record_path(path.to_path_buf(), read, answer);
+        }
+        file
+    }
+
+    /// Every file the codebase was built from that has a path (the PHPStan API blocks have none), without recording.
+    pub(crate) fn every_file(&self) -> Vec<&Arc<File>> {
+        let mut seen = HashSet::new();
+        (self.scanned.values().map(|s| &s.file))
+            .chain(self.files.values())
+            .filter(|f| f.path.is_some() && seen.insert(f.id))
+            .collect()
+    }
+
+    /// The outline hash of a scanned file (`Facts::outline`), without recording.
+    pub(crate) fn outline(&self, id: FileId) -> Option<[u8; 16]> {
+        (self.scanned.get(&id).or_else(|| self.api.get(&id))).map(|s| s.facts.outline)
+    }
+
+    /// The source files, without recording: for building and caching, not for analysing.
+    pub(crate) fn unrecorded(&self) -> &HashMap<PathBuf, Arc<File>> {
+        &self.files
     }
 }
 
+/// Reads that bypass `get` depend on every source file.
 impl std::ops::Deref for Sources {
     type Target = HashMap<PathBuf, Arc<File>>;
 
     fn deref(&self) -> &Self::Target {
+        mago_codex::reads::record_all();
         &self.files
     }
 }
@@ -937,6 +988,7 @@ pub(crate) fn build(
         Default::default(),
     );
     ancestor_stub_docs(&mut metadata);
+    metadata.index_class_likes_by_file();
     resolve_initializers(&mut metadata, &sources, project);
     Ok((metadata, sources))
 }
@@ -1047,36 +1099,14 @@ fn ancestor_stub_docs(metadata: &mut CodebaseMetadata) {
 }
 
 fn resolve_initializers(metadata: &mut CodebaseMetadata, sources: &Sources, project: &Project) {
-    let version = project.php_version.to_mago();
     let loaded: &CodebaseMetadata = metadata;
-    let mut roots: Vec<Initializer> = project
-        .analysed
-        .par_iter()
-        .map_init(LocalArena::new, |arena, path| {
-            let Some(file) = sources.get(path) else {
-                return Vec::new();
-            };
-            let found = {
-                let (program, names) = parse(arena, file);
-                if crate::parser::errors(file, program, version).is_empty() {
-                    let mut inputs = ConstantInputs {
-                        metadata: loaded,
-                        names: &names,
-                        names_found: Vec::new(),
-                        class: None,
-                    };
-                    inputs.walk_program(program, &mut ());
-                    inputs.names_found
-                } else {
-                    Vec::new()
-                }
-            };
-            arena.reset();
-            found
-        })
-        .collect::<Vec<_>>()
-        .into_iter()
-        .flatten()
+    // The constants the analysed files name, as the scan kept them: resolved against the populated codebase as
+    // `ConstantInputs` resolves them in an initializer.
+    let mut roots: Vec<Initializer> = (project.analysed.iter())
+        .filter_map(|path| sources.unrecorded().get(path))
+        .filter_map(|file| sources.scanned.get(&file.id))
+        .flat_map(|scanned| scanned.facts.constant_refs.iter())
+        .filter_map(|r| r.resolve(loaded))
         .collect();
     let inherited: Vec<_> = metadata
         .class_likes
@@ -1267,6 +1297,81 @@ fn resolve_initializers(metadata: &mut CodebaseMetadata, sources: &Sources, proj
     }
 }
 
+/// A constant an analysed file names, as written: a global constant (its resolved name, and the name as written when
+/// PHP falls back to the global namespace), or a class constant (its class as named, or `self`/`static`/`parent` at a
+/// position, and its name).
+#[derive(Clone, Debug)]
+pub(crate) enum ConstantRef {
+    Global(mago_word::Word, Option<mago_word::Word>),
+    Class(RefClass, mago_word::Word),
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum RefClass {
+    Named(mago_word::Word),
+    Current(Span),
+    Parent(Span),
+}
+
+impl ConstantRef {
+    /// The initializer this reference reaches in the populated codebase: `ConstantInputs` with no class context.
+    fn resolve(&self, metadata: &CodebaseMetadata) -> Option<Initializer> {
+        match self {
+            ConstantRef::Global(name, short) => {
+                let selected = metadata
+                    .get_constant(name.as_bytes())
+                    .or_else(|| short.and_then(|s| metadata.get_constant(s.as_bytes())))?;
+                (!selected.flags.is_built_in()).then_some(Initializer::Global(selected.name))
+            }
+            ConstantRef::Class(class, name) => {
+                let class = match *class {
+                    RefClass::Named(class) => class,
+                    RefClass::Current(at) => initializer_class(metadata, at)?.name,
+                    RefClass::Parent(at) => initializer_class(metadata, at)?.direct_parent_class?,
+                };
+                metadata
+                    .get_class_constant(class.as_bytes(), name.as_bytes())
+                    .is_some_and(|constant| !constant.flags.is_built_in())
+                    .then_some(Initializer::Class(class, *name))
+            }
+        }
+    }
+}
+
+/// Collects an analysed file's [`ConstantRef`]s while the scan has it parsed.
+struct ConstantRefs<'a, 'arena> {
+    names: &'a ResolvedNames<'arena>,
+    out: Vec<ConstantRef>,
+}
+
+impl<'ast, 'arena> MutWalker<'ast, 'arena, ()> for ConstantRefs<'_, 'arena> {
+    fn walk_in_constant_access(&mut self, access: &'ast ConstantAccess<'arena>, (): &mut ()) {
+        let name = mago_word::word(self.names.get(access));
+        let short = (!access.name.value().contains(&b'\\')
+            && !self.names.is_imported(&access.name))
+        .then(|| mago_word::word(access.name.value()));
+        self.out.push(ConstantRef::Global(name, short));
+    }
+
+    fn walk_in_class_constant_access(
+        &mut self,
+        access: &'ast cst::ClassConstantAccess<'arena>,
+        (): &mut (),
+    ) {
+        let cst::ClassLikeConstantSelector::Identifier(name) = &access.constant else {
+            return;
+        };
+        let class = match access.class.unparenthesized() {
+            Expression::Identifier(name) => RefClass::Named(mago_word::word(self.names.get(name))),
+            Expression::Self_(_) | Expression::Static(_) => RefClass::Current(access.span()),
+            Expression::Parent(_) => RefClass::Parent(access.span()),
+            _ => return,
+        };
+        self.out
+            .push(ConstantRef::Class(class, mago_word::word(name.value)));
+    }
+}
+
 struct ConstantInputs<'a, 'arena> {
     metadata: &'a CodebaseMetadata,
     names: &'a ResolvedNames<'arena>,
@@ -1296,7 +1401,8 @@ pub(crate) fn initializer_class(
     metadata: &CodebaseMetadata,
     at: Span,
 ) -> Option<&ClassLikeMetadata> {
-    smallest_containing(metadata.class_likes.values().map(Box::as_ref), at)
+    // only the class-likes declared in `at`'s file can contain it: what that file's outline declares
+    smallest_containing(metadata.class_likes_in_file(at.file_id)?, at)
 }
 
 fn smallest_containing<'m>(

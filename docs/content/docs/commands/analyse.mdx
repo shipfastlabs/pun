@@ -27,6 +27,7 @@ pun analyse --generate-baseline   # accept current errors
 | `--concise` | One line per error. |
 | `--max-processes=<n>` | Limit threads. Default: one per core. |
 | `--color=<when>` | `auto`, `always` or `never`. |
+| `--no-cache` | Analyse every file again. |
 | `-v` | Add identifiers to `raw` output. |
 | `-q` | Print nothing. The exit code gives the result. |
 
@@ -36,6 +37,7 @@ pun analyse --generate-baseline   # accept current errors
 - Checks the files in `[analyse] paths`, or `[files] paths`, or the whole project.
 - Reads `vendor/` for classes and functions, but never reports on it.
 - Hides errors listed in the baseline (`[analyse] baseline`).
+- Reuses the last run's results: a run with no change analyses nothing, and after an edit it analyses only the changed files and the files that read what changed. Editing a method body re-analyses only that file.
 - With the `laravel` extension on, also runs Larastan's checks.
 - If a file has a syntax error, reports only syntax errors.
 

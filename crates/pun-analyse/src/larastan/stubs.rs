@@ -6,9 +6,9 @@ static BUNDLED: include_dir::Dir =
 
 pub(crate) fn files(root: &Path) -> Vec<PathBuf> {
     let stubs = package(root).join("stubs");
-    let names: Vec<String> = match std::fs::read_dir(&stubs) {
+    let names: Vec<String> = match crate::io::read_dir(&stubs) {
         Ok(entries) => (entries.flatten())
-            .filter(|e| e.path().is_dir())
+            .filter(|e| crate::io::is_dir(&e.path()))
             .filter_map(|e| e.file_name().into_string().ok())
             .collect(),
         Err(_) => (BUNDLED.dirs())
@@ -25,7 +25,7 @@ pub(crate) fn files(root: &Path) -> Vec<PathBuf> {
     let mut found = BTreeMap::new();
     for name in std::iter::once("common".to_string()).chain(versions) {
         let dir = stubs.join(&name);
-        if stubs.is_dir() {
+        if crate::io::is_dir(&stubs) {
             collect(&dir, &dir, &mut found);
         } else if let Some(bundled) = BUNDLED.get_dir(&name) {
             collect_bundled(bundled, &name, &stubs, &mut found);
@@ -75,11 +75,11 @@ fn collect_bundled(
 
 fn package(root: &Path) -> PathBuf {
     let installed = root.join("vendor/larastan/larastan");
-    let own = std::fs::read_to_string(root.join("composer.json"))
+    let own = crate::io::read_to_string(root.join("composer.json"))
         .ok()
         .and_then(|c| serde_json::from_str::<serde_json::Value>(&c).ok())
         .is_some_and(|c| c["name"] == "larastan/larastan");
-    if own && !installed.is_dir() {
+    if own && !crate::io::is_dir(&installed) {
         root.to_path_buf()
     } else {
         installed
@@ -87,9 +87,9 @@ fn package(root: &Path) -> PathBuf {
 }
 
 fn collect(base: &Path, dir: &Path, found: &mut BTreeMap<PathBuf, PathBuf>) {
-    for e in std::fs::read_dir(dir).into_iter().flatten().flatten() {
+    for e in crate::io::read_dir(dir).into_iter().flatten().flatten() {
         let p = e.path();
-        if p.is_dir() {
+        if crate::io::is_dir(&p) {
             collect(base, &p, found);
         } else if p.extension().is_some_and(|x| x == "stub") {
             let relative = p.strip_prefix(base).unwrap_or(&p).to_path_buf();
@@ -99,7 +99,7 @@ fn collect(base: &Path, dir: &Path, found: &mut BTreeMap<PathBuf, PathBuf>) {
 }
 
 pub(crate) fn laravel_version(root: &Path) -> Option<String> {
-    let source = std::fs::read_to_string(
+    let source = crate::io::read_to_string(
         root.join("vendor/laravel/framework/src/Illuminate/Foundation/Application.php"),
     )
     .ok()?;

@@ -461,7 +461,10 @@ impl<'ast, 'arena> Analyzable<'ast, 'arena> for Class<'arena> {
             && !class_like_metadata.flags.is_final()
             && !class_like_metadata.flags.is_abstract()
             && !class_like_metadata.flags.is_public_api()
-            && class_like_metadata.child_class_likes.as_ref().is_none_or(|children| children.is_empty())
+            && {
+                mago_codex::reads::record_descendants(class_like_metadata.name.to_ascii_lowercase());
+                class_like_metadata.child_class_likes.as_ref().is_none_or(|children| children.is_empty())
+            }
         {
             context.collector.report_with_code(
                 IssueCode::ClassMustBeFinal,

@@ -62,6 +62,7 @@ pub mod parameter;
 mod patch;
 pub mod property;
 pub mod property_hook;
+pub mod recorded;
 pub mod shared;
 mod trait_adaptation;
 pub mod ttype;
@@ -100,7 +101,7 @@ pub struct CodebaseMetadata {
     /// Configuration flag: Should types be inferred based on usage patterns?
     pub infer_types_from_usage: bool,
     /// Map from class-like FQCN (`Word`) to its detailed metadata (`ClassLikeMetadata`).
-    pub class_likes: shared::Shared<WordMap<Box<ClassLikeMetadata>>>,
+    pub class_likes: shared::Shared<recorded::Recorded<Box<ClassLikeMetadata>, recorded::ClassLikes>>,
     /// Current anonymous scopes for edited bodies; populated project declarations stay shared.
     #[cfg_attr(feature = "serde", serde(default))]
     file_anonymous_classes: shared::Shared<HashMap<FileId, shared::Shared<WordMap<Box<ClassLikeMetadata>>>>>,
@@ -116,11 +117,11 @@ pub struct CodebaseMetadata {
     /// Stores the kind (Class, Interface, etc.) for every known symbol FQCN.
     pub symbols: shared::Shared<Symbols>,
     /// Map from global constant FQN (`Word`) to its metadata (`ConstantMetadata`).
-    pub constants: shared::Shared<WordMap<ConstantMetadata>>,
+    pub constants: shared::Shared<recorded::Recorded<ConstantMetadata, recorded::Constants>>,
     /// Map from class/interface FQCN to the set of all its descendants (recursive).
-    pub all_class_like_descendants: shared::Shared<WordMap<WordSet>>,
+    pub all_class_like_descendants: shared::Shared<recorded::Recorded<WordSet, recorded::Descendants>>,
     /// Map from class/interface FQCN to the set of its direct descendants (children).
-    pub direct_classlike_descendants: shared::Shared<WordMap<WordSet>>,
+    pub direct_classlike_descendants: shared::Shared<recorded::Recorded<WordSet, recorded::Descendants>>,
     /// Set of symbols (FQCNs) that are considered safe/validated.
     pub safe_symbols: shared::Shared<WordSet>,
     /// Set of specific members `(SymbolFQCN, MemberName)` that are considered safe/validated.
@@ -143,6 +144,9 @@ pub struct CodebaseMetadata {
     pub patch_function_likes: shared::Shared<HashMap<(Word, Word), Box<FunctionLikeMetadata>>>,
     /// Per-patch constant metadata, keyed by FQN.
     pub patch_constants: shared::Shared<WordMap<ConstantMetadata>>,
+    /// Pun: the class-likes each file declares, once [`Self::index_class_likes_by_file`] has run.
+    #[cfg_attr(feature = "serde", serde(skip, default))]
+    class_likes_by_file: shared::Shared<HashMap<FileId, Vec<Word>>>,
 }
 
 impl CodebaseMetadata {
@@ -151,6 +155,27 @@ impl CodebaseMetadata {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Pun: indexes the class-likes by the file that declares them, for [`Self::class_likes_in_file`]. Run it once
+    /// the class-likes are final; a class-like added later is not in the index.
+    pub fn index_class_likes_by_file(&mut self) {
+        let mut index: HashMap<FileId, Vec<Word>> = HashMap::default();
+        for (name, class) in self.class_likes.unrecorded() {
+            index.entry(class.span.file_id).or_default().push(*name);
+        }
+        self.class_likes_by_file = index.into();
+    }
+
+    /// Pun: the class-likes `file` declares, or none when [`Self::index_class_likes_by_file`] has not run. Records a
+    /// read of the file's outline (`crate::reads`): what it declares.
+    pub fn class_likes_in_file(&self, file: FileId) -> Option<impl Iterator<Item = &ClassLikeMetadata>> {
+        if self.class_likes_by_file.is_empty() {
+            return None;
+        }
+        crate::reads::record_outline(file);
+        let names = self.class_likes_by_file.get(&file).map(Vec::as_slice).unwrap_or_default();
+        Some(names.iter().filter_map(|name| self.class_likes.unrecorded().get(name)).map(Box::as_ref))
     }
 
     /// Refresh anonymous functions and their anonymous-class scopes from a complete file scan.
@@ -246,7 +271,7 @@ impl CodebaseMetadata {
             });
         }
         let mut snapshot = self.clone();
-        snapshot.file_anonymous_classes.insert(file, scanned.class_likes);
+        snapshot.file_anonymous_classes.insert(file, shared::Shared::from(scanned.class_likes.into_inner().unrecorded().clone()));
         snapshot.function_likes.replace_closures(file, scanned.function_likes.into_inner(), declaration_spans);
         snapshot
     }

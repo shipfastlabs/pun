@@ -165,6 +165,35 @@ impl Checks {
         }
     }
 
+    /// What every check reads besides the codebase and the file: the Laravel, Mockery and `@internal` facts and the
+    /// stub docs, as gathered from the whole project (`crate::incremental`).
+    pub(crate) fn fingerprint(&self) -> crate::fingerprint::Fingerprint {
+        // Spans are left out of the structural hash, so the stub docs' pairs go in as offsets.
+        let mut docs: Vec<_> = (self.patched_docs.iter())
+            .map(|(a, b)| {
+                (
+                    a.file_id,
+                    a.start.offset,
+                    a.end.offset,
+                    b.file_id,
+                    b.start.offset,
+                    b.end.offset,
+                )
+            })
+            .collect();
+        docs.sort_unstable();
+        let docs: Vec<_> = (docs.into_iter())
+            .map(|(a, a0, a1, b, b0, b1)| (format!("{a:?}"), a0, a1, format!("{b:?}"), b0, b1))
+            .collect();
+        crate::fingerprint::structure(&(
+            &self.larastan,
+            &self.mockery,
+            &self.internal,
+            docs,
+            &self.type_aliases,
+        ))
+    }
+
     fn extensions(&self) -> impl Iterator<Item = &dyn crate::AnalyseExtension> {
         (self
             .larastan

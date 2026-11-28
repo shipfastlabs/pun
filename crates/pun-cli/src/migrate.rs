@@ -683,7 +683,7 @@ fn closest_preset(
     let exact = pun_config::from_toml(root, &parts.render())?;
     let preset = pun_config::from_toml(root, &plain.render())?;
     let found = |cfg: &pun_config::Config| -> Result<std::collections::HashSet<_>> {
-        let a = crate::analyse::analyse(cfg, &[], false)?;
+        let a = crate::analyse::analyse(cfg, &[], false, false)?;
         Ok((a.findings.into_iter())
             .map(|f| (f.rel, f.line, f.identifier, f.message))
             .collect())

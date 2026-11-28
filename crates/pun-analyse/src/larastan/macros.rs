@@ -21,13 +21,15 @@ const MACROABLE: &[u8] = b"Illuminate\\Support\\Traits\\Macroable";
 const BUILDER: &[u8] = b"Illuminate\\Database\\Eloquent\\Builder";
 const QUERY_BUILDER: &[u8] = b"Illuminate\\Database\\Query\\Builder";
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, serde::Serialize)]
 pub(crate) struct Macros {
+    #[serde(serialize_with = "crate::fingerprint::unordered_nested")]
     macros: HashMap<String, HashMap<String, Macro>>,
+    #[serde(serialize_with = "crate::fingerprint::unordered")]
     accessors: HashMap<String, String>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
 pub(crate) struct Macro {
     /// The return type; a `static` in it is the class the macro is called on.
     pub(crate) ty: TUnion,
@@ -52,7 +54,7 @@ pub(crate) enum Definition {
 
 pub(crate) fn discovered_providers(root: &Path) -> Vec<PathBuf> {
     let composer = root.join("vendor/composer");
-    let Some(installed) = std::fs::read(composer.join("installed.json"))
+    let Some(installed) = crate::io::read(composer.join("installed.json"))
         .ok()
         .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok())
     else {
@@ -90,7 +92,7 @@ pub(crate) fn discovered_providers(root: &Path) -> Vec<PathBuf> {
                     directories
                         .into_iter()
                         .map(|directory| composer.join(path).join(directory).join(&file))
-                        .filter(|file| file.is_file()),
+                        .filter(|file| crate::io::is_file(&file)),
                 );
             }
         }
@@ -113,13 +115,21 @@ impl Macros {
         app: &App,
     ) -> Macros {
         let registers = |path: &&PathBuf| {
-            std::fs::read(path).is_ok_and(|b| {
-                b.windows(7).any(|w| {
-                    w.eq_ignore_ascii_case(b"::macro") || w.eq_ignore_ascii_case(b"::mixin")
+            crate::io::read(path).is_ok_and(|b| {
+                memchr::memmem::find_iter(&b, b"::").any(|at| {
+                    b[at..].get(..7).is_some_and(|w| {
+                        w.eq_ignore_ascii_case(b"::macro") || w.eq_ignore_ascii_case(b"::mixin")
+                    })
                 })
             })
         };
-        let mut files: Vec<PathBuf> = analysed.iter().filter(registers).cloned().collect();
+        let mut files: Vec<PathBuf> = {
+            use rayon::prelude::*;
+            (analysed.par_iter())
+                .filter(|p| registers(p))
+                .cloned()
+                .collect()
+        };
         files.extend_from_slice(bootstrap);
         let php = ["php".to_string()];
         files.extend(crate::php_files(&root.join("app/Providers"), &php));
@@ -547,7 +557,8 @@ impl Walker<'_, '_, '_> {
             },
             _ => None,
         };
-        self.includes.extend(path.filter(|p| p.is_file()));
+        self.includes
+            .extend(path.filter(|p| crate::io::is_file(&p)));
     }
 
     fn class_of(&self, e: &Expression) -> Option<String> {

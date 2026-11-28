@@ -12,7 +12,7 @@ use crate::codebase::read;
 
 fn files(dir: &Path, blade: bool) -> Vec<PathBuf> {
     let mut found = Vec::new();
-    let mut entries: Vec<PathBuf> = std::fs::read_dir(dir)
+    let mut entries: Vec<PathBuf> = crate::io::read_dir(dir)
         .into_iter()
         .flatten()
         .flatten()
@@ -20,7 +20,7 @@ fn files(dir: &Path, blade: bool) -> Vec<PathBuf> {
         .collect();
     entries.sort();
     for p in entries {
-        if p.is_dir() {
+        if crate::io::is_dir(&p) {
             found.extend(files(&p, blade));
         } else if !blade
             || p.to_string_lossy()
@@ -36,7 +36,7 @@ fn files(dir: &Path, blade: bool) -> Vec<PathBuf> {
 pub(crate) struct Finder {
     pub(crate) paths: Vec<PathBuf>,
     /// The view namespaces the providers register (`ns::view`), each with its directories.
-    hints: std::sync::Arc<Vec<(String, Vec<PathBuf>)>>,
+    hints: Hints,
 }
 
 /// ServiceProvider::loadViewsFrom($path, $namespace) calls whose path PHP resolves without running anything:
@@ -50,24 +50,24 @@ static LOAD_VIEWS_FROM: LazyLock<pcre2::bytes::Regex> = LazyLock::new(|| {
 
 /// The namespaces the app's and the discovered packages' providers register, as Larastan's booted application has
 /// them: FileViewFinder looks in the app's `resources/views/vendor/<namespace>` before the provider's directory
-/// (ServiceProvider::loadViewsFrom()). Read once per project root.
-fn hints(root: &Path) -> std::sync::Arc<Vec<(String, Vec<PathBuf>)>> {
+/// (ServiceProvider::loadViewsFrom()). Read once per project root, with what reading them read, which every call
+/// replays: a file that looks a namespace up depends on the providers even when another file computed them.
+fn hints(root: &Path) -> Hints {
     static HINTS: LazyLock<
         std::sync::Mutex<
-            std::collections::HashMap<PathBuf, std::sync::Arc<Vec<(String, Vec<PathBuf>)>>>,
+            std::collections::HashMap<PathBuf, (Hints, std::sync::Arc<mago_codex::reads::Reads>)>,
         >,
     > = LazyLock::new(Default::default);
     let mut cache = HINTS
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
-    cache
-        .entry(root.to_path_buf())
-        .or_insert_with(|| {
+    let (hints, read) = cache.entry(root.to_path_buf()).or_insert_with(|| {
+        let (hints, read) = mago_codex::reads::recording(|| {
             let mut providers = crate::php_files(&root.join("app/Providers"), &["php".to_string()]);
             providers.extend(super::macros::discovered_providers(root));
             let mut hints: Vec<(String, Vec<PathBuf>)> = Vec::new();
             for provider in providers {
-                let (Ok(code), Some(dir)) = (std::fs::read(&provider), provider.parent()) else {
+                let (Ok(code), Some(dir)) = (crate::io::read(&provider), provider.parent()) else {
                     continue;
                 };
                 for found in LOAD_VIEWS_FROM.captures_iter(&code).flatten() {
@@ -89,9 +89,15 @@ fn hints(root: &Path) -> std::sync::Arc<Vec<(String, Vec<PathBuf>)>> {
                 }
             }
             std::sync::Arc::new(hints)
-        })
-        .clone()
+        });
+        (hints, std::sync::Arc::new(read))
+    });
+    mago_codex::reads::replay(read);
+    hints.clone()
 }
+
+/// The view namespaces the providers register, each with its directories.
+type Hints = std::sync::Arc<Vec<(String, Vec<PathBuf>)>>;
 
 impl Finder {
     pub(crate) fn new(root: &Path) -> Finder {
@@ -115,7 +121,7 @@ impl Finder {
             ["blade.php", "php", "css", "html"]
                 .iter()
                 .map(|e| path.join(format!("{file}.{e}")))
-                .find(|p| p.exists())
+                .find(|p| crate::io::exists(&p))
         })
     }
 
@@ -274,7 +280,7 @@ fn stripcslashes(s: &str) -> String {
 
 pub(crate) fn available_translations(directories: &[PathBuf]) -> Vec<String> {
     let mut available = Vec::new();
-    for dir in directories.iter().filter(|d| d.is_dir()) {
+    for dir in directories.iter().filter(|d| crate::io::is_dir(&d)) {
         for file in files(dir, false) {
             let name = file.file_name().unwrap_or_default().to_string_lossy();
             if name.starts_with('.') {
@@ -303,7 +309,7 @@ pub(crate) fn available_translations(directories: &[PathBuf]) -> Vec<String> {
                 }
                 Some("json") => {
                     if let Ok(serde_json::Value::Object(o)) =
-                        serde_json::from_slice(&std::fs::read(&file).unwrap_or_default())
+                        serde_json::from_slice(&crate::io::read(&file).unwrap_or_default())
                     {
                         available.extend(o.keys().cloned());
                     }

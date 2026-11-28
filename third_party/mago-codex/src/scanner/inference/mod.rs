@@ -336,7 +336,8 @@ pub fn infer_initializer_with_codebase(
         expression_types: Some(expression_types),
         codebase: Some(codebase),
     };
-    infer_with_constant_sources(&context, scope, expression, enclosing_class, Some(&codebase.constants), None)
+    // Pun: lookups below record each constant (crate::reads)
+    infer_with_constant_sources(&context, scope, expression, enclosing_class, Some(codebase.constants.unrecorded()), None)
 }
 
 struct InferenceContext<'ctx, 'arena> {
@@ -1037,9 +1038,13 @@ fn infer_constant<'ctx, 'arena>(
     };
 
     if let Some(constants) = constants_map {
-        let selected = constants.get(&ascii_lowercase_constant_name_word(fqn)).or_else(|| {
+        let lookup = |name: Word| {
+            crate::reads::record_constant(name);
+            constants.get(&name)
+        };
+        let selected = lookup(ascii_lowercase_constant_name_word(fqn)).or_else(|| {
             (!constant.value().contains(&b'\\') && !names.is_imported(constant))
-                .then(|| constants.get(&ascii_lowercase_constant_name_word(constant.value())))
+                .then(|| lookup(ascii_lowercase_constant_name_word(constant.value())))
                 .flatten()
         });
         if let Some(selected) = selected.filter(|k| !k.flags.is_built_in()) {
@@ -1058,6 +1063,7 @@ fn infer_constant<'ctx, 'arena>(
 
     if let Some(constants) = constants_map {
         let normalized_name = ascii_lowercase_constant_name_word(fqn);
+        crate::reads::record_constant(normalized_name);
 
         if let Some(constant_metadata) = constants.get(&normalized_name)
             && let Some(inferred_type) = &constant_metadata.inferred_type

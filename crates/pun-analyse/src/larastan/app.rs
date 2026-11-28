@@ -10,7 +10,7 @@ use mago_syntax::walker::MutWalker;
 
 use crate::codebase::{parse, read};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
 enum Value {
     Array(Vec<(String, Value)>),
     String(String),
@@ -54,8 +54,9 @@ impl Value {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, serde::Serialize)]
 pub(crate) struct App {
+    #[serde(serialize_with = "crate::fingerprint::unordered")]
     container: HashMap<String, String>,
     auth: Option<Value>,
     pub(crate) date_class: String,
@@ -288,7 +289,7 @@ pub(crate) fn framework_bindings(root: &Path) -> Vec<(String, String)> {
 /// replace its bindings, then ApplicationBuilder::withExceptions()'s handler when bootstrap/app.php calls it.
 pub(crate) fn bootstrap_bindings(root: &Path) -> Vec<(String, String)> {
     let mut bindings = package_bindings(root);
-    if std::fs::read_to_string(root.join("bootstrap/app.php"))
+    if crate::io::read_to_string(root.join("bootstrap/app.php"))
         .is_ok_and(|app| app.contains("->withExceptions("))
     {
         bindings.push((
@@ -395,7 +396,7 @@ fn class_constant(names: &ResolvedNames, e: &Expression) -> Option<String> {
 }
 
 fn dot_env(root: &Path) -> HashMap<String, String> {
-    let Ok(text) = std::fs::read_to_string(root.join(".env")) else {
+    let Ok(text) = crate::io::read_to_string(root.join(".env")) else {
         return HashMap::new();
     };
     text.lines()
@@ -421,12 +422,12 @@ fn dot_env(root: &Path) -> HashMap<String, String> {
 
 fn auth_config(root: &Path, framework: &Path, env: &HashMap<String, String>) -> Option<Value> {
     let cached = root.join("bootstrap/cache/config.php");
-    if cached.is_file() {
+    if crate::io::is_file(&cached) {
         return returned(&cached, env)?.get("auth").cloned();
     }
     let base = returned(&framework.join("config/auth.php"), env);
     let app = root.join("config/auth.php");
-    let app = if app.is_file() {
+    let app = if crate::io::is_file(&app) {
         returned(&app, env)
     } else {
         None
@@ -535,7 +536,7 @@ fn array(
 
 fn date_class(root: &Path) -> Option<String> {
     let mut found = None;
-    let mut files: Vec<_> = std::fs::read_dir(root.join("app/Providers"))
+    let mut files: Vec<_> = crate::io::read_dir(root.join("app/Providers"))
         .into_iter()
         .flatten()
         .flatten()

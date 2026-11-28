@@ -29,7 +29,7 @@ const ISOLATABLE: &[u8] = b"illuminate\\contracts\\console\\isolatable";
 const INPUT_ARGUMENT: &[u8] = b"Symfony\\Component\\Console\\Input\\InputArgument";
 const INPUT_OPTION: &[u8] = b"Symfony\\Component\\Console\\Input\\InputOption";
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
 pub(crate) struct Command {
     pub(crate) class: String,
     pub(crate) names: Vec<String>,
@@ -47,7 +47,7 @@ impl Command {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
 pub(crate) enum Value {
     Null,
     Bool(bool),
@@ -58,13 +58,13 @@ pub(crate) enum Value {
     Unknown,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
 pub(crate) enum Key {
     Int(i64),
     String(String),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
 pub(crate) struct InputArgument {
     pub(crate) name: String,
     pub(crate) mode: Option<u32>,
@@ -89,7 +89,7 @@ impl InputArgument {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
 pub(crate) struct InputOption {
     pub(crate) name: String,
     pub(crate) mode: Option<u32>,
@@ -133,10 +133,11 @@ impl InputOption {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, serde::Serialize)]
 pub(crate) struct Definition {
     pub(crate) arguments: Vec<InputArgument>,
     pub(crate) options: Vec<InputOption>,
+    #[serde(serialize_with = "crate::fingerprint::unordered")]
     pub(crate) shortcuts: HashMap<String, String>,
 }
 

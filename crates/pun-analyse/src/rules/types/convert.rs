@@ -1981,7 +1981,7 @@ mod never_identity_tests {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/never-identity");
         let file = root.join("conversion.php");
         let oracle: Value =
-            serde_json::from_slice(&std::fs::read(root.join("expected-phpstan.json")).unwrap())
+            serde_json::from_slice(&crate::io::read(root.join("expected-phpstan.json")).unwrap())
                 .unwrap();
         let project = crate::Project::new(vec![file.clone()], Vec::new());
         let (mut codebase, sources) = crate::codebase::build(&project, None).unwrap();

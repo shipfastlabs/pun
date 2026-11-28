@@ -22,6 +22,7 @@ pub mod metadata;
 pub mod misc;
 pub mod operator_overloading;
 pub mod populator;
+pub mod reads;
 pub mod reference;
 pub mod scanner;
 pub mod signature;

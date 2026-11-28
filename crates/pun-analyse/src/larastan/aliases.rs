@@ -69,14 +69,14 @@ pub(crate) fn load(root: &Path) -> Vec<(String, String)> {
         _ => Vec::new(),
     };
     let cached = root.join("bootstrap/cache/config.php");
-    let mut aliases = if cached.is_file() {
+    let mut aliases = if crate::io::is_file(&cached) {
         returned(&cached, &defaults, false)
             .and_then(|v| v.get("app")?.get("aliases").cloned())
             .unwrap_or(Value::Unknown)
             .aliases()
     } else {
         let app = root.join("config/app.php");
-        let app = if app.is_file() {
+        let app = if crate::io::is_file(&app) {
             returned(&app, &defaults, false).unwrap_or(Value::Unknown)
         } else {
             Value::Array(Vec::new())
@@ -96,7 +96,7 @@ pub(crate) fn load(root: &Path) -> Vec<(String, String)> {
     };
     let manifest = root.join("bootstrap/cache/packages.php");
     let mut package_aliases = Vec::new();
-    if manifest.is_file() {
+    if crate::io::is_file(&manifest) {
         if let Some(Value::Array(packages)) = returned(&manifest, &defaults, false) {
             for (_, package) in packages {
                 if let Some(Value::Array(a)) = package.get("aliases") {
@@ -134,7 +134,7 @@ pub(crate) fn load(root: &Path) -> Vec<(String, String)> {
 }
 
 fn json(path: &Path) -> Json {
-    std::fs::read(path)
+    crate::io::read(path)
         .ok()
         .and_then(|s| serde_json::from_slice(&s).ok())
         .unwrap_or(Json::Null)

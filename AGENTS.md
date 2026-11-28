@@ -67,7 +67,7 @@ Pun publishes no benchmark figures: the docs, README and homepage say it is fast
 - The commands divide the work like this. `format` changes layout only. `lint` applies code rules, including PHP-CS-Fixer's risky fixers. `analyse` reports type errors. `check` runs all three in one pass.
 - The Mago crates are pinned to `=1.61.0`. Bump them together. Four of them (mago-analyzer, mago-codex, mago-syntax, mago-phpdoc-syntax) are vendored and patched in `third_party/`; each has a PATCHES.md, and a bump re-applies those patches.
 - `crates/pun-blade` (native Blade, `[format] blade = "native"`) uses oxc's formatters from git, pinned to one rev in the root `Cargo.toml` (with a `[patch.crates-io]` for `oxc_allocator`). `oxc_formatter_css` is vendored and patched in `third_party/` with a PATCHES.md. Check a change against Prettier with prettier-plugin-blade: `cargo test -p punphp-fixers --test blade native_blade` runs the golden files.
-- Harness-only environment variables: `PUN_IGNORE_PHP_CONSTRAINT=1` (for corpora that allow PHP below 8.3), `PUN_BIN`, `PUN_HARNESS_ROOT`, `PUN_PROFILE`, and `PUN_GITHUB_URL` (the plain-HTTP server `pun self-update` downloads from in its tests, instead of github.com and api.github.com).
+- Harness-only environment variables: `PUN_IGNORE_PHP_CONSTRAINT=1` (for corpora that allow PHP below 8.3), `PUN_BIN`, `PUN_HARNESS_ROOT`, `PUN_PROFILE`, `PUN_CACHE_STATS` (`pun analyse` prints how many files its result cache reused and analysed, for its tests), and `PUN_GITHUB_URL` (the plain-HTTP server `pun self-update` downloads from in its tests, instead of github.com and api.github.com).
 - Every test that spawns `pun` sets `PUN_AGENT=0`. Tests of agent mode are the exception.
 
 ## Build budget

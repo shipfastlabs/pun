@@ -57,6 +57,7 @@ mod coalesce_inputs;
 mod coalesce_nullable_receiver;
 mod coalesce_offset_values;
 mod coalesce_scope;
+mod codebase_reads;
 mod compound_assignment_reads;
 mod compound_signature_channels;
 mod conditional_type_correlation;

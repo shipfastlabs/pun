@@ -32,36 +32,50 @@ use pun_phpstan::types::{LateArrayShape, Type, mixed};
 
 use crate::codebase::read;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
 pub(crate) enum IsArray {
     No,
     Maybe,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
 enum Returned {
-    Doc(Node, Option<TUnion>),
+    Doc(#[serde(serialize_with = "debug_text")] Node, Option<TUnion>),
     Array(Vec<Item>, Option<TUnion>),
     Other,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
 struct Item {
     key: Option<Option<String>>,
     value: Value,
     ty: Option<TUnion>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
 enum Value {
     Array(Vec<Item>),
     Other(IsArray),
 }
 
-#[derive(Clone, Debug, Default)]
+type ParsedTypes =
+    BTreeMap<(mago_database::file::FileId, String), (IsArray, Arc<mago_codex::reads::Reads>)>;
+
+#[derive(Clone, Debug, Default, serde::Serialize)]
 pub(crate) struct Configs {
+    #[serde(serialize_with = "crate::fingerprint::path_keyed")]
     files: BTreeMap<PathBuf, Option<Returned>>,
-    parsed: Arc<Mutex<BTreeMap<String, IsArray>>>,
+    /// A cache the checks fill: not part of what the configs say. Keyed by the asking file too, because a doc type
+    /// resolves in the asker's scope: shared across files, the value would depend on which file the run analyses
+    /// first, so a cached run, or one with more processes, would get another one. Each value keeps what computing it
+    /// read (`mago_codex::reads`), replayed by every later call of that file.
+    #[serde(skip)]
+    parsed: Arc<Mutex<ParsedTypes>>,
+}
+
+/// A PHPDoc node, which has no `Serialize`, as its `Debug` text: enough for the fingerprint of the shared facts.
+fn debug_text<S: serde::Serializer>(node: &Node, s: S) -> Result<S::Ok, S::Error> {
+    s.serialize_str(&format!("{node:?}"))
 }
 
 impl Configs {
@@ -103,23 +117,36 @@ impl Configs {
             .find_map(|(_, r)| r.as_ref())
     }
 
-    pub(crate) fn types(&self, keys: &[String], scope: &dyn Scope) -> Option<Vec<IsArray>> {
+    /// The types of `keys`, a doc-typed one resolved in `scope` (whose building read `scope_reads`), the scope of
+    /// `caller`'s first call: the value is memoized for `caller`'s later calls, which replay what computing it read.
+    pub(crate) fn types(
+        &self,
+        keys: &[String],
+        scope: &dyn Scope,
+        scope_reads: &mago_codex::reads::Reads,
+        caller: mago_database::file::FileId,
+    ) -> Option<Vec<IsArray>> {
+        use mago_codex::reads;
         let mut types = Vec::new();
         let mut parsed = self.parsed.lock().unwrap();
         for key in keys {
-            if let Some(ty) = parsed.get(key) {
+            let memo = (caller, key.clone());
+            if let Some((ty, read)) = parsed.get(&memo) {
+                reads::replay(read);
                 types.push(*ty);
                 continue;
             }
             let parts: Vec<&str> = key.split('.').skip(1).collect();
             types.extend(match self.file(key)? {
                 Returned::Doc(node, _) => {
-                    let ty = doc_type(node, &parts, scope);
-                    parsed.insert(key.clone(), ty);
+                    let (ty, mut read) = reads::recording(|| doc_type(node, &parts, scope));
+                    read.extend(scope_reads);
+                    parsed.insert(memo, (ty, Arc::new(read)));
                     Some(ty)
                 }
                 Returned::Array(..) if parts.is_empty() => {
-                    parsed.insert(key.clone(), IsArray::Maybe);
+                    // always `Maybe`: no scope and no symbol decides it
+                    parsed.insert(memo, (IsArray::Maybe, Arc::default()));
                     Some(IsArray::Maybe)
                 }
                 Returned::Array(items, _) => lookup(items, &parts).map(|item| match item.value {

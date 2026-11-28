@@ -1858,7 +1858,9 @@ fn inherited_constant_doc(
 
 pub(super) struct Classes<'c, 'a, 'arena> {
     checker: &'c Checker<'a, 'arena>,
-    cache: RefCell<HashMap<String, Option<Arc<Class>>>>,
+    /// The classes this scope asked for, with what building each read: a hit replays it, as a hit in the shared
+    /// [`ClassCache`] does, so a class built around it records its parents' reads too.
+    cache: RefCell<HashMap<String, CachedClass>>,
 }
 
 thread_local! {
@@ -1866,8 +1868,44 @@ thread_local! {
     static CYCLES: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
 }
 
-#[derive(Default)]
-pub(crate) struct ClassCache(std::sync::Mutex<HashMap<String, Option<Arc<Class>>>>);
+/// The classes built so far, shared by every file's checker, in shards: each file asks for hundreds of classes, and
+/// one lock over them all kept the threads waiting on each other.
+pub(crate) struct ClassCache([std::sync::Mutex<HashMap<String, CachedClass>>; SHARDS]);
+
+const SHARDS: usize = 64;
+
+impl Default for ClassCache {
+    fn default() -> Self {
+        ClassCache(std::array::from_fn(|_| std::sync::Mutex::default()))
+    }
+}
+
+impl ClassCache {
+    fn shard(&self, key: &str) -> &std::sync::Mutex<HashMap<String, CachedClass>> {
+        use std::hash::{BuildHasher, BuildHasherDefault};
+        let hash = BuildHasherDefault::<std::hash::DefaultHasher>::default().hash_one(key);
+        &self.0[(hash as usize) % SHARDS]
+    }
+
+    fn get(&self, key: &str) -> Option<CachedClass> {
+        self.shard(key)
+            .lock()
+            .expect("class cache")
+            .get(key)
+            .cloned()
+    }
+
+    fn insert(&self, key: String, value: CachedClass) {
+        self.shard(&key)
+            .lock()
+            .expect("class cache")
+            .insert(key, value);
+    }
+}
+
+/// A class built for one file and reused by the others, with what building it read: a file that reuses it reads
+/// that too (`mago_codex::reads`).
+type CachedClass = (Option<Arc<Class>>, Arc<mago_codex::reads::Reads>);
 
 impl<'c, 'a, 'arena> Classes<'c, 'a, 'arena> {
     pub(super) fn new(checker: &'c Checker<'a, 'arena>) -> Self {
@@ -1879,12 +1917,14 @@ impl<'c, 'a, 'arena> Classes<'c, 'a, 'arena> {
 
     pub(super) fn get(&self, name: &str) -> Option<Arc<Class>> {
         let key = name.to_ascii_lowercase();
-        if let Some(found) = self.cache.borrow().get(&key) {
+        if let Some((found, reads)) = self.cache.borrow().get(&key) {
+            mago_codex::reads::replay(reads);
             return found.clone();
         }
-        let shared = &self.checker.class_cache.0;
-        if let Some(found) = shared.lock().expect("class cache").get(&key).cloned() {
-            self.cache.borrow_mut().insert(key, found.clone());
+        let shared = self.checker.class_cache;
+        if let Some((found, reads)) = shared.get(&key) {
+            mago_codex::reads::replay(&reads);
+            self.cache.borrow_mut().insert(key, (found.clone(), reads));
             return found;
         }
         if !BUILDING.with_borrow_mut(|b| b.insert(key.clone())) {
@@ -1892,15 +1932,13 @@ impl<'c, 'a, 'arena> Classes<'c, 'a, 'arena> {
             return None;
         }
         let cycles = CYCLES.get();
-        let built = self.build(name).map(Arc::new);
+        let (built, reads) = mago_codex::reads::recording(|| self.build(name).map(Arc::new));
+        let reads = Arc::new(reads);
         BUILDING.with_borrow_mut(|b| b.remove(&key));
         if CYCLES.get() == cycles {
-            shared
-                .lock()
-                .expect("class cache")
-                .insert(key.clone(), built.clone());
+            shared.insert(key.clone(), (built.clone(), Arc::clone(&reads)));
         }
-        self.cache.borrow_mut().insert(key, built.clone());
+        self.cache.borrow_mut().insert(key, (built.clone(), reads));
         built
     }
 

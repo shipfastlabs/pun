@@ -33,7 +33,7 @@ impl Carbon {
     pub fn from_params(root: &Path, params: &Array) -> Option<Carbon> {
         let bootstrap = root.join(BOOTSTRAP);
         let files = params.get_str("bootstrapFiles").and_then(Value::as_array)?;
-        (bootstrap.is_file()
+        (crate::io::is_file(&bootstrap)
             && (files.values().filter_map(Value::as_str))
                 .any(|f| Path::new(f) == bootstrap || root.join(f) == bootstrap))
         .then_some(Carbon)
@@ -113,12 +113,19 @@ impl crate::AnalyseExtension for Carbon {
     /// itself gets none.
     fn prepare_codebase(&self, project: &Project, codebase: &mut CodebaseMetadata) {
         let registers = |path: &&PathBuf| {
-            std::fs::read(path)
-                .is_ok_and(|b| b.windows(7).any(|w| w.eq_ignore_ascii_case(b"::macro")))
+            crate::io::read(path).is_ok_and(|b| {
+                memchr::memmem::find_iter(&b, b"::").any(|at| {
+                    b[at..]
+                        .get(..7)
+                        .is_some_and(|w| w.eq_ignore_ascii_case(b"::macro"))
+                })
+            })
         };
-        let files = (project.analysed.iter().chain(&project.scanned))
-            .filter(registers)
-            .cloned()
+        use rayon::prelude::*;
+        let candidates: Vec<&PathBuf> = project.analysed.iter().chain(&project.scanned).collect();
+        let files = (candidates.par_iter())
+            .filter(|p| registers(p))
+            .map(|p| (*p).clone())
             .collect();
         let mut macros = Vec::new();
         for (class, name, definition) in registrations(files) {

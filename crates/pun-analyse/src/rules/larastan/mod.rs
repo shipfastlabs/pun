@@ -119,27 +119,49 @@ bitflags::bitflags! {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
 pub struct Larastan {
+    #[serde(serialize_with = "crate::fingerprint::path_bytes")]
     pub root: PathBuf,
     pub config_directories: Vec<String>,
+    #[serde(serialize_with = "switch_bits")]
     pub switches: LarastanSwitches,
+    #[serde(serialize_with = "crate::fingerprint::unordered_nested")]
     pub(crate) database_properties: HashMap<String, HashSet<String>>,
+    #[serde(serialize_with = "crate::fingerprint::unordered_nested")]
     pub(crate) table_columns: HashMap<String, HashSet<String>>,
     pub no_unnecessary_collection_call_methods: Vec<String>,
+    #[serde(serialize_with = "crate::fingerprint::paths_bytes")]
     pub view_directories: Vec<PathBuf>,
+    #[serde(serialize_with = "crate::fingerprint::paths_bytes")]
     pub translation_directories: Vec<PathBuf>,
     pub(crate) configs: std::sync::Arc<crate::larastan::config::Configs>,
+    #[serde(serialize_with = "models")]
     pub(crate) models: std::sync::Arc<crate::laravel::Models>,
     pub(crate) app: std::sync::Arc<crate::larastan::app::App>,
+    #[serde(serialize_with = "crate::fingerprint::paths_bytes")]
     pub bootstrap_files: Vec<PathBuf>,
     /// MigrationHelper's and SquashedMigrationHelper's directories
+    #[serde(serialize_with = "crate::fingerprint::paths_bytes")]
     pub migration_directories: Vec<PathBuf>,
+    #[serde(serialize_with = "crate::fingerprint::paths_bytes")]
     pub schema_directories: Vec<PathBuf>,
     pub(crate) macros: std::sync::Arc<crate::larastan::macros::Macros>,
     pub(crate) commands: std::sync::Arc<Vec<crate::larastan::console::Command>>,
     /// The Eloquent builder's `$passthru` for the project's Laravel version (BuilderHelper::getPassthru()).
     pub(crate) passthru: std::sync::Arc<Vec<&'static str>>,
+}
+
+/// The switches as their bits, for the fingerprint of the shared facts (`crate::fingerprint`).
+fn switch_bits<S: serde::Serializer>(switches: &LarastanSwitches, s: S) -> Result<S::Ok, S::Error> {
+    s.serialize_u16(switches.bits())
+}
+
+fn models<S: serde::Serializer>(
+    models: &std::sync::Arc<crate::laravel::Models>,
+    s: S,
+) -> Result<S::Ok, S::Error> {
+    crate::fingerprint::unordered_nested(models, s)
 }
 
 impl Larastan {
@@ -345,9 +367,10 @@ impl crate::AnalyseExtension for Larastan {
             migrations: &self.migration_directories,
             schemas: &self.schema_directories,
         };
+        let tables = crate::laravel::tables(app, project, codebase);
         (self.database_properties, self.table_columns) =
-            crate::laravel::database_properties(app, project, codebase);
-        self.models = Arc::new(crate::laravel::models(app, project, codebase));
+            crate::laravel::database_properties(&tables, codebase);
+        self.models = Arc::new(crate::laravel::models(&tables, codebase));
         self.commands = Arc::new(crate::larastan::console::commands(project, codebase));
         self.app = Arc::new(crate::larastan::app::App::load(&self.root));
         self.passthru = Arc::new(forwards::passthru(
@@ -442,7 +465,9 @@ impl crate::AnalyseExtension for Larastan {
 
 fn app_root(root: &Path) -> PathBuf {
     let skeleton = root.join("vendor/orchestra/testbench-core/laravel");
-    if !root.join("bootstrap/app.php").is_file() && skeleton.join("bootstrap/app.php").is_file() {
+    if !crate::io::is_file(&root.join("bootstrap/app.php"))
+        && crate::io::is_file(&skeleton.join("bootstrap/app.php"))
+    {
         skeleton
     } else {
         root.to_path_buf()

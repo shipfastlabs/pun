@@ -3,6 +3,7 @@ mod schema;
 mod sql;
 mod strings;
 
+use rayon::prelude::*;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -57,7 +58,7 @@ pub(crate) fn resolve_directories(cwd: &Path, paths: &[String]) -> Vec<PathBuf> 
     let mut directories: Vec<PathBuf> = Vec::new();
     for path in paths {
         let path = pun_phpstan::php::absolutize_path(&cwd.to_string_lossy(), path);
-        let matches = if Path::new(&path).is_dir() || !path.contains(['*', '?', '[']) {
+        let matches = if crate::io::is_dir(&Path::new(&path)) || !path.contains(['*', '?', '[']) {
             vec![path]
         } else {
             glob_directories(&path)
@@ -85,7 +86,7 @@ fn glob_directories(pattern: &str) -> Vec<String> {
                 continue;
             }
             let mut names: Vec<String> =
-                std::fs::read_dir(if base.is_empty() { "/" } else { base })
+                crate::io::read_dir(if base.is_empty() { "/" } else { base })
                     .into_iter()
                     .flatten()
                     .flatten()
@@ -98,7 +99,7 @@ fn glob_directories(pattern: &str) -> Vec<String> {
         }
         found = next;
     }
-    found.retain(|d| Path::new(d).is_dir());
+    found.retain(|d| crate::io::is_dir(&Path::new(d)));
     found
 }
 
@@ -113,7 +114,7 @@ pub(crate) fn migration_files(directories: &[PathBuf]) -> Vec<PathBuf> {
 /// directory.
 fn files_below(directories: &[PathBuf], matches: &dyn Fn(&str) -> bool) -> Vec<PathBuf> {
     fn walk(dir: &Path, matches: &dyn Fn(&str) -> bool, out: &mut Vec<PathBuf>) {
-        for entry in std::fs::read_dir(dir).into_iter().flatten().flatten() {
+        for entry in crate::io::read_dir(dir).into_iter().flatten().flatten() {
             let path = entry.path();
             if entry.file_type().is_ok_and(|t| t.is_dir()) {
                 walk(&path, matches, out);
@@ -141,7 +142,7 @@ pub(crate) fn register(
     codebase: &CodebaseMetadata,
 ) {
     registry.register_expression_hook(ModelAttributes {
-        models: std::sync::Arc::new(models(app, project, codebase)),
+        models: std::sync::Arc::new(models(&tables(app, project, codebase), codebase)),
     });
 }
 
@@ -491,23 +492,35 @@ fn scan_tables(
         .collect();
     models.sort();
     models.dedup();
-    for file in project
-        .analysed
-        .iter()
-        .chain(models)
+    // Each file is collected on its own, in parallel, then merged in file order: the collector only overwrites (a
+    // model's later declaration, the last `Date::use()`), so the merge gives what one pass over the files would.
+    let files: Vec<&std::path::PathBuf> = project.analysed.iter().chain(models).collect();
+    let parts: Vec<Scan> = files
+        .par_iter()
         .filter_map(|p| read(p, FileType::Host).ok().flatten())
-    {
-        let arena = LocalArena::new();
-        let program = parse_file(&arena, &file);
-        let names = NameResolver::new(&arena).resolve(program);
-        let parse_casts_method = app.parse_casts_method;
-        Collector {
-            scan: &mut scan,
-            names: &names,
-            codebase,
-            parse_casts_method,
+        .map(|file| {
+            let mut part = Scan {
+                parse_casts_method: app.parse_casts_method,
+                ..Scan::default()
+            };
+            let arena = LocalArena::new();
+            let program = parse_file(&arena, &file);
+            let names = NameResolver::new(&arena).resolve(program);
+            Collector {
+                scan: &mut part,
+                names: &names,
+                codebase,
+                parse_casts_method: app.parse_casts_method,
+            }
+            .walk_program(program, &mut ());
+            part
+        })
+        .collect();
+    for part in parts {
+        scan.models.extend(part.models);
+        if part.date_class.is_some() {
+            scan.date_class = part.date_class;
         }
-        .walk_program(program, &mut ());
     }
     let model_key = |class: &str| model(&scan, codebase, class).map(|m| (m.table, m.key));
     let mut schema = SchemaAggregator::new(codebase, &model_key);
@@ -518,7 +531,7 @@ fn scan_tables(
     });
     dumps.sort();
     for dump in dumps {
-        if let Some(tables) = std::fs::read(&dump)
+        if let Some(tables) = crate::io::read(&dump)
             .ok()
             .and_then(|sql| sql::parse_tables(&sql))
         {
@@ -541,15 +554,22 @@ fn scan_tables(
     (scan, tables)
 }
 
+/// The models the project declares and the tables its migrations and schema dumps build, read once for both
+/// [`database_properties`] and [`models`].
+pub(crate) struct Tables(Scan, HashMap<String, schema::Table>);
+
+pub(crate) fn tables(app: Laravel, project: &Project, codebase: &CodebaseMetadata) -> Tables {
+    let (scan, tables) = scan_tables(app, project, codebase);
+    Tables(scan, tables)
+}
+
 pub(crate) fn database_properties(
-    app: Laravel,
-    project: &Project,
+    Tables(scan, tables): &Tables,
     codebase: &CodebaseMetadata,
 ) -> (
     HashMap<String, std::collections::HashSet<String>>,
     HashMap<String, std::collections::HashSet<String>>,
 ) {
-    let (scan, tables) = scan_tables(app, project, codebase);
     let columns = tables
         .iter()
         .map(|(name, t)| (name.clone(), t.columns.keys().cloned().collect()))
@@ -557,7 +577,7 @@ pub(crate) fn database_properties(
     let properties = scan
         .models
         .keys()
-        .filter_map(|key| model(&scan, codebase, key))
+        .filter_map(|key| model(scan, codebase, key))
         .filter(|m| {
             codebase
                 .get_class_like(m.name.as_bytes())
@@ -583,11 +603,9 @@ pub(crate) fn register_models(registry: &mut PluginRegistry, models: std::sync::
 }
 
 pub(crate) fn models(
-    app: Laravel,
-    project: &Project,
+    Tables(scan, tables): &Tables,
     codebase: &CodebaseMetadata,
 ) -> HashMap<String, HashMap<String, TUnion>> {
-    let (scan, tables) = scan_tables(app, project, codebase);
     let date_class = scan
         .date_class
         .clone()
@@ -597,7 +615,7 @@ pub(crate) fn models(
     for m in scan
         .models
         .keys()
-        .filter_map(|key| model(&scan, codebase, key))
+        .filter_map(|key| model(scan, codebase, key))
     {
         if codebase
             .get_class_like(m.name.as_bytes())

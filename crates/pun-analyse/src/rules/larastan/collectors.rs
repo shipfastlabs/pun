@@ -217,7 +217,7 @@ pub(crate) fn finish(larastan: Option<&Larastan>, errors: Vec<Error>) -> Vec<Err
     {
         let directories = if larastan.translation_directories.is_empty() {
             let resources = larastan.root.join("resources/lang");
-            vec![if resources.is_dir() {
+            vec![if crate::io::is_dir(&resources) {
                 resources
             } else {
                 larastan.root.join("lang")

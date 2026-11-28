@@ -13,8 +13,11 @@ use mago_syntax::walker::MutWalker;
 use super::Checker;
 use super::members::Method;
 
+#[derive(Debug, serde::Serialize)]
 pub(super) struct Names {
+    #[serde(serialize_with = "crate::fingerprint::unordered")]
     methods: HashSet<Vec<u8>>,
+    #[serde(serialize_with = "crate::fingerprint::unordered")]
     properties: HashSet<Vec<u8>>,
 }
 
