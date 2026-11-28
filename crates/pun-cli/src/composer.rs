@@ -37,6 +37,13 @@ enum ComposerCmd {
     /// Write the autoloader again from vendor/composer/installed.json, as `composer dump-autoload` does.
     #[command(visible_alias = "dumpautoload")]
     DumpAutoload(DumpArgs),
+    /// Check the platform requirements of the installed packages against the real platform, as
+    /// `composer check-platform-reqs` does.
+    CheckPlatformReqs(crate::platform_reqs::PlatformReqsArgs),
+    /// Show the licenses of the root and its dependencies, as `composer licenses` does.
+    Licenses(crate::licenses::LicensesArgs),
+    /// Show the packages the root and its dependencies suggest, as `composer suggests` does.
+    Suggests(crate::suggests::SuggestsArgs),
     /// Run a script from composer.json, as `composer run-script` does; a script also runs as `pun composer <script>`.
     #[command(visible_alias = "run")]
     RunScript(RunArgs),
@@ -168,6 +175,9 @@ pub(crate) fn run(a: ComposerArgs) -> Result<Exit> {
     let globals = a.globals;
     match a.cmd {
         ComposerCmd::DumpAutoload(d) => dump(&d, &globals),
+        ComposerCmd::CheckPlatformReqs(c) => crate::platform_reqs::run(&c, &globals),
+        ComposerCmd::Licenses(l) => crate::licenses::run(&l, &globals),
+        ComposerCmd::Suggests(s) => crate::suggests::run(&s, &globals),
         ComposerCmd::RunScript(r) => {
             let project = project(globals.working_dir.as_ref(), false)?;
             run_script(&project, &r, &globals, true)

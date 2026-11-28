@@ -3,7 +3,7 @@ title: pun composer
 description: Run other Composer commands.
 ---
 
-Run Composer commands that have no `pun` command of their own: `dump-autoload`, `run-script` and `exec`.
+Run Composer commands that have no `pun` command of their own: `dump-autoload`, `run-script`, `exec`, `check-platform-reqs`, `licenses` and `suggests`.
 
 ## Usage
 
@@ -20,9 +20,22 @@ pun composer test
 pun composer run --list
 pun composer exec phpstan -- analyse --memory-limit=1G
 pun composer exec --list
+pun composer check-platform-reqs
+pun composer check-platform-reqs --lock --no-dev --format=json
+pun composer licenses --format=json
+pun composer licenses --locked --no-dev --format=summary
+pun composer suggests --by-suggestion
+pun composer suggests --all --list
 ```
 
 ## Options
+
+For every command, before or after its name:
+
+| Option | Description |
+| --- | --- |
+| `-d`, `--working-dir=<dir>` | Run in `<dir>`. |
+| `-n`, `--no-interaction` | Ask nothing: `run-script` without a script name exits 2, `exec` without a binary lists the binaries. |
 
 For `dump-autoload` (alias `dumpautoload`):
 
@@ -38,6 +51,46 @@ For `dump-autoload` (alias `dumpautoload`):
 | `--no-plugins` | Skip Composer plugins. |
 | `--ignore-platform-req=<req>` | Leave one requirement out of `platform_check.php`. |
 | `--ignore-platform-reqs` | Write no `platform_check.php`. |
+
+For `check-platform-reqs`:
+
+| Option | Description |
+| --- | --- |
+| `--no-dev` | Leave out the requirements of `require-dev` and of the dev packages. |
+| `--lock` | Check the packages of `composer.lock`, not those installed in `vendor/`. |
+| `-f`, `--format=<format>` | `text` (the default) or `json`. Another value is `text`, as in Composer. |
+| `--no-plugins` | Load no plugins: each package counts where Composer's own installer puts it, in `vendor/`. |
+| `-q`, `--quiet` | Print nothing, the JSON included. The exit code still tells. |
+| `--ansi`, `--no-ansi` | Colour the output, or don't; `--ansi` wins when both are given. By default each of stdout and stderr is coloured on a terminal. |
+| `-v`, `-vv`, `-vvv` | Taken, as in Composer, but Pun prints no debug output. |
+| `--no-scripts`, `--no-cache` | Taken, as in Composer. This command runs no scripts and uses no cache. |
+
+For `licenses`:
+
+| Option | Description |
+| --- | --- |
+| `-f`, `--format=<format>` | `text` (the default), `json` or `summary`. |
+| `--no-dev` | Leave out the packages only `require-dev` needs. |
+| `--locked` | Show the packages of `composer.lock`, not those installed in `vendor/`. |
+| `--ansi`, `--no-ansi` | Colour the output, with each package's name a link to its source or homepage, or don't; `--ansi` wins when both are given. By default each of stdout and stderr is coloured on a terminal. |
+| `-q`, `--quiet` | Print nothing. The exit code still tells. |
+| `--no-plugins` | Load no plugins: each package counts where Composer's own installer puts it, in `vendor/`. |
+| `-v`, `-vv`, `-vvv`, `--no-scripts`, `--no-cache` | Taken, as in Composer. They change nothing here. |
+
+For `suggests`:
+
+| Option | Description |
+| --- | --- |
+| `[packages]...` | Show only what these packages suggest, transitive ones included. |
+| `--by-package` | Group by the package that suggests (the default). |
+| `--by-suggestion` | Group by the suggested package; with `--by-package`, both, by package first. |
+| `-a`, `--all` | Show the suggestions of every dependency, not only those of the root and the packages it requires. |
+| `--list` | Show only the names of the suggested packages. |
+| `--no-dev` | With a `composer.lock`, leave out the packages only `require-dev` needs. |
+| `--ansi`, `--no-ansi` | Colour the output, or don't; `--ansi` wins when both are given. |
+| `-q`, `--quiet` | Print nothing, Composer's errors included. The exit code still tells. |
+| `--no-plugins` | Load no plugins: each package counts where Composer's own installer puts it, in `vendor/`. |
+| `-v`, `-vv`, `-vvv`, `--no-scripts`, `--no-cache` | Taken, as in Composer. They change nothing here. |
 
 For `run-script` (alias `run`):
 
@@ -60,13 +113,6 @@ For `exec`:
 | `-v`, `-vv`, `-vvv` | Print the command before it runs. Pun prints no further debug output. |
 | `--ansi`, `--no-ansi` | Colour the list and the error line, or don't; `--ansi` wins when both are given. By default each of stdout and stderr is coloured on a terminal. |
 | `--no-plugins`, `--no-scripts`, `--no-cache` | Taken, as in Composer. They change nothing here. |
-
-For every command, before or after its name:
-
-| Option | Description |
-| --- | --- |
-| `-d`, `--working-dir=<dir>` | Run in `<dir>`. |
-| `-n`, `--no-interaction` | Ask nothing: `run-script` without a script name exits 2, `exec` without a binary lists the binaries. |
 
 A script also runs as `pun composer <script>`, or by a name from `scripts-aliases`, as in Composer. That form takes `--dev`, `--no-dev`, `--no-plugins`, `-d` and `-n`, and, like Composer, stops reading at the first option it doesn't know: that option and every word after it are dropped, unless they follow `--`. Scripts named after a Composer event, such as `post-autoload-dump`, or after a Composer command or its alias, such as `show` or `i`, run only through `run-script`. A Composer command's name also wins over a script's alias.
 
@@ -97,9 +143,33 @@ A script also runs as `pun composer <script>`, or by a name from `scripts-aliase
 - Without a binary, in a terminal, asks which binary to run; otherwise, and with `--list`, lists the files of the bin dir (without a `.bat` beside its binary) and composer.json's `bin`, marked `(local)`.
 - Exits with the binary's exit code, after Composer's line about it when it isn't 0.
 
+`check-platform-reqs`:
+
+- Checks the platform requirements (`php`, `ext-*`, `lib-*`, `composer-plugin-api` and the rest) of the packages installed in `vendor/` and of the root against the real platform: the PHP that `PHP_BINARY`, else `php` on the `PATH`, runs. `config.platform` doesn't count, as in Composer.
+- With nothing installed in `vendor/`, it checks the packages of `composer.lock` instead. A package whose directory is gone doesn't count as installed.
+- Plugins decide where that directory is, as in Composer. Pun runs no plugin, but follows Composer's rules for which installed plugins load (`allow-plugins`, and whether the root requires them) and prints Composer's warnings and errors about the others. When a plugin loads, a package's directory is the one `vendor/composer/installed.json` records, which an installer plugin such as composer/installers can put outside `vendor/`. Otherwise, and with `--no-plugins`, it is `vendor/<name>`. Composer's global plugins (in `COMPOSER_HOME`) are left out.
+- A `self.version` link of the root uses the root's version as Composer finds it: its `version`, else `COMPOSER_ROOT_VERSION`, else git's, else `1.0.0`, with Composer's warning.
+- A package that provides or replaces a platform package meets its requirements, as in Composer.
+- Prints Composer's table, or its JSON with `--format=json`.
+
+`licenses`:
+
+- Lists the root's licenses, then each package installed in `vendor/` (or locked, with `--locked`) with its version and licenses, by name. A package with a branch alias shows twice, as the alias and the package, as in Composer; the JSON holds it once.
+- A dev version shows the start of its commit, as Composer shows it (`dev-main 1234567`).
+- Packages count as installed as for `check-platform-reqs` (the same plugin rules); the root's version is the one Composer finds, `1.0.0+no-version-set` when it finds none.
+
+`suggests`:
+
+- Lists what the root and its dependencies suggest, from `composer.lock` when there is one, else from `vendor/`. Without a lock, `--no-dev` changes nothing, as in Composer.
+- Leaves out what is already there: a suggested package some other package is, provides or replaces, and a platform package the PHP you run has (`config.platform`, or the lock's platform overrides, count too).
+- Without `--all` or package names, shows only what the root and the packages it requires suggest, and how many more `--all` shows.
+- A named package that isn't installed, or that `--no-dev` leaves out, prints Composer's error and exits 1.
+
 ## Limitations
 
-- Only `dump-autoload`, `run-script` and `exec` exist. Any other command exits 2.
+- Only `dump-autoload`, `run-script`, `exec`, `check-platform-reqs`, `licenses` and `suggests` exist. Any other command exits 2.
+- `check-platform-reqs`, `licenses` and `suggests` print only the first line of Composer's message for a composer.json, composer.lock or installed.json that isn't valid JSON, without the description of the error. It doesn't check composer.json against Composer's schema, apart from it being an object.
+- Only `-d` and `-n` work before the command's name; put the other options after it.
 - `exec` doesn't take Composer's `--help`, `--version` or `--profile` after the binary: put them before `exec`, or after `--` for the binary.
 - `run-script` without a script name outside a terminal exits 2.
 
@@ -107,7 +177,7 @@ A script also runs as `pun composer <script>`, or by a name from `scripts-aliase
 
 | Code | Meaning |
 | --- | --- |
-| 0 | Written, or the script or binary succeeded. |
-| 1 | Written, but a package is missing from `vendor/`. |
-| 2 | Unknown command or script, or another error. |
+| 0 | Written, or every platform requirement is met, or listed, or the script or binary succeeded. |
+| 1 | Written, but a package is missing from `vendor/`; or the platform has a required package at a version that doesn't match; or `suggests` was given a package that isn't installed. |
+| 2 | Unknown command or script, or another error; or the platform lacks a required package. |
 | other | `run-script` and `exec`: the failed script's or binary's exit code, as in Composer. |

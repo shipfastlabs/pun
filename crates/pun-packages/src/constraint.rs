@@ -452,6 +452,85 @@ fn parse_one(constraint: &str) -> Result<Vec<Constraint>> {
     Ok(vec![Constraint::Single(op, version)])
 }
 
+/// `(string) $constraint` of what composer/semver's `VersionParser::parseConstraints` builds from the text `constraint`
+/// was parsed from: `>= 1.0.0.0-dev` for one, `[a b]` for all of several, `[a || b]` for any of them, `*` for any version.
+/// Its alternatives are joined as `MultiConstraint::create` joins them: a range that ends where the next starts becomes
+/// one (`^1.0 || ^2.0` is `[>= 1.0.0.0-dev < 3.0.0.0-dev]`).
+pub fn composer_string(constraint: &Constraint) -> String {
+    match constraint {
+        Constraint::Multi(alternatives, false) => {
+            let mut joined = join_ranges(alternatives);
+            if joined.len() == 1 {
+                joined.pop().expect("one")
+            } else {
+                format!("[{}]", joined.join(" || "))
+            }
+        }
+        other => text(other),
+    }
+}
+
+/// `Constraint::$transOpInt`: an operator as composer/semver writes it.
+fn op_str(op: Op) -> &'static str {
+    match op {
+        Op::Eq => "==",
+        Op::Lt => "<",
+        Op::Le => "<=",
+        Op::Gt => ">",
+        Op::Ge => ">=",
+        Op::Ne => "!=",
+    }
+}
+
+/// `__toString` of a constraint as it stands.
+fn text(constraint: &Constraint) -> String {
+    match constraint {
+        Constraint::Any => "*".into(),
+        Constraint::Single(op, version) => format!("{} {version}", op_str(*op)),
+        Constraint::Multi(items, conjunctive) => {
+            let parts: Vec<String> = items.iter().map(text).collect();
+            format!("[{}]", parts.join(if *conjunctive { " " } else { " || " }))
+        }
+    }
+}
+
+/// `MultiConstraint::optimizeConstraints` for alternatives, on their strings: `[>= a < b]` then `[>= b < c]` is
+/// `[>= a < c]`. The alternatives come back as text.
+fn join_ranges(alternatives: &[Constraint]) -> Vec<String> {
+    // A two-sided range: its lower and upper constraint as text.
+    let range = |c: &Constraint| match c {
+        Constraint::Multi(items, true) if items.len() == 2 => {
+            let (low, high) = (text(&items[0]), text(&items[1]));
+            (low.starts_with(">=") && high.starts_with('<')).then_some((low, high))
+        }
+        _ => None,
+    };
+    let mut out = vec![];
+    let mut left: Option<(String, String)> = None;
+    let mut left_text = text(&alternatives[0]);
+    if let Some(r) = range(&alternatives[0]) {
+        left = Some(r);
+    }
+    for right in &alternatives[1..] {
+        let right_range = range(right);
+        match (&left, &right_range) {
+            (Some((low, high)), Some((right_low, right_high)))
+                if high.get(2..) == right_low.get(3..) =>
+            {
+                let merged = (low.clone(), right_high.clone());
+                left_text = format!("[{} {}]", merged.0, merged.1);
+                left = Some(merged);
+            }
+            _ => {
+                out.push(std::mem::replace(&mut left_text, text(right)));
+                left = right_range;
+            }
+        }
+    }
+    out.push(left_text);
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -682,5 +761,22 @@ mod tests {
         ] {
             assert_eq!(parse(c).unwrap_err().to_string(), message, "{c}");
         }
+    }
+
+    /// composer/semver's own `(string) parseConstraints(...)` (tests/fixtures/constraint-strings.json, from
+    /// scripts/export-constraint-strings.php).
+    #[test]
+    fn strings_as_composer_writes_them() {
+        let fixture: serde_json::Value =
+            serde_json::from_str(include_str!("../tests/fixtures/constraint-strings.json"))
+                .unwrap();
+        let wrong: Vec<String> = (fixture.as_object().unwrap().iter())
+            .filter_map(|(given, want)| {
+                let got = composer_string(&parse(given).unwrap());
+                (got != want.as_str().unwrap())
+                    .then(|| format!("{given:?}: Composer {want}, Pun {got}"))
+            })
+            .collect();
+        assert!(wrong.is_empty(), "{}", wrong.join("\n"));
     }
 }

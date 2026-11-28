@@ -1,0 +1,626 @@
+{
+ "cases": [
+  {
+   "name": "text",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/beta\",\n            \"version\": \"2.0.0\",\n            \"version_normalized\": \"2.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\",\n                \"Apache-2.0\"\n            ],\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/beta.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            },\n            \"support\": {\n                \"source\": \"https://github.com/acme/beta/tree/2.0.0\"\n            }\n        },\n        {\n            \"name\": \"zeta/none\",\n            \"version\": \"0.1.0\",\n            \"version_normalized\": \"0.1.0.0\",\n            \"type\": \"library\"\n        },\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        },\n        {\n            \"name\": \"acme/string\",\n            \"version\": \"3.1.0\",\n            \"version_normalized\": \"3.1.0.0\",\n            \"type\": \"library\",\n            \"license\": \"BSD-3-Clause\"\n        },\n        {\n            \"name\": \"acme/dev-git\",\n            \"version\": \"dev-main\",\n            \"version_normalized\": \"dev-main\",\n            \"type\": \"library\",\n            \"license\": [\n                \"GPL-2.0-or-later\"\n            ],\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://example.org/dev-git.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            }\n        },\n        {\n            \"name\": \"acme/dev-dist\",\n            \"version\": \"1.x-dev\",\n            \"version_normalized\": \"1.9999999.9999999.9999999-dev\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"dist\": {\n                \"type\": \"zip\",\n                \"url\": \"https://example.org/dev-dist.zip\",\n                \"reference\": \"abcdef\"\n            }\n        },\n        {\n            \"name\": \"acme/dev-svn\",\n            \"version\": \"dev-trunk\",\n            \"version_normalized\": \"dev-trunk\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"source\": {\n                \"type\": \"svn\",\n                \"url\": \"https://example.org/svn\",\n                \"reference\": \"trunk@12\"\n            }\n        },\n        {\n            \"name\": \"acme/aliased\",\n            \"version\": \"dev-main\",\n            \"version_normalized\": \"dev-main\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"extra\": {\n                \"branch-alias\": {\n                    \"dev-main\": \"2.x-dev\"\n                }\n            },\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/aliased.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            }\n        },\n        {\n            \"name\": \"Acme/Upper\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"ISC\"\n            ],\n            \"homepage\": \"\"\n        },\n        {\n            \"name\": \"acme/wide\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"Propri\\u00e9taire\",\n                \"Licence-\\u65e5\\u672c\"\n            ]\n        },\n        {\n            \"name\": \"acme/empty-license\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": []\n        },\n        {\n            \"name\": \"acme/meta\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"metapackage\",\n            \"license\": [\n                \"MIT\"\n            ]\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/beta/.keep": "",
+    "vendor/zeta/none/.keep": "",
+    "vendor/acme/alpha/.keep": "",
+    "vendor/acme/string/.keep": "",
+    "vendor/acme/dev-git/.keep": "",
+    "vendor/acme/dev-dist/.keep": "",
+    "vendor/acme/dev-svn/.keep": "",
+    "vendor/acme/aliased/.keep": "",
+    "vendor/Acme/Upper/.keep": "",
+    "vendor/acme/wide/.keep": "",
+    "vendor/acme/empty-license/.keep": ""
+   },
+   "args": [
+    "licenses"
+   ],
+   "exit": 0,
+   "stdout": "Name: acme/app\nVersion: 1.0.0\nLicenses: MIT\nDependencies:\n\nName               Version          Licenses                   \nacme/aliased       2.x-dev 1234567  MIT                        \nacme/aliased       dev-main 1234567 MIT                        \nacme/alpha         1.2.3            MIT                        \nacme/beta          2.0.0            MIT, Apache-2.0            \nacme/dev-dist      1.x-dev abcdef   MIT                        \nacme/dev-git       dev-main 1234567 GPL-2.0-or-later           \nacme/dev-svn       dev-trunk        MIT                        \nacme/empty-license 1.0.0            none                       \nacme/meta          1.0.0            MIT                        \nacme/string        3.1.0            BSD-3-Clause               \nAcme/Upper         1.0.0            ISC                        \nacme/wide          1.0.0            Propriétaire, Licence-日本 \nzeta/none          0.1.0            none                       \n",
+   "stderr": ""
+  },
+  {
+   "name": "json",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/beta\",\n            \"version\": \"2.0.0\",\n            \"version_normalized\": \"2.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\",\n                \"Apache-2.0\"\n            ],\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/beta.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            },\n            \"support\": {\n                \"source\": \"https://github.com/acme/beta/tree/2.0.0\"\n            }\n        },\n        {\n            \"name\": \"zeta/none\",\n            \"version\": \"0.1.0\",\n            \"version_normalized\": \"0.1.0.0\",\n            \"type\": \"library\"\n        },\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        },\n        {\n            \"name\": \"acme/string\",\n            \"version\": \"3.1.0\",\n            \"version_normalized\": \"3.1.0.0\",\n            \"type\": \"library\",\n            \"license\": \"BSD-3-Clause\"\n        },\n        {\n            \"name\": \"acme/dev-git\",\n            \"version\": \"dev-main\",\n            \"version_normalized\": \"dev-main\",\n            \"type\": \"library\",\n            \"license\": [\n                \"GPL-2.0-or-later\"\n            ],\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://example.org/dev-git.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            }\n        },\n        {\n            \"name\": \"acme/dev-dist\",\n            \"version\": \"1.x-dev\",\n            \"version_normalized\": \"1.9999999.9999999.9999999-dev\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"dist\": {\n                \"type\": \"zip\",\n                \"url\": \"https://example.org/dev-dist.zip\",\n                \"reference\": \"abcdef\"\n            }\n        },\n        {\n            \"name\": \"acme/dev-svn\",\n            \"version\": \"dev-trunk\",\n            \"version_normalized\": \"dev-trunk\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"source\": {\n                \"type\": \"svn\",\n                \"url\": \"https://example.org/svn\",\n                \"reference\": \"trunk@12\"\n            }\n        },\n        {\n            \"name\": \"acme/aliased\",\n            \"version\": \"dev-main\",\n            \"version_normalized\": \"dev-main\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"extra\": {\n                \"branch-alias\": {\n                    \"dev-main\": \"2.x-dev\"\n                }\n            },\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/aliased.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            }\n        },\n        {\n            \"name\": \"Acme/Upper\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"ISC\"\n            ],\n            \"homepage\": \"\"\n        },\n        {\n            \"name\": \"acme/wide\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"Propri\\u00e9taire\",\n                \"Licence-\\u65e5\\u672c\"\n            ]\n        },\n        {\n            \"name\": \"acme/empty-license\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": []\n        },\n        {\n            \"name\": \"acme/meta\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"metapackage\",\n            \"license\": [\n                \"MIT\"\n            ]\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/beta/.keep": "",
+    "vendor/zeta/none/.keep": "",
+    "vendor/acme/alpha/.keep": "",
+    "vendor/acme/string/.keep": "",
+    "vendor/acme/dev-git/.keep": "",
+    "vendor/acme/dev-dist/.keep": "",
+    "vendor/acme/dev-svn/.keep": "",
+    "vendor/acme/aliased/.keep": "",
+    "vendor/Acme/Upper/.keep": "",
+    "vendor/acme/wide/.keep": "",
+    "vendor/acme/empty-license/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "--format=json"
+   ],
+   "exit": 0,
+   "stdout": "{\n    \"name\": \"acme/app\",\n    \"version\": \"1.0.0\",\n    \"license\": [\n        \"MIT\"\n    ],\n    \"dependencies\": {\n        \"acme/aliased\": {\n            \"version\": \"dev-main 1234567\",\n            \"license\": [\n                \"MIT\"\n            ]\n        },\n        \"acme/alpha\": {\n            \"version\": \"1.2.3\",\n            \"license\": [\n                \"MIT\"\n            ]\n        },\n        \"acme/beta\": {\n            \"version\": \"2.0.0\",\n            \"license\": [\n                \"MIT\",\n                \"Apache-2.0\"\n            ]\n        },\n        \"acme/dev-dist\": {\n            \"version\": \"1.x-dev abcdef\",\n            \"license\": [\n                \"MIT\"\n            ]\n        },\n        \"acme/dev-git\": {\n            \"version\": \"dev-main 1234567\",\n            \"license\": [\n                \"GPL-2.0-or-later\"\n            ]\n        },\n        \"acme/dev-svn\": {\n            \"version\": \"dev-trunk\",\n            \"license\": [\n                \"MIT\"\n            ]\n        },\n        \"acme/empty-license\": {\n            \"version\": \"1.0.0\",\n            \"license\": []\n        },\n        \"acme/meta\": {\n            \"version\": \"1.0.0\",\n            \"license\": [\n                \"MIT\"\n            ]\n        },\n        \"acme/string\": {\n            \"version\": \"3.1.0\",\n            \"license\": [\n                \"BSD-3-Clause\"\n            ]\n        },\n        \"Acme/Upper\": {\n            \"version\": \"1.0.0\",\n            \"license\": [\n                \"ISC\"\n            ]\n        },\n        \"acme/wide\": {\n            \"version\": \"1.0.0\",\n            \"license\": [\n                \"Propriétaire\",\n                \"Licence-日本\"\n            ]\n        },\n        \"zeta/none\": {\n            \"version\": \"0.1.0\",\n            \"license\": []\n        }\n    }\n}\n",
+   "stderr": ""
+  },
+  {
+   "name": "summary",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/beta\",\n            \"version\": \"2.0.0\",\n            \"version_normalized\": \"2.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\",\n                \"Apache-2.0\"\n            ],\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/beta.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            },\n            \"support\": {\n                \"source\": \"https://github.com/acme/beta/tree/2.0.0\"\n            }\n        },\n        {\n            \"name\": \"zeta/none\",\n            \"version\": \"0.1.0\",\n            \"version_normalized\": \"0.1.0.0\",\n            \"type\": \"library\"\n        },\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        },\n        {\n            \"name\": \"acme/string\",\n            \"version\": \"3.1.0\",\n            \"version_normalized\": \"3.1.0.0\",\n            \"type\": \"library\",\n            \"license\": \"BSD-3-Clause\"\n        },\n        {\n            \"name\": \"acme/dev-git\",\n            \"version\": \"dev-main\",\n            \"version_normalized\": \"dev-main\",\n            \"type\": \"library\",\n            \"license\": [\n                \"GPL-2.0-or-later\"\n            ],\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://example.org/dev-git.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            }\n        },\n        {\n            \"name\": \"acme/dev-dist\",\n            \"version\": \"1.x-dev\",\n            \"version_normalized\": \"1.9999999.9999999.9999999-dev\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"dist\": {\n                \"type\": \"zip\",\n                \"url\": \"https://example.org/dev-dist.zip\",\n                \"reference\": \"abcdef\"\n            }\n        },\n        {\n            \"name\": \"acme/dev-svn\",\n            \"version\": \"dev-trunk\",\n            \"version_normalized\": \"dev-trunk\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"source\": {\n                \"type\": \"svn\",\n                \"url\": \"https://example.org/svn\",\n                \"reference\": \"trunk@12\"\n            }\n        },\n        {\n            \"name\": \"acme/aliased\",\n            \"version\": \"dev-main\",\n            \"version_normalized\": \"dev-main\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"extra\": {\n                \"branch-alias\": {\n                    \"dev-main\": \"2.x-dev\"\n                }\n            },\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/aliased.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            }\n        },\n        {\n            \"name\": \"Acme/Upper\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"ISC\"\n            ],\n            \"homepage\": \"\"\n        },\n        {\n            \"name\": \"acme/wide\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"Propri\\u00e9taire\",\n                \"Licence-\\u65e5\\u672c\"\n            ]\n        },\n        {\n            \"name\": \"acme/empty-license\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": []\n        },\n        {\n            \"name\": \"acme/meta\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"metapackage\",\n            \"license\": [\n                \"MIT\"\n            ]\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/beta/.keep": "",
+    "vendor/zeta/none/.keep": "",
+    "vendor/acme/alpha/.keep": "",
+    "vendor/acme/string/.keep": "",
+    "vendor/acme/dev-git/.keep": "",
+    "vendor/acme/dev-dist/.keep": "",
+    "vendor/acme/dev-svn/.keep": "",
+    "vendor/acme/aliased/.keep": "",
+    "vendor/Acme/Upper/.keep": "",
+    "vendor/acme/wide/.keep": "",
+    "vendor/acme/empty-license/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "--format",
+    "summary"
+   ],
+   "exit": 0,
+   "stdout": " ------------------ ------------------------ \n  License            Number of dependencies  \n ------------------ ------------------------ \n  MIT                7                       \n  none               2                       \n  Apache-2.0         1                       \n  GPL-2.0-or-later   1                       \n  BSD-3-Clause       1                       \n  ISC                1                       \n  Propriétaire       1                       \n  Licence-日本       1                       \n ------------------ ------------------------ \n\n",
+   "stderr": ""
+  },
+  {
+   "name": "format-short",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "-f",
+    "json"
+   ],
+   "exit": 0,
+   "stdout": "{\n    \"name\": \"acme/app\",\n    \"version\": \"1.0.0\",\n    \"license\": [\n        \"MIT\"\n    ],\n    \"dependencies\": {\n        \"acme/alpha\": {\n            \"version\": \"1.2.3\",\n            \"license\": [\n                \"MIT\"\n            ]\n        }\n    }\n}\n",
+   "stderr": ""
+  },
+  {
+   "name": "format-invalid",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "--format=xml"
+   ],
+   "exit": 1,
+   "stdout": "",
+   "stderr": "",
+   "message": [
+    "Unsupported format \"xml\".  See help for supported formats."
+   ]
+  },
+  {
+   "name": "text-ansi",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/beta\",\n            \"version\": \"2.0.0\",\n            \"version_normalized\": \"2.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\",\n                \"Apache-2.0\"\n            ],\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/beta.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            },\n            \"support\": {\n                \"source\": \"https://github.com/acme/beta/tree/2.0.0\"\n            }\n        },\n        {\n            \"name\": \"zeta/none\",\n            \"version\": \"0.1.0\",\n            \"version_normalized\": \"0.1.0.0\",\n            \"type\": \"library\"\n        },\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        },\n        {\n            \"name\": \"acme/string\",\n            \"version\": \"3.1.0\",\n            \"version_normalized\": \"3.1.0.0\",\n            \"type\": \"library\",\n            \"license\": \"BSD-3-Clause\"\n        },\n        {\n            \"name\": \"acme/dev-git\",\n            \"version\": \"dev-main\",\n            \"version_normalized\": \"dev-main\",\n            \"type\": \"library\",\n            \"license\": [\n                \"GPL-2.0-or-later\"\n            ],\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://example.org/dev-git.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            }\n        },\n        {\n            \"name\": \"acme/dev-dist\",\n            \"version\": \"1.x-dev\",\n            \"version_normalized\": \"1.9999999.9999999.9999999-dev\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"dist\": {\n                \"type\": \"zip\",\n                \"url\": \"https://example.org/dev-dist.zip\",\n                \"reference\": \"abcdef\"\n            }\n        },\n        {\n            \"name\": \"acme/dev-svn\",\n            \"version\": \"dev-trunk\",\n            \"version_normalized\": \"dev-trunk\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"source\": {\n                \"type\": \"svn\",\n                \"url\": \"https://example.org/svn\",\n                \"reference\": \"trunk@12\"\n            }\n        },\n        {\n            \"name\": \"acme/aliased\",\n            \"version\": \"dev-main\",\n            \"version_normalized\": \"dev-main\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"extra\": {\n                \"branch-alias\": {\n                    \"dev-main\": \"2.x-dev\"\n                }\n            },\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/aliased.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            }\n        },\n        {\n            \"name\": \"Acme/Upper\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"ISC\"\n            ],\n            \"homepage\": \"\"\n        },\n        {\n            \"name\": \"acme/wide\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"Propri\\u00e9taire\",\n                \"Licence-\\u65e5\\u672c\"\n            ]\n        },\n        {\n            \"name\": \"acme/empty-license\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": []\n        },\n        {\n            \"name\": \"acme/meta\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"metapackage\",\n            \"license\": [\n                \"MIT\"\n            ]\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/beta/.keep": "",
+    "vendor/zeta/none/.keep": "",
+    "vendor/acme/alpha/.keep": "",
+    "vendor/acme/string/.keep": "",
+    "vendor/acme/dev-git/.keep": "",
+    "vendor/acme/dev-dist/.keep": "",
+    "vendor/acme/dev-svn/.keep": "",
+    "vendor/acme/aliased/.keep": "",
+    "vendor/Acme/Upper/.keep": "",
+    "vendor/acme/wide/.keep": "",
+    "vendor/acme/empty-license/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "--ansi"
+   ],
+   "exit": 0,
+   "stdout": "Name: \u001b[33macme/app\u001b[39m\nVersion: \u001b[33m1.0.0\u001b[39m\nLicenses: \u001b[33mMIT\u001b[39m\nDependencies:\n\n\u001b[32mName               \u001b[39m\u001b[32mVersion          \u001b[39m\u001b[32mLicenses                   \u001b[39m\n\u001b]8;;https://github.com/acme/aliased.git\u001b\\acme/aliased\u001b]8;;\u001b\\       2.x-dev 1234567  MIT                        \n\u001b]8;;https://github.com/acme/aliased.git\u001b\\acme/aliased\u001b]8;;\u001b\\       dev-main 1234567 MIT                        \n\u001b]8;;https://alpha.example\u001b\\acme/alpha\u001b]8;;\u001b\\         1.2.3            MIT                        \n\u001b]8;;https://github.com/acme/beta/tree/2.0.0\u001b\\acme/beta\u001b]8;;\u001b\\          2.0.0            MIT, Apache-2.0            \nacme/dev-dist      1.x-dev abcdef   MIT                        \n\u001b]8;;https://example.org/dev-git.git\u001b\\acme/dev-git\u001b]8;;\u001b\\       dev-main 1234567 GPL-2.0-or-later           \n\u001b]8;;https://example.org/svn\u001b\\acme/dev-svn\u001b]8;;\u001b\\       dev-trunk        MIT                        \nacme/empty-license 1.0.0            none                       \nacme/meta          1.0.0            MIT                        \nacme/string        3.1.0            BSD-3-Clause               \nAcme/Upper         1.0.0            ISC                        \nacme/wide          1.0.0            Propriétaire, Licence-日本 \nzeta/none          0.1.0            none                       \n",
+   "stderr": ""
+  },
+  {
+   "name": "summary-ansi",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        },\n        {\n            \"name\": \"acme/beta\",\n            \"version\": \"2.0.0\",\n            \"version_normalized\": \"2.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\",\n                \"Apache-2.0\"\n            ],\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/beta.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            },\n            \"support\": {\n                \"source\": \"https://github.com/acme/beta/tree/2.0.0\"\n            }\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": "",
+    "vendor/acme/beta/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "-f",
+    "summary",
+    "--ansi"
+   ],
+   "exit": 0,
+   "stdout": " ------------ ------------------------ \n \u001b[32m License    \u001b[39m \u001b[32m Number of dependencies \u001b[39m \n ------------ ------------------------ \n  MIT          2                       \n  Apache-2.0   1                       \n ------------ ------------------------ \n\n",
+   "stderr": ""
+  },
+  {
+   "name": "json-ansi",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "-f",
+    "json",
+    "--ansi"
+   ],
+   "exit": 0,
+   "stdout": "{\n    \"name\": \"acme/app\",\n    \"version\": \"1.0.0\",\n    \"license\": [\n        \"MIT\"\n    ],\n    \"dependencies\": {\n        \"acme/alpha\": {\n            \"version\": \"1.2.3\",\n            \"license\": [\n                \"MIT\"\n            ]\n        }\n    }\n}\n",
+   "stderr": ""
+  },
+  {
+   "name": "root-bare",
+   "files": {
+    "composer.json": "{}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": ""
+   },
+   "args": [
+    "licenses"
+   ],
+   "exit": 0,
+   "stdout": "Name: __root__\nVersion: 1.0.0\nLicenses: none\nDependencies:\n\nName       Version Licenses \nacme/alpha 1.2.3   MIT      \n",
+   "stderr": ""
+  },
+  {
+   "name": "root-bare-json",
+   "files": {
+    "composer.json": "{}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "-f",
+    "json"
+   ],
+   "exit": 0,
+   "stdout": "{\n    \"name\": \"__root__\",\n    \"version\": \"1.0.0\",\n    \"license\": [],\n    \"dependencies\": {\n        \"acme/alpha\": {\n            \"version\": \"1.2.3\",\n            \"license\": [\n                \"MIT\"\n            ]\n        }\n    }\n}\n",
+   "stderr": ""
+  },
+  {
+   "name": "root-licenses",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": [\n        \"MIT\",\n        \"GPL-3.0-only\"\n    ],\n    \"version\": \"2.0.0\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": ""
+   },
+   "args": [
+    "licenses"
+   ],
+   "exit": 0,
+   "stdout": "Name: acme/app\nVersion: 2.0.0\nLicenses: MIT, GPL-3.0-only\nDependencies:\n\nName       Version Licenses \nacme/alpha 1.2.3   MIT      \n",
+   "stderr": ""
+  },
+  {
+   "name": "root-version-guessed",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": ""
+   },
+   "args": [
+    "licenses"
+   ],
+   "exit": 0,
+   "stdout": "Name: acme/app\nVersion: 1.0.0+no-version-set\nLicenses: MIT\nDependencies:\n\nName       Version Licenses \nacme/alpha 1.2.3   MIT      \n",
+   "stderr": "Composer could not detect the root package (acme/app) version, defaulting to '1.0.0'. See https://getcomposer.org/root-version\n",
+   "env": {
+    "COMPOSER_ROOT_VERSION": null
+   }
+  },
+  {
+   "name": "root-version-dev",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "-f",
+    "json"
+   ],
+   "exit": 0,
+   "stdout": "{\n    \"name\": \"acme/app\",\n    \"version\": \"1.2.x-dev\",\n    \"license\": [\n        \"MIT\"\n    ],\n    \"dependencies\": {\n        \"acme/alpha\": {\n            \"version\": \"1.2.3\",\n            \"license\": [\n                \"MIT\"\n            ]\n        }\n    }\n}\n",
+   "stderr": "",
+   "env": {
+    "COMPOSER_ROOT_VERSION": "1.2-dev"
+   }
+  },
+  {
+   "name": "root-version-git",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": ""
+   },
+   "args": [
+    "licenses"
+   ],
+   "exit": 0,
+   "stdout": "Name: acme/app\nVersion: dev-main 96de5c4\nLicenses: MIT\nDependencies:\n\nName       Version Licenses \nacme/alpha 1.2.3   MIT      \n",
+   "stderr": "",
+   "env": {
+    "COMPOSER_ROOT_VERSION": null
+   },
+   "git": true
+  },
+  {
+   "name": "empty",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n"
+   },
+   "args": [
+    "licenses"
+   ],
+   "exit": 0,
+   "stdout": "Name: acme/app\nVersion: 1.0.0\nLicenses: MIT\nDependencies:\n\nName Version Licenses \n",
+   "stderr": ""
+  },
+  {
+   "name": "empty-json",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n"
+   },
+   "args": [
+    "licenses",
+    "-f",
+    "json"
+   ],
+   "exit": 0,
+   "stdout": "{\n    \"name\": \"acme/app\",\n    \"version\": \"1.0.0\",\n    \"license\": [\n        \"MIT\"\n    ],\n    \"dependencies\": []\n}\n",
+   "stderr": ""
+  },
+  {
+   "name": "empty-summary",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n"
+   },
+   "args": [
+    "licenses",
+    "-f",
+    "summary"
+   ],
+   "exit": 0,
+   "stdout": " --------- ------------------------ \n  License   Number of dependencies  \n --------- ------------------------ \n\n",
+   "stderr": ""
+  },
+  {
+   "name": "package-directory-missing",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        },\n        {\n            \"name\": \"acme/beta\",\n            \"version\": \"2.0.0\",\n            \"version_normalized\": \"2.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\",\n                \"Apache-2.0\"\n            ],\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/beta.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            },\n            \"support\": {\n                \"source\": \"https://github.com/acme/beta/tree/2.0.0\"\n            }\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": ""
+   },
+   "args": [
+    "licenses"
+   ],
+   "exit": 0,
+   "stdout": "Name: acme/app\nVersion: 1.0.0\nLicenses: MIT\nDependencies:\n\nName       Version Licenses \nacme/alpha 1.2.3   MIT      \n",
+   "stderr": ""
+  },
+  {
+   "name": "summary-ties",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"a/one\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"Zlib\"\n            ]\n        },\n        {\n            \"name\": \"b/two\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ]\n        },\n        {\n            \"name\": \"c/three\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"Zlib\",\n                \"MIT\"\n            ]\n        },\n        {\n            \"name\": \"d/four\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"Apache-2.0\"\n            ]\n        },\n        {\n            \"name\": \"e/five\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\"\n        },\n        {\n            \"name\": \"f/six\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"Apache-2.0\"\n            ]\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/a/one/.keep": "",
+    "vendor/b/two/.keep": "",
+    "vendor/c/three/.keep": "",
+    "vendor/d/four/.keep": "",
+    "vendor/e/five/.keep": "",
+    "vendor/f/six/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "-f",
+    "summary"
+   ],
+   "exit": 0,
+   "stdout": " ------------ ------------------------ \n  License      Number of dependencies  \n ------------ ------------------------ \n  Zlib         2                       \n  MIT          2                       \n  Apache-2.0   2                       \n  none         1                       \n ------------ ------------------------ \n\n",
+   "stderr": ""
+  },
+  {
+   "name": "no-dev",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"acme/alpha\": \"*\",\n        \"virtual/thing\": \"*\"\n    },\n    \"require-dev\": {\n        \"acme/beta\": \"*\"\n    }\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"require\": {\n                \"acme/string\": \"*\"\n            }\n        },\n        {\n            \"name\": \"acme/string\",\n            \"version\": \"3.1.0\",\n            \"version_normalized\": \"3.1.0.0\",\n            \"type\": \"library\",\n            \"license\": \"BSD-3-Clause\"\n        },\n        {\n            \"name\": \"acme/beta\",\n            \"version\": \"2.0.0\",\n            \"version_normalized\": \"2.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\",\n                \"Apache-2.0\"\n            ],\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/beta.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            },\n            \"support\": {\n                \"source\": \"https://github.com/acme/beta/tree/2.0.0\"\n            }\n        },\n        {\n            \"name\": \"acme/provider\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"ISC\"\n            ],\n            \"provide\": {\n                \"virtual/thing\": \"1.0\"\n            }\n        },\n        {\n            \"name\": \"acme/unused\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ]\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": [\n        \"acme/beta\"\n    ]\n}\n",
+    "vendor/acme/alpha/.keep": "",
+    "vendor/acme/string/.keep": "",
+    "vendor/acme/beta/.keep": "",
+    "vendor/acme/provider/.keep": "",
+    "vendor/acme/unused/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "--no-dev"
+   ],
+   "exit": 0,
+   "stdout": "Name: acme/app\nVersion: 1.0.0\nLicenses: MIT\nDependencies:\n\nName          Version Licenses     \nacme/alpha    1.0.0   MIT          \nacme/provider 1.0.0   ISC          \nacme/string   3.1.0   BSD-3-Clause \n",
+   "stderr": ""
+  },
+  {
+   "name": "no-dev-json",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"acme/alpha\": \"*\"\n    }\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ]\n        },\n        {\n            \"name\": \"acme/beta\",\n            \"version\": \"2.0.0\",\n            \"version_normalized\": \"2.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\",\n                \"Apache-2.0\"\n            ],\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/beta.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            },\n            \"support\": {\n                \"source\": \"https://github.com/acme/beta/tree/2.0.0\"\n            }\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": "",
+    "vendor/acme/beta/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "--no-dev",
+    "-f",
+    "json"
+   ],
+   "exit": 0,
+   "stdout": "{\n    \"name\": \"acme/app\",\n    \"version\": \"1.0.0\",\n    \"license\": [\n        \"MIT\"\n    ],\n    \"dependencies\": {\n        \"acme/alpha\": {\n            \"version\": \"1.0.0\",\n            \"license\": [\n                \"MIT\"\n            ]\n        }\n    }\n}\n",
+   "stderr": ""
+  },
+  {
+   "name": "locked",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "composer.lock": "{\n    \"content-hash\": \"x\",\n    \"packages\": [\n        {\n            \"name\": \"acme/beta\",\n            \"version\": \"2.0.0\",\n            \"version_normalized\": \"2.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\",\n                \"Apache-2.0\"\n            ],\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/beta.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            },\n            \"support\": {\n                \"source\": \"https://github.com/acme/beta/tree/2.0.0\"\n            }\n        },\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"packages-dev\": [\n        {\n            \"name\": \"zeta/none\",\n            \"version\": \"0.1.0\",\n            \"version_normalized\": \"0.1.0.0\",\n            \"type\": \"library\"\n        },\n        {\n            \"name\": \"acme/dev-git\",\n            \"version\": \"dev-main\",\n            \"version_normalized\": \"dev-main\",\n            \"type\": \"library\",\n            \"license\": [\n                \"GPL-2.0-or-later\"\n            ],\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://example.org/dev-git.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            }\n        }\n    ]\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/string\",\n            \"version\": \"3.1.0\",\n            \"version_normalized\": \"3.1.0.0\",\n            \"type\": \"library\",\n            \"license\": \"BSD-3-Clause\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/string/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "--locked"
+   ],
+   "exit": 0,
+   "stdout": "Name: acme/app\nVersion: 1.0.0\nLicenses: MIT\nDependencies:\n\nName         Version          Licenses         \nacme/alpha   1.2.3            MIT              \nacme/beta    2.0.0            MIT, Apache-2.0  \nacme/dev-git dev-main 1234567 GPL-2.0-or-later \nzeta/none    0.1.0            none             \n",
+   "stderr": ""
+  },
+  {
+   "name": "locked-no-dev",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "composer.lock": "{\n    \"content-hash\": \"x\",\n    \"packages\": [\n        {\n            \"name\": \"acme/beta\",\n            \"version\": \"2.0.0\",\n            \"version_normalized\": \"2.0.0.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\",\n                \"Apache-2.0\"\n            ],\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/beta.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            },\n            \"support\": {\n                \"source\": \"https://github.com/acme/beta/tree/2.0.0\"\n            }\n        },\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"packages-dev\": [\n        {\n            \"name\": \"zeta/none\",\n            \"version\": \"0.1.0\",\n            \"version_normalized\": \"0.1.0.0\",\n            \"type\": \"library\"\n        }\n    ]\n}\n"
+   },
+   "args": [
+    "licenses",
+    "--locked",
+    "--no-dev"
+   ],
+   "exit": 0,
+   "stdout": "Name: acme/app\nVersion: 1.0.0\nLicenses: MIT\nDependencies:\n\nName       Version Licenses        \nacme/alpha 1.2.3   MIT             \nacme/beta  2.0.0   MIT, Apache-2.0 \n",
+   "stderr": ""
+  },
+  {
+   "name": "locked-json",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "composer.lock": "{\n    \"content-hash\": \"x\",\n    \"packages\": [\n        {\n            \"name\": \"acme/aliased\",\n            \"version\": \"dev-main\",\n            \"version_normalized\": \"dev-main\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"extra\": {\n                \"branch-alias\": {\n                    \"dev-main\": \"2.x-dev\"\n                }\n            },\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/aliased.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            }\n        }\n    ],\n    \"packages-dev\": []\n}\n"
+   },
+   "args": [
+    "licenses",
+    "--locked",
+    "-f",
+    "json"
+   ],
+   "exit": 0,
+   "stdout": "{\n    \"name\": \"acme/app\",\n    \"version\": \"1.0.0\",\n    \"license\": [\n        \"MIT\"\n    ],\n    \"dependencies\": {\n        \"acme/aliased\": {\n            \"version\": \"dev-main 1234567\",\n            \"license\": [\n                \"MIT\"\n            ]\n        }\n    }\n}\n",
+   "stderr": ""
+  },
+  {
+   "name": "locked-alias",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "composer.lock": "{\n    \"content-hash\": \"x\",\n    \"packages\": [\n        {\n            \"name\": \"acme/aliased\",\n            \"version\": \"dev-main\",\n            \"version_normalized\": \"dev-main\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"extra\": {\n                \"branch-alias\": {\n                    \"dev-main\": \"2.x-dev\"\n                }\n            },\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/aliased.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            }\n        },\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"packages-dev\": []\n}\n"
+   },
+   "args": [
+    "licenses",
+    "--locked"
+   ],
+   "exit": 0,
+   "stdout": "Name: acme/app\nVersion: 1.0.0\nLicenses: MIT\nDependencies:\n\nName         Version          Licenses \nacme/aliased 2.x-dev 1234567  MIT      \nacme/aliased dev-main 1234567 MIT      \nacme/alpha   1.2.3            MIT      \n",
+   "stderr": ""
+  },
+  {
+   "name": "locked-alias-summary",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "composer.lock": "{\n    \"content-hash\": \"x\",\n    \"packages\": [\n        {\n            \"name\": \"acme/aliased\",\n            \"version\": \"dev-main\",\n            \"version_normalized\": \"dev-main\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"extra\": {\n                \"branch-alias\": {\n                    \"dev-main\": \"2.x-dev\"\n                }\n            },\n            \"source\": {\n                \"type\": \"git\",\n                \"url\": \"https://github.com/acme/aliased.git\",\n                \"reference\": \"1234567890abcdef1234567890abcdef12345678\"\n            }\n        },\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"packages-dev\": []\n}\n"
+   },
+   "args": [
+    "licenses",
+    "--locked",
+    "-f",
+    "summary"
+   ],
+   "exit": 0,
+   "stdout": " --------- ------------------------ \n  License   Number of dependencies  \n --------- ------------------------ \n  MIT       3                       \n --------- ------------------------ \n\n",
+   "stderr": ""
+  },
+  {
+   "name": "locked-invalid-lock",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\",\n    \"config\": {\n        \"allow-plugins\": {\n            \"acme/x\": true\n        }\n    }\n}\n",
+    "composer.lock": "{\"packages\": [\n"
+   },
+   "args": [
+    "licenses",
+    "--locked"
+   ],
+   "exit": 1,
+   "stdout": "",
+   "stderr": "",
+   "message": [
+    "\"./composer.lock\" does not contain valid JSON",
+    "Parse error on line 1:",
+    "{\"packages\": [",
+    "-------------^",
+    "Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '[', ']'"
+   ]
+  },
+  {
+   "name": "locked-lock-without-packages",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "composer.lock": "{}\n"
+   },
+   "args": [
+    "licenses",
+    "--locked"
+   ],
+   "exit": 1,
+   "stdout": "",
+   "stderr": "",
+   "message": [
+    "Valid composer.json and composer.lock files are required to run this command with --locked"
+   ]
+  },
+  {
+   "name": "locked-without-lock",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n"
+   },
+   "args": [
+    "licenses",
+    "--locked"
+   ],
+   "exit": 1,
+   "stdout": "",
+   "stderr": "",
+   "message": [
+    "Valid composer.json and composer.lock files are required to run this command with --locked"
+   ]
+  },
+  {
+   "name": "locked-without-packages-dev",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "composer.lock": "{\n    \"content-hash\": \"x\",\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ]\n}\n"
+   },
+   "args": [
+    "licenses",
+    "--locked"
+   ],
+   "exit": 1,
+   "stdout": "",
+   "stderr": "",
+   "message": [
+    "The lock file does not contain require-dev information, run install with the --no-dev option or delete it and run composer update to generate a new lock file."
+   ]
+  },
+  {
+   "name": "locked-without-packages-dev-no-dev",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "composer.lock": "{\n    \"content-hash\": \"x\",\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ]\n}\n"
+   },
+   "args": [
+    "licenses",
+    "--locked",
+    "--no-dev"
+   ],
+   "exit": 0,
+   "stdout": "Name: acme/app\nVersion: 1.0.0\nLicenses: MIT\nDependencies:\n\nName       Version Licenses \nacme/alpha 1.2.3   MIT      \n",
+   "stderr": ""
+  },
+  {
+   "name": "quiet",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "-q"
+   ],
+   "exit": 0,
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "name": "quiet-json",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "--quiet",
+    "-f",
+    "json"
+   ],
+   "exit": 0,
+   "stdout": "",
+   "stderr": ""
+  },
+  {
+   "name": "verbose",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "-v"
+   ],
+   "exit": 0,
+   "stdout": "Name: acme/app\nVersion: 1.0.0\nLicenses: MIT\nDependencies:\n\nName       Version Licenses \nacme/alpha 1.2.3   MIT      \n",
+   "stderr": ""
+  },
+  {
+   "name": "no-ops",
+   "files": {
+    "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\"\n}\n",
+    "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/alpha\",\n            \"version\": \"1.2.3\",\n            \"version_normalized\": \"1.2.3.0\",\n            \"type\": \"library\",\n            \"license\": [\n                \"MIT\"\n            ],\n            \"homepage\": \"https://alpha.example\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+    "vendor/acme/alpha/.keep": ""
+   },
+   "args": [
+    "licenses",
+    "--no-plugins",
+    "--no-scripts",
+    "--no-cache",
+    "-f",
+    "summary"
+   ],
+   "exit": 0,
+   "stdout": " --------- ------------------------ \n  License   Number of dependencies  \n --------- ------------------------ \n  MIT       1                       \n --------- ------------------------ \n\n",
+   "stderr": ""
+  },
+  {
+   "name": "no-composer-json",
+   "files": {},
+   "args": [
+    "licenses"
+   ],
+   "exit": 1,
+   "stdout": "",
+   "stderr": "",
+   "message": [
+    "Composer could not find a composer.json file in {dir}",
+    "To initialize a project, please create a composer.json file. See https://getcomposer.org/basic-usage"
+   ]
+  }
+ ]
+}
