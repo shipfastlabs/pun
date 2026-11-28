@@ -1028,6 +1028,9 @@ fn handle_variadic_array_element<'arena, A>(
 
                 let Some((iterable_key, iterable_value)) = get_iterable_parameters(atomic, context.codebase) else {
                     array_creation_info.can_create_objectlike = false;
+                    // Pun: the keys of what is unpacked are unknown, so the literal is no list (PHPStan's
+                    // InitializerExprTypeResolver::getArrayType gives `[...$mixed]` `array<mixed>`)
+                    array_creation_info.is_list = false;
                     array_creation_info.item_key_atomic_types.push(TAtomic::Scalar(TScalar::ArrayKey));
                     array_creation_info.item_value_atomic_types.push(TAtomic::Mixed(TMixed::new()));
 

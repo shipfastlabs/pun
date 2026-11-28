@@ -4613,3 +4613,10 @@ closure took `Builder<Report>` alone where PHPStan's
 gives `Builder<Report>|Builder<Review>` (shipfastlabs/pun#172). The magic method's target is built by the new
 `undocumented_target()`. `crates/pun-analyse/tests/fixtures/larastan-types/Type/PunNestedEagerLoadTest.json` covers it
 against PHPStan 2.3.7 with Larastan 3.15.0.
+## Unpacking a value of unknown keys into an array literal
+
+`expression/array.rs` `handle_variadic_array_element()`: unpacking a value with no iterable parameters (`mixed`, such
+as `...config('x', [])`) makes the literal no list. It was `list`, so string keys were impossible: the result was
+rejected where `array<string, ...>` is expected, and `$merged['react'] ?? null` was reported as an offset that does
+not exist (shipfastlabs/pun#160). PHPStan's InitializerExprTypeResolver::getArrayType() gives `[...$mixed]`
+`array<mixed>`.

@@ -139,6 +139,7 @@ mod method_origins;
 mod method_specification_edges;
 mod mixed_addition;
 mod mixed_case_alias;
+mod mixed_spreads;
 mod mixed_subtraction;
 mod mockery;
 mod named_argument_registration;

@@ -1,0 +1,18 @@
+{
+ "phpstan": "2.3.5",
+ "level": 6,
+ "errors": [
+  {
+   "file": "spread.php",
+   "line": 31,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: list<int>"
+  },
+  {
+   "file": "spread.php",
+   "line": 32,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: list<int|string>"
+  }
+ ]
+}
