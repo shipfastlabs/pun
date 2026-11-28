@@ -4640,3 +4640,13 @@ is `bool` when the property is declared without a native type, whatever its PHPD
 [`RicherScopeGetTypeHelper::getIdenticalResult()`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Analyser/RicherScopeGetTypeHelper.php#L56).
 A promoted `public $user` documented `@param \Stringable $user` gave `identical.alwaysFalse` (shipfastlabs/pun#170).
 PHPStan's static property fetches are not covered.
+
+## A for loop's update expressions on the last pass
+
+`statement/loop/mod.rs` `analyze()`: when a pass leaves the loop's types unchanged, the loop stops without walking
+the update expressions again. Upstream walked them once more on the scope after the previous pass's own updates,
+where the condition no longer narrows (`$failure = $failure->getPrevious()` read `$failure` as `Throwable|null`).
+The previous pass already walked them on its body's back edge, entered through the last condition's truthy scope,
+and recorded its issues. That is PHPStan's
+[`ForHandler`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Analyser/StmtHandler/ForHandler.php)
+final walk (shipfastlabs/pun#104). `crates/pun-analyse/tests/for_update_narrowing.rs` covers it against PHPStan 2.3.5.

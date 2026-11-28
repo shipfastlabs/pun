@@ -101,6 +101,7 @@ mod finite_array_literal_keys;
 mod first_class_template_defaults;
 mod float_shape_keys;
 mod fluent_arguments;
+mod for_update_narrowing;
 mod foreach_conditional_holders;
 mod function_callable;
 mod function_checks;

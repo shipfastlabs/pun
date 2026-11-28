@@ -1026,9 +1026,6 @@ where
                 if previous_input.take().is_some() {
                     artifacts.finish_expression_type_checkpoint(CheckpointAction::Keep);
                 }
-                continue_context.flags.set_inside_loop_expressions(true);
-                analyze_post_expressions(context, &mut continue_context, artifacts, &post_expressions, loop_scope.back_edge_dead)?;
-                continue_context.flags.set_inside_loop_expressions(false);
 
                 break;
             }

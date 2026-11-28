@@ -1,0 +1,23 @@
+{
+ "level": 10,
+ "errors": [
+  {
+   "line": 49,
+   "identifier": "method.nonObject",
+   "message": "Cannot call method getPrevious() on Throwable|null.",
+   "tip": null
+  },
+  {
+   "line": 57,
+   "identifier": "method.nonObject",
+   "message": "Cannot call method getPrevious() on Throwable|null.",
+   "tip": null
+  },
+  {
+   "line": 68,
+   "identifier": "method.nonObject",
+   "message": "Cannot call method getPrevious() on Throwable|null.",
+   "tip": null
+  }
+ ]
+}
