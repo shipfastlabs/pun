@@ -1,0 +1,21 @@
+{
+    "test": "Type/PunRequireExtendsClassStringsTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-require-extends-class-strings.php",
+            "declares": [
+                "punrequireextendsclassstrings\\commentable",
+                "punrequireextendsclassstrings\\commentableclass",
+                "punrequireextendsclassstrings\\reversed"
+            ],
+            "asserts": [
+                30,
+                39
+            ],
+            "errors": []
+        }
+    ]
+}

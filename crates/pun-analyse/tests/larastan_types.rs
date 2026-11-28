@@ -131,6 +131,9 @@
 //! invariant template) has its errors from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
 //! Type/PunCollectionFilterOffsetsTest.json (`filter()` callbacks that check an offset of an array shape) has its
 //! assertions from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
+//! Type/PunRequireExtendsClassStringsTest.json (a class string narrowed by `is_a(..., true)` on a model and on an
+//! interface with `@phpstan-require-extends Model`) has its assertions from PHPStan 2.3.7 with Larastan 3.15.0 at level
+//! 8 in a Laravel 13.44.1 app.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};

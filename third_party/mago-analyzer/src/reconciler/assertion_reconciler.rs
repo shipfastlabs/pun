@@ -579,6 +579,25 @@ where
         return Some(intersection);
     }
 
+    // Pun: the same for class strings, so `class-string<Model>` narrowed by `is_a($class, Commentable::class, true)`
+    // is `class-string<Model&Commentable>`.
+    if let (
+        TAtomic::Scalar(TScalar::ClassLikeString(TClassLikeString::OfType { kind, constraint })),
+        TAtomic::Scalar(TScalar::ClassLikeString(TClassLikeString::OfType { constraint: other_constraint, .. })),
+    ) = (first_type, second_type)
+        && let (TAtomic::Object(TObject::Named(first_object)), TAtomic::Object(TObject::Named(second_object))) =
+            (constraint.as_ref(), other_constraint.as_ref())
+        && first_object.intersection_types.is_none()
+        && second_object.intersection_types.is_none()
+        && (only_required_by(context.codebase, second_object, first_object)
+            || only_required_by(context.codebase, first_object, second_object))
+    {
+        let mut intersection = constraint.as_ref().clone();
+        intersection.add_intersection_type(other_constraint.as_ref().clone());
+
+        return Some(TAtomic::Scalar(TScalar::ClassLikeString(TClassLikeString::of_type(*kind, intersection))));
+    }
+
     // Pun: `$this` and `static` narrowed by their own class or an ancestor stay `$this` and `static`, as in PHPStan.
     // Mago 1.61 asserts `instanceof self` as the plain class, which the check below also finds containing `$this`.
     if let (TAtomic::Object(TObject::Named(first_object)), TAtomic::Object(TObject::Named(second_object))) =

@@ -4620,3 +4620,9 @@ as `...config('x', [])`) makes the literal no list. It was `list`, so string key
 rejected where `array<string, ...>` is expected, and `$merged['react'] ?? null` was reported as an offset that does
 not exist (shipfastlabs/pun#160). PHPStan's InitializerExprTypeResolver::getArrayType() gives `[...$mixed]`
 `array<mixed>`.
+## Class-string narrowing by an interface that requires the class
+
+`reconciler/assertion_reconciler.rs` `intersect_atomic_with_atomic()`: as for objects (shipfastlabs/pun#137), `class-string<Model>`
+narrowed by `class-string<Commentable>`, an interface marked `@phpstan-require-extends Model`, is
+`class-string<Model&Commentable>`, not `class-string<Commentable>` alone, so two `is_a($class, ..., true)` checks keep
+both classes (shipfastlabs/pun#166).
