@@ -1544,6 +1544,7 @@ mod migrate {
     fn pint(json: &str) -> crate::migrate::Migration {
         from_pint(
             &dir(&[("pint.json", json)]).join("pint.json"),
+            Path::new("/project"),
             None,
             &|_| true,
         )
@@ -1587,12 +1588,127 @@ not-path = ["y"]
 "phpdoc/no-useless-inheritdoc" = "error"
 "classes/prefer-self-in-final" = "error"
 "style/require-final-class" = "error"
+
+[[lint.overrides]]
+files = ["*y*"]
+
+[lint.overrides.rules]
+"refactor/rename-phpdoc-tag" = "off"
+"functions/no-unused-closure-use" = "off"
+"style/no-alias-function" = "off"
+"statements/no-empty" = "off"
+"phpdoc/no-superfluous-tags" = "off"
+"functions/no-unreachable-default-argument-value" = "off"
+"imports/no-unused" = "off"
+"control-flow/no-useless-return" = "off"
+"style/require-ordered-traits" = "off"
+"phpunit/require-method-casing" = "off"
+"phpunit/require-protected-setup" = "off"
+"phpdoc/no-access" = "off"
+"phpdoc/no-package" = "off"
+"phpdoc/no-useless-inheritdoc" = "off"
+"classes/prefer-self-in-final" = "off"
+"style/require-final-class" = "off"
 "#
         );
         assert_eq!(
             pint(r#"{"rules":{"single_quote":true}}"#).toml,
             pint("{}").toml
         );
+    }
+
+    /// Pint runs `final_class` and every other rule as a fixer on the files its finder keeps (issue #41), so the
+    /// files `notPath` and `notName` skip are skipped by the lint rules the config brings too; `exclude` is
+    /// `[files] exclude`, which lint already honors.
+    #[test]
+    fn skips_lint_rules_where_pint_skips_files() {
+        let m = pint(
+            r##"{"preset":"empty","notPath":["tests/Support/TestCase.php","a[1]*.php","#^legacy#"],"notName":["*Controller.php","_ide_helper.php","Foo*.php","/^x/"],"exclude":["legacy"],"rules":{"final_class":true,"no_alias_functions":false}}"##,
+        );
+        assert_eq!(
+            m.toml,
+            r##"[files]
+exclude = ["legacy"]
+
+[format]
+preset = "empty"
+not-path = ["tests/Support/TestCase.php", "a[1]*.php", "#^legacy#"]
+not-name = ["*Controller.php", "_ide_helper.php", "Foo*.php", "/^x/"]
+
+[lint.rules]
+"style/require-final-class" = "error"
+
+[[lint.overrides]]
+files = ["*tests/Support/TestCase.php*", '*a\[1\]\*.php*', "**/*Controller.php", "**/_ide_helper.php"]
+
+[lint.overrides.rules]
+"style/require-final-class" = "off"
+"##
+        );
+        assert_eq!(
+            m.unsupported,
+            [
+                "notPath \"#^legacy#\": a regex, which no [[lint.overrides]] glob holds, so the lint rules still check the files it skips",
+                "notName \"Foo*.php\": a [[lint.overrides]] glob's wildcards would also match directory names, so the lint rules still check the files it skips",
+                "notName \"/^x/\": a regex, which no [[lint.overrides]] glob holds, so the lint rules still check the files it skips",
+            ]
+        );
+        let c = from_toml(&dir(&[]), &m.toml).unwrap();
+        assert_eq!(
+            c.lint.overrides[0].files,
+            [
+                "*tests/Support/TestCase.php*",
+                "*a\\[1\\]\\*.php*",
+                "**/*Controller.php",
+                "**/_ide_helper.php"
+            ]
+        );
+        assert_eq!(
+            c.lint.overrides[0].rules[0].id,
+            "lint/style/require-final-class"
+        );
+        assert_eq!(c.lint.overrides[0].rules[0].level, None);
+
+        // Symfony walks each `in` directory, `.` the project too, and matches `notPath` against the path below it; an
+        // absolute directory in the project (here `/project`) is matched relative to it.
+        let m = pint(
+            r#"{"preset":"empty","in":["./app/","src",".","/project/lib/","/elsewhere"],"notPath":"Legacy","rules":{"final_class":true}}"#,
+        );
+        assert!(
+            m.toml.contains(
+                "files = [\"app/*Legacy*\", \"src/*Legacy*\", \"*Legacy*\", \"lib/*Legacy*\", \"/elsewhere/*Legacy*\"]\n\n[lint.overrides.rules]\n\"style/require-final-class\" = \"off\"\n"
+            ),
+            "{}",
+            m.toml
+        );
+        assert_eq!(m.unsupported, [] as [String; 0]);
+
+        // A file under a nested `in` directory stays when one walk keeps it: Pint keeps `app/Legacy/A.php` from the
+        // `app/Legacy` walk (`A.php`), while the `app` walk's glob would match it; so for `Legacy/Old` and, across `.`
+        // and `app`, `pp/x`. `Models` can only occur below `app/Legacy` where both walks see it: its globs are exact.
+        let m = pint(
+            r#"{"preset":"empty","in":["app","app/Legacy",".","lib"],"notPath":["Legacy","Models","pp/x","Legacy/Old"],"rules":{"final_class":true}}"#,
+        );
+        assert!(
+            m.toml.contains(
+                "files = [\"app/*Models*\", \"app/Legacy/*Models*\", \"*Models*\", \"lib/*Models*\"]\n"
+            ),
+            "{}",
+            m.toml
+        );
+        assert_eq!(
+            m.unsupported,
+            [
+                "notPath \"Legacy\": the `in` directories \"app\" and \"app/Legacy\" nest, and a file Pint keeps from one would match the other's glob, so the lint rules still check the files it skips",
+                "notPath \"pp/x\": the `in` directories \".\" and \"app\" nest, and a file Pint keeps from one would match the other's glob, so the lint rules still check the files it skips",
+                "notPath \"Legacy/Old\": the `in` directories \"app\" and \"app/Legacy\" nest, and a file Pint keeps from one would match the other's glob, so the lint rules still check the files it skips",
+            ]
+        );
+
+        // Without a lint rule on there is nothing to skip, and nothing to report.
+        let m = pint(r#"{"preset":"empty","notPath":["x","/y/"],"rules":{"final_class":false}}"#);
+        assert!(!m.toml.contains("[[lint.overrides]]"), "{}", m.toml);
+        assert_eq!(m.unsupported, [] as [String; 0]);
     }
 
     #[test]
@@ -1694,6 +1810,7 @@ not-path = ["y"]
                 r#"{"preset":"empty","rules":{"final_internal_class":{"include":null}}}"#,
             )])
             .join("pint.json"),
+            Path::new("/project"),
             None,
             &|_| true,
         )
@@ -1732,7 +1849,7 @@ not-path = ["y"]
     fn skips_rules_pun_cant_run() {
         let runs = |n: &str| n != "single_quote" && n != "final_class";
         let d = dir(&[("pint.json", r#"{"rules":{"final_class":true}}"#)]);
-        let m = from_pint(&d.join("pint.json"), None, &runs).unwrap();
+        let m = from_pint(&d.join("pint.json"), Path::new("/project"), None, &runs).unwrap();
         assert_eq!(
             m.unsupported,
             [
@@ -1888,15 +2005,35 @@ not-path = ["y"]
         );
         let fixers: Vec<_> = c.lint.rules.iter().map(|l| l.fixer.unwrap()).collect();
         assert_eq!(fixers, ["ordered_class_elements", "strict_param"]);
+        // PHP-CS-Fixer's Finder skips `notPath` (below each `in` directory) and `notName` for its risky rules too.
+        assert_eq!(
+            c.lint.overrides[0].files,
+            ["src/*x/y.php*", "/elsewhere/*x/y.php*", "**/*.inc"]
+        );
+        let off: Vec<_> = (c.lint.overrides[0].rules.iter())
+            .map(|r| (r.id.as_str(), r.level))
+            .collect();
+        assert_eq!(
+            off,
+            [
+                ("lint/classes/require-member-order", None),
+                ("lint/types/require-strict-param", None)
+            ]
+        );
     }
 
     #[test]
     fn pint_errors() {
         let e = |files: &[(&str, &str)]| {
-            from_pint(&dir(files).join("pint.json"), None, &|_| true)
-                .err()
-                .unwrap()
-                .to_string()
+            from_pint(
+                &dir(files).join("pint.json"),
+                Path::new("/project"),
+                None,
+                &|_| true,
+            )
+            .err()
+            .unwrap()
+            .to_string()
         };
         assert_eq!(
             e(&[("pint.json", r#"{"preset":"nope"}"#)]),
@@ -1908,9 +2045,14 @@ not-path = ["y"]
         );
         assert_eq!(pint("[1]").toml, pint("{}").toml);
         assert_eq!(
-            from_pint(&dir(&[]).join("pint.json"), Some("psr12"), &|_| true)
-                .unwrap()
-                .toml,
+            from_pint(
+                &dir(&[]).join("pint.json"),
+                Path::new("/project"),
+                Some("psr12"),
+                &|_| true
+            )
+            .unwrap()
+            .toml,
             "[format]\npreset = \"psr12\"\n\n[lint.rules]\n\"classes/require-member-order\" = { order = [\"use_trait\"] }\n\"imports/no-unused\" = \"error\"\n"
         );
         assert_eq!(
@@ -1923,7 +2065,7 @@ not-path = ["y"]
         assert!(e(&[("pint.json", "1")]).ends_with("pint.json] is not valid JSON."));
         let d = dir(&[]);
         std::fs::create_dir(d.join("pint.json")).unwrap();
-        let err = from_pint(&d.join("pint.json"), None, &|_| true)
+        let err = from_pint(&d.join("pint.json"), Path::new("/project"), None, &|_| true)
             .err()
             .unwrap();
         assert_eq!(
@@ -1978,7 +2120,10 @@ not-path = ["y"]
                 r#"{"extend":"base.json","exclude":["x"],"notName":["n","m"],"in":"src","rules":{"concat_space":{"spacing":"one"}}}"#,
             ),
         ]);
-        let m = from_pint(&d.join("custom.json"), None, &|_| true).unwrap();
+        let m = from_pint(&d.join("custom.json"), Path::new("/project"), None, &|_| {
+            true
+        })
+        .unwrap();
         assert_eq!(
             m.toml,
             "[files]\npaths = [\"src\"]\nexclude = [\"x\", \"b\"]\n\n[format]\npreset = \"empty\"\nnot-name = [\"n\", \"m\"]\n\n[format.rules]\n\"strings/single-quote\" = true\n\"operators/concat-spacing\" = \"one\"\n"

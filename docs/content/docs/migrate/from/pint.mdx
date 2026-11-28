@@ -19,8 +19,8 @@ Run `pun migrate --from pint`. Pint's risky and code-deleting fixers become lint
 | `rules` | `[format.rules]` for layout, and `[lint.rules]` at `"error"` for code edits |
 | Rule options | Pun option names and values, on each rule page |
 | `in`, `exclude` | `[files] paths`, `[files] exclude` |
-| `notPath` | `[format] not-path` |
-| `notName` | `[format] not-name` |
+| `notPath` | `[format] not-path`, and a `[[lint.overrides]]` that turns the migrated lint rules off for the same files, since Pint runs them as fixers too. A regex, or a pattern that could span two nested `in` directories, is reported instead |
+| `notName` | `[format] not-name`, and the same `[[lint.overrides]]`. A regex, a `/`, or a wildcard other than a leading `*`, is reported instead |
 | `@php-cs-fixer-ignore` | `@pun-ignore-file` with the full format rule ID |
 
 ## Rule mapping

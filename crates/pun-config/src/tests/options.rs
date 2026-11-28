@@ -572,6 +572,7 @@ fn migrate_errors() {
             r#"{"rules":{"array_syntax":{"syntax":"medium"}}}"#,
         )])
         .join("pint.json"),
+        Path::new("/project"),
         None,
         &|_| true,
     );
@@ -698,6 +699,7 @@ fn migrate_entry_types() {
             r#"{"rules":{"group_import":{"group_types":[null]}}}"#,
         )])
         .join("pint.json"),
+        Path::new("/project"),
         None,
         &|_| true,
     );

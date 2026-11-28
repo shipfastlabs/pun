@@ -238,7 +238,7 @@ fn short(class: &str) -> String {
     class.rsplit('\\').next().unwrap().to_string()
 }
 
-fn relative(root: &Path, path: &str) -> String {
+pub(super) fn relative(root: &Path, path: &str) -> String {
     let p = Path::new(path);
     match p.strip_prefix(root) {
         Ok(r) if r.as_os_str().is_empty() => ".".into(),
@@ -386,6 +386,8 @@ pub fn compose(root: &Path, parts: &mut Parts, rector: &Rector) -> Result<Reconc
             continue;
         }
         if given.contains(id) {
+            // Rector runs the rule on the files Pint's finder skips too.
+            parts.lint_skip_rules.retain(|r| *r != id[5..]);
             continue;
         }
         let options = rector.options.get(id);

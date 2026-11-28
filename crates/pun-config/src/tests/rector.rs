@@ -717,3 +717,37 @@ fn a_rector_rule_deprecated_upstream_still_migrates_to_its_pun_rule() {
     );
     assert!(r.unsupported.is_empty(), "{:?}", r.unsupported);
 }
+
+/// Pint skips its `notPath` files for the rules it brings, but Rector runs a rule both ask for on them too (issue #41).
+#[test]
+fn rector_keeps_a_shared_rule_on_where_pint_skips_files() {
+    let root = dir(&[]);
+    let id = |s: &str| s.to_string();
+    let rector = Rector {
+        want: vec![(
+            id("lint/imports/no-unused"),
+            id("RemoveUnusedImportsRector"),
+        )],
+        ..Rector::default()
+    };
+    let mut parts = Parts {
+        format: "preset = \"empty\"\n".into(),
+        lint_rules: vec![
+            (id("imports/no-unused"), id("\"error\"")),
+            (id("style/require-final-class"), id("\"error\"")),
+        ],
+        lint_skip_files: vec![id("*legacy*")],
+        lint_skip_rules: vec![id("imports/no-unused"), id("style/require-final-class")],
+        ..Parts::default()
+    };
+    compose(&root, &mut parts, &rector).unwrap();
+    assert!(
+        parts.render().ends_with(
+            "[[lint.overrides]]\nfiles = [\"*legacy*\"]\n\n[lint.overrides.rules]\n\"style/require-final-class\" = \"off\"\n"
+        ),
+        "{}",
+        parts.render()
+    );
+    parts.lint_skip_rules.clear();
+    assert!(!parts.render().contains("[[lint.overrides]]"));
+}

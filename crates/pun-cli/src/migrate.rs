@@ -476,8 +476,8 @@ fn convert(
             let (rules, finder) = php_cs_fixer_config(root, f)?;
             migrate::from_rules(rules, &finder, &runs)?
         }
-        Some((_, f)) => migrate::from_pint(f, a.preset.as_deref(), &runs)?,
-        None => migrate::from_pint(&root.join(pint), a.preset.as_deref(), &runs)?,
+        Some((_, f)) => migrate::from_pint(f, root, a.preset.as_deref(), &runs)?,
+        None => migrate::from_pint(&root.join(pint), root, a.preset.as_deref(), &runs)?,
     };
     let from = match source {
         Some((_, f)) => rel(root, f),

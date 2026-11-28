@@ -471,8 +471,8 @@ def translation(tool: str) -> str:
 | `rules` | `[format.rules]` for layout, and `[lint.rules]` at `\"error\"` for code edits |
 | Rule options | Pun option names and values, on each rule page |
 | `in`, `exclude` | `[files] paths`, `[files] exclude` |
-| `notPath` | `[format] not-path` |
-| `notName` | `[format] not-name` |
+| `notPath` | `[format] not-path`, and a `[[lint.overrides]]` that turns the migrated lint rules off for the same files, since Pint runs them as fixers too. A regex, or a pattern that could span two nested `in` directories, is reported instead |
+| `notName` | `[format] not-name`, and the same `[[lint.overrides]]`. A regex, a `/`, or a wildcard other than a leading `*`, is reported instead |
 | `@php-cs-fixer-ignore` | `@pun-ignore-file` with the full format rule ID |
 """,
         "php-cs-fixer": """Run `pun migrate --from php-cs-fixer`. It reads `.php-cs-fixer.php` or `.php-cs-fixer.dist.php` through PHP-CS-Fixer, so it needs system PHP.
@@ -483,8 +483,8 @@ def translation(tool: str) -> str:
 | `setRiskyAllowed(true)` | Enabled risky fixers become lint rules at `\"error\"` |
 | Configured options | Pun names and values, on each rule page |
 | Finder `in()`, `exclude()` | `[files] paths`, `[files] exclude` |
-| Finder `notPath()` | `[format] not-path` |
-| Finder `notName()` | `[format] not-name` |
+| Finder `notPath()` | `[format] not-path`, and a `[[lint.overrides]]` that turns the migrated lint rules off for the same files, since PHP-CS-Fixer runs them as fixers too. A regex, or a pattern that could span two nested `in` directories, is reported instead |
+| Finder `notName()` | `[format] not-name`, and the same `[[lint.overrides]]`. A regex, a `/`, or a wildcard other than a leading `*`, is reported instead |
 | `setIndent("\\t")` | `"whitespace/indentation-type" = "tabs"` in `[format.rules]`. A 2-space indent is not supported: `pun migrate` reports it |
 | `setLineEnding("\\r\\n")` | `"whitespace/line-ending" = "crlf"` in `[format.rules]` |
 | Custom fixer classes | Reported and skipped |

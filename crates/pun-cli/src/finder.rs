@@ -548,28 +548,12 @@ fn git(root: &Path, args: &[&str]) -> Option<Vec<u8>> {
     Some(out.stdout)
 }
 
-fn is_regex(s: &str) -> bool {
-    let b = s.as_bytes();
-    if b.len() < 3 {
-        return false;
-    }
-    let body = &b[..s.trim_end_matches(|c| "imsxuADUn".contains(c)).len().max(3)];
-    let (start, end) = (body[0], body[body.len() - 1]);
-    if start == end {
-        return !(start.is_ascii_alphanumeric() || b"*? \\".contains(&start));
-    }
-    matches!(
-        (start, end),
-        (b'{', b'}') | (b'(', b')') | (b'[', b']') | (b'<', b'>')
-    )
-}
-
 fn php_regex(p: &str) -> Result<Regex> {
     preg_compile(p).map_err(|m| anyhow::anyhow!("preg_match(): {m}"))
 }
 
 fn path_regex(s: &str) -> Result<Regex> {
-    if is_regex(s) {
+    if pun_config::is_regex(s) {
         php_regex(s)
     } else {
         Ok(Regex::new(&quote(s))?)

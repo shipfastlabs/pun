@@ -157,6 +157,24 @@ pub fn fixer_entries() -> &'static toml::Table {
     &T
 }
 
+/// Whether a Finder pattern (`notPath`, `notName`, `path`) is a delimited regex rather than a string or glob: Symfony's
+/// `MultiplePcreFilterIterator::isRegex`.
+pub fn is_regex(s: &str) -> bool {
+    let b = s.as_bytes();
+    if b.len() < 3 {
+        return false;
+    }
+    let body = &b[..s.trim_end_matches(|c| "imsxuADUn".contains(c)).len().max(3)];
+    let (start, end) = (body[0], body[body.len() - 1]);
+    if start == end {
+        return !(start.is_ascii_alphanumeric() || b"*? \\".contains(&start));
+    }
+    matches!(
+        (start, end),
+        (b'{', b'}') | (b'(', b')') | (b'[', b']') | (b'<', b'>')
+    )
+}
+
 pub fn rule_of(fixer: &str) -> Option<&'static str> {
     fixer_entries().get(fixer)?.get("pun")?.as_str()
 }
