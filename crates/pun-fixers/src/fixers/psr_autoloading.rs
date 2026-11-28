@@ -105,7 +105,7 @@ impl Fixer for PsrAutoloadingFixer {
                 // getNextTokenOfKind() returns null and generatePartialCode($start, null - 1) is '', so the
                 // namespace is empty. The end index is then never read: an empty namespace changes no casing.
                 let Some(end) = tokens.get_next_token_of_kind(start, &[";".into()], true) else {
-                    namespace = Some((String::new(), start, start));
+                    namespace = Some((Vec::new(), start, start));
                     continue;
                 };
                 let code = tokens.generate_partial_code(start, end - 1);
