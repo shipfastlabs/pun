@@ -1,0 +1,21 @@
+{
+    "test": "Type/PunNestedEagerLoadTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-nested-eager-load.php",
+            "declares": [
+                "punnestedeagerload\\loadreturnedreviews",
+                "punnestedeagerload\\organisation",
+                "punnestedeagerload\\report",
+                "punnestedeagerload\\review"
+            ],
+            "asserts": [
+                46
+            ],
+            "errors": []
+        }
+    ]
+}

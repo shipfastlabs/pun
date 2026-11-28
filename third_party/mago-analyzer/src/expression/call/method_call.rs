@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use mago_allocator::Arena;
@@ -9,7 +10,10 @@ use mago_codex::identifier::function_like::FunctionLikeIdentifier;
 use mago_codex::identifier::method::MethodIdentifier;
 use mago_codex::metadata::class_like::ClassLikeMetadata;
 use mago_codex::metadata::function_like::FunctionLikeMetadata;
+use mago_codex::metadata::CodebaseMetadata;
 use mago_codex::ttype::add_optional_union_type;
+use mago_codex::ttype::add_union_type;
+use mago_codex::ttype::combiner::CombinerOptions;
 use mago_codex::ttype::atomic::TAtomic;
 use mago_codex::ttype::atomic::object::TObject;
 use mago_codex::ttype::expander::StaticClassType;
@@ -654,6 +658,48 @@ where
     Ok(has_invalid_target)
 }
 
+/// The requested identifier and the magic method's target of an undocumented call.
+#[allow(clippy::expect_used)]
+fn undocumented_target<'ctx>(
+    codebase: &'ctx CodebaseMetadata,
+    undocumented_method: &UndocumentedMethod,
+    invocation_kind: MethodInvocationKind,
+    span: Span,
+) -> (FunctionLikeIdentifier, InvocationTarget<'ctx>) {
+    let magic_call_method = undocumented_method.magic_method.clone();
+    let class_like_metadata = codebase
+        .get_class_like_by_name(magic_call_method.classname)
+        .expect("class-like metadata should exist for resolved magic call method");
+
+    let method_metadata = codebase
+        .get_method_by_id(&magic_call_method.method_identifier)
+        .expect("method metadata should exist for resolved magic call method");
+
+    let requested_identifier = FunctionLikeIdentifier::Method(
+        undocumented_method.classname,
+        undocumented_method.method_name.to_ascii_lowercase(),
+    );
+    let target = InvocationTarget::FunctionLike {
+        identifier: FunctionLikeIdentifier::Method(
+            magic_call_method.method_identifier.get_class_name(),
+            magic_call_method.method_identifier.get_method_name(),
+        ),
+        metadata: method_metadata,
+        inferred_return_type: None,
+        effective_signature: None,
+        method_context: Some(MethodTargetContext {
+            invocation_kind,
+            requested_name: magic_call_method.requested_name,
+            declaring_method_id: Some(magic_call_method.method_identifier),
+            class_like_metadata,
+            class_type: magic_call_method.static_class_type,
+            declaring_object_type: magic_call_method.declaring_object,
+        }),
+        span,
+    };
+    (requested_identifier, target)
+}
+
 /// Gives return-type providers the first opportunity to describe an
 /// undocumented magic call, then falls back to the magic method's declaration.
 #[allow(clippy::expect_used)]
@@ -674,40 +720,50 @@ where
     let mut arguments_analyzed = !analyze_arguments;
     let mut evaluated_arguments = EvaluatedArguments::new(argument_list.arguments.len());
     let mut resulting_type: Option<TUnion> = None;
+    // UnionTypeUnresolvedMethodPrototypeReflection: the arguments are analysed once, so an inline callback a
+    // provider forwards on a union receiver takes every member's parameter types, combined
+    let mut combined_callbacks: Option<HashMap<Span, Vec<TUnion>>> = None;
+    if !arguments_analyzed && undocumented_methods.len() > 1 {
+        let mut combined: HashMap<Span, Vec<TUnion>> = HashMap::default();
+        for undocumented_method in &undocumented_methods {
+            let (requested_identifier, target) =
+                undocumented_target(context.codebase, undocumented_method, invocation_kind, span);
+            let invocation = Invocation::new(target, InvocationArgumentsSource::ArgumentList(argument_list), span);
+            let requests = context.plugin_registry.callback_invocations(
+                context.codebase,
+                context.source_file,
+                block_context,
+                artifacts,
+                &requested_identifier,
+                &invocation,
+            );
+            for request in requests {
+                match combined.entry(request.callback.span()) {
+                    std::collections::hash_map::Entry::Occupied(mut entry) => {
+                        let types = entry.get_mut();
+                        for (i, argument) in request.arguments.iter().enumerate() {
+                            if let Some(existing) = types.get_mut(i) {
+                                *existing = add_union_type(
+                                    existing.clone(),
+                                    argument,
+                                    context.codebase,
+                                    CombinerOptions::default(),
+                                );
+                            }
+                        }
+                        types.truncate(request.arguments.len());
+                    }
+                    std::collections::hash_map::Entry::Vacant(entry) => {
+                        entry.insert(request.arguments);
+                    }
+                }
+            }
+        }
+        combined_callbacks = Some(combined);
+    }
     for undocumented_method in undocumented_methods {
-        let magic_call_method = undocumented_method.magic_method;
-        let class_like_metadata = context
-            .codebase
-            .get_class_like_by_name(magic_call_method.classname)
-            .expect("class-like metadata should exist for resolved magic call method");
-
-        let method_metadata = context
-            .codebase
-            .get_method_by_id(&magic_call_method.method_identifier)
-            .expect("method metadata should exist for resolved magic call method");
-
-        let requested_identifier = FunctionLikeIdentifier::Method(
-            undocumented_method.classname,
-            undocumented_method.method_name.to_ascii_lowercase(),
-        );
-        let target = InvocationTarget::FunctionLike {
-            identifier: FunctionLikeIdentifier::Method(
-                magic_call_method.method_identifier.get_class_name(),
-                magic_call_method.method_identifier.get_method_name(),
-            ),
-            metadata: method_metadata,
-            inferred_return_type: None,
-            effective_signature: None,
-            method_context: Some(MethodTargetContext {
-                invocation_kind,
-                requested_name: magic_call_method.requested_name,
-                declaring_method_id: Some(magic_call_method.method_identifier),
-                class_like_metadata,
-                class_type: magic_call_method.static_class_type,
-                declaring_object_type: magic_call_method.declaring_object,
-            }),
-            span,
-        };
+        let (requested_identifier, target) =
+            undocumented_target(context.codebase, &undocumented_method, invocation_kind, span);
 
         let mut invocation = Invocation::new(target, InvocationArgumentsSource::ArgumentList(argument_list), span);
         let signature_handled = context.external_analysis_session.is_some()
@@ -733,17 +789,25 @@ where
         } else if !arguments_analyzed {
             // the inline callbacks a provider forwards to a method take that method's parameter types, as
             // ArgumentsHandler types them against the forwarded method's parameters
-            let requests = context.plugin_registry.callback_invocations(
-                context.codebase,
-                context.source_file,
-                block_context,
-                artifacts,
-                &requested_identifier,
-                &invocation,
-            );
-            let callbacks: Vec<Span> = requests.iter().map(|r| r.callback.span()).collect();
-            for request in requests {
-                artifacts.callback_parameter_types.insert(request.callback.span(), request.arguments);
+            let requests: Vec<(Span, Vec<TUnion>)> = match combined_callbacks.take() {
+                Some(combined) => combined.into_iter().collect(),
+                None => context
+                    .plugin_registry
+                    .callback_invocations(
+                        context.codebase,
+                        context.source_file,
+                        block_context,
+                        artifacts,
+                        &requested_identifier,
+                        &invocation,
+                    )
+                    .into_iter()
+                    .map(|request| (request.callback.span(), request.arguments))
+                    .collect(),
+            };
+            let callbacks: Vec<Span> = requests.iter().map(|(span, _)| *span).collect();
+            for (callback, arguments) in requests {
+                artifacts.callback_parameter_types.insert(callback, arguments);
             }
             argument_list.analyze(context, block_context, artifacts)?;
             for span in callbacks {

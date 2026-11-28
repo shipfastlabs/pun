@@ -4602,4 +4602,14 @@ replaced by the class's `@extends` arguments or their defaults, before the check
 Filament's `CreateRecord` declares `/** @var ?TModel */ public ?Model $record` with `TModel of Model = Model`, so a
 subclass's `@property Product $record` narrows `?Model` and governs the read, as PHPStan's resolved property does
 (shipfastlabs/pun#155). `crates/pun-analyse/tests/fixtures/larastan-types/Type/PunPropertyWriteTest.json` covers it
+## Forwarded callbacks of an undocumented call on a union
+
+`expression/call/method_call.rs` `analyze_undocumented_method_return_type()`: when a receiver is a union with more than
+one undocumented method, the inline callbacks each member's provider forwards are combined, every parameter the union
+of the members' types, before the arguments are analysed once. The arguments were analysed with the first member's
+callback types only, so in `'reports.reviews' => fn ($reviews) => $reviews->when(..., fn ($query) => ...)` the inner
+closure took `Builder<Report>` alone where PHPStan's
+[`UnionTypeUnresolvedMethodPrototypeReflection`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Reflection/Type/UnionTypeUnresolvedMethodPrototypeReflection.php)
+gives `Builder<Report>|Builder<Review>` (shipfastlabs/pun#172). The magic method's target is built by the new
+`undocumented_target()`. `crates/pun-analyse/tests/fixtures/larastan-types/Type/PunNestedEagerLoadTest.json` covers it
 against PHPStan 2.3.7 with Larastan 3.15.0.
