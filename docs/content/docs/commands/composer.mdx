@@ -3,7 +3,7 @@ title: pun composer
 description: Run other Composer commands.
 ---
 
-Run Composer commands that have no `pun` command of their own: `dump-autoload`, `run-script` and `exec`.
+Run Composer commands that have no `pun` command of their own: `dump-autoload`, `run-script`, `exec` and `validate`.
 
 ## Usage
 
@@ -20,6 +20,8 @@ pun composer test
 pun composer run --list
 pun composer exec phpstan -- analyse --memory-limit=1G
 pun composer exec --list
+pun composer validate
+pun composer validate --strict --with-dependencies
 ```
 
 ## Options
@@ -61,6 +63,19 @@ For `exec`:
 | `--ansi`, `--no-ansi` | Colour the list and the error line, or don't; `--ansi` wins when both are given. By default each of stdout and stderr is coloured on a terminal. |
 | `--no-plugins`, `--no-scripts`, `--no-cache` | Taken, as in Composer. They change nothing here. |
 
+For `validate`:
+
+| Option | Description |
+| --- | --- |
+| `[file]` | The `composer.json` to check (default: `COMPOSER`, else `./composer.json`). |
+| `--no-check-all` | Skip the warnings for unbound (`*`, `>=1.0`) and exact (`1.2.3`) constraints. |
+| `--check-lock` | Check `composer.lock` even when `config.lock` is false. |
+| `--no-check-lock` | Report a stale `composer.lock` as warnings, not errors. |
+| `--no-check-publish` | Skip what only stops the package from being published. |
+| `--no-check-version` | Skip the warning for a `version` field. |
+| `-A`, `--with-dependencies` | Also check `vendor/<name>/composer.json` of every installed package. |
+| `--strict` | Exit 1 for warnings too. |
+
 For every command, before or after its name:
 
 | Option | Description |
@@ -97,17 +112,28 @@ A script also runs as `pun composer <script>`, or by a name from `scripts-aliase
 - Without a binary, in a terminal, asks which binary to run; otherwise, and with `--list`, lists the files of the bin dir (without a `.bat` beside its binary) and composer.json's `bin`, marked `(local)`.
 - Exits with the binary's exit code, after Composer's line about it when it isn't 0.
 
+`validate`:
+
+- Checks `composer.json` as `composer validate` does, with the same messages: the JSON syntax (the same parse errors), Composer's JSON schema (what only the strict schema refuses is a publish error), and Composer's own checks of names, versions, constraints, licenses (SPDX), URLs, authors, autoload and the rest.
+- Checks that `composer.lock` is up to date and has every requirement.
+- A `composer.json` that Composer can't load (a parse error, a value the schema refuses, a package requiring itself) is an error, not a report.
+
 ## Limitations
 
-- Only `dump-autoload`, `run-script` and `exec` exist. Any other command exits 2.
+- Only `dump-autoload`, `run-script`, `exec` and `validate` exist. Any other command exits 2.
 - `exec` doesn't take Composer's `--help`, `--version` or `--profile` after the binary: put them before `exec`, or after `--` for the binary.
 - `run-script` without a script name outside a terminal exits 2.
+- `validate` reads `time` in the forms Composer documents (`YYYY-MM-DD`, `YYYY-MM-DD HH:MM:SS`) and ISO 8601's, and reports no error for any other value or for an impossible date in those forms (`2020-13-01`). Composer reports a value PHP's `DateTime` can't parse.
+- When a JSON parse error's excerpt cuts a multibyte character in two, `validate` prints `�` where Composer prints the partial byte.
+- `validate` sends no `command` event to Composer plugins, so a plugin can't change its exit code.
+- Where Composer itself crashes on a value of the wrong type (a number as a constraint, a list mixing licenses and numbers), `validate` reports what Composer reports without the crash.
 
 ## Exit codes
 
 | Code | Meaning |
 | --- | --- |
-| 0 | Written, or the script or binary succeeded. |
-| 1 | Written, but a package is missing from `vendor/`. |
-| 2 | Unknown command or script, or another error. |
+| 0 | Written, valid (warnings allowed), or the script or binary succeeded. |
+| 1 | Written, but a package is missing from `vendor/`; or `validate --strict` found warnings. |
+| 2 | Unknown command or script; `validate` found errors (publish and lock errors included, unless left out by an option); or another error. |
+| 3 | `validate`: the `composer.json` is missing or unreadable. |
 | other | `run-script` and `exec`: the failed script's or binary's exit code, as in Composer. |

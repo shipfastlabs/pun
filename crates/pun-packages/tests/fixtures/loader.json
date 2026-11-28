@@ -1,0 +1,940 @@
+[
+    {
+        "name": "name-missing",
+        "config": "{\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "name : must be present"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "name-blank",
+        "config": "{\"name\":\"  \",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "name : must be present",
+            "name :    is invalid, it should have a vendor name, a forward slash, and a package name. The vendor and package name can be words separated by -, . or _. The complete name should match \"^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]?|-{0,2})[a-z0-9]+)*$\"."
+        ],
+        "warnings": []
+    },
+    {
+        "name": "name-reserved",
+        "config": "{\"name\":\"con/app\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "name : con/app is reserved, package and vendor names can not match any of: nul, con, prn, aux, com1, com2, com3, com4, com5, com6, com7, com8, com9, lpt1, lpt2, lpt3, lpt4, lpt5, lpt6, lpt7, lpt8, lpt9."
+        ],
+        "warnings": []
+    },
+    {
+        "name": "name-json",
+        "config": "{\"name\":\"acme/app.json\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "name : acme/app.json is invalid, package names can not end in .json, consider renaming it or perhaps using a -json suffix instead."
+        ],
+        "warnings": []
+    },
+    {
+        "name": "name-uppercase",
+        "config": "{\"name\":\"Acme/FooBar\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "name : Acme/FooBar is invalid, it should not contain uppercase characters. We suggest using acme/foo-bar instead."
+        ],
+        "warnings": []
+    },
+    {
+        "name": "name-invalid",
+        "config": "{\"name\":\"acme\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "name : acme is invalid, it should have a vendor name, a forward slash, and a package name. The vendor and package name can be words separated by -, . or _. The complete name should match \"^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]?|-{0,2})[a-z0-9]+)*$\"."
+        ],
+        "warnings": []
+    },
+    {
+        "name": "version-array",
+        "config": "{\"name\":\"acme/pkg\",\"version\":[\"1.0\"]}",
+        "constraints": true,
+        "errors": [
+            "version : should be a string, array given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "version-bool",
+        "config": "{\"name\":\"acme/pkg\",\"version\":true}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "version-number",
+        "config": "{\"name\":\"acme/pkg\",\"version\":5}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "version-invalid",
+        "config": "{\"name\":\"acme/pkg\",\"version\":\"abc\"}",
+        "constraints": true,
+        "errors": [
+            "version : invalid value (abc): Invalid version string \"abc\""
+        ],
+        "warnings": []
+    },
+    {
+        "name": "platform-string",
+        "config": "{\"name\":\"acme/pkg\",\"config\":{\"platform\":\"abc\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "config.platform.0 : invalid value (abc): Invalid version string \"abc\""
+        ],
+        "warnings": []
+    },
+    {
+        "name": "platform-values",
+        "config": "{\"name\":\"acme/pkg\",\"config\":{\"platform\":{\"php\":\"abc\",\"ext-a\":true,\"ext-b\":5,\"ext-c\":false,\"ext-d\":\"1.2\",\"ext-e\":[],\"ext-f\":null,\"ext-g\":[\"x\",5],\"ext-h\":{\"a\":\"b\"},\"ext-i\":1.5}},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "config.platform.php : invalid value (abc): Invalid version string \"abc\"",
+            "config.platform.ext-a : invalid value (bool true): expected string or false",
+            "config.platform.ext-b : invalid value (int 5): expected string or false",
+            "config.platform.ext-e : invalid value (array array (\n)): expected string or false",
+            "config.platform.ext-f : invalid value (null NULL): expected string or false",
+            "config.platform.ext-g : invalid value (array array (\n  0 => 'x',\n  1 => 5,\n)): expected string or false",
+            "config.platform.ext-h : invalid value (array array (\n  'a' => 'b',\n)): expected string or false",
+            "config.platform.ext-i : invalid value (float 1.5): expected string or false"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "type",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"bad type!\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "type : invalid value (bad type!), must match [A-Za-z0-9-]+"
+        ]
+    },
+    {
+        "name": "type-not-a-string",
+        "config": "{\"name\":\"acme/pkg\",\"type\":5,\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "type : should be a string, int given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "target-dir-and-extra",
+        "config": "{\"name\":\"acme/pkg\",\"target-dir\":5,\"extra\":\"x\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "target-dir : should be a string, int given",
+            "extra : should be an array, string given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "extra-empty",
+        "config": "{\"name\":\"acme/pkg\",\"extra\":[],\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "bin-string",
+        "config": "{\"name\":\"acme/pkg\",\"bin\":\"bin/tool\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "bin-parent",
+        "config": "{\"name\":\"acme/pkg\",\"bin\":\"../tool\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "bin : invalid value (../tool), must not contain a \"..\" path component"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "bin-unsafe",
+        "config": "{\"name\":\"acme/pkg\",\"bin\":\"a;b\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "bin : invalid value (a;b), must not contain any of the characters *$`\"&^|<>()%!; nor control characters"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "bin-array",
+        "config": "{\"name\":\"acme/pkg\",\"bin\":[\"ok\",\"../x\",5,\"a|b\",[\"x\"]],\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "bin.4 : must be a string or int, array given",
+            "bin.1 : invalid value (../x), must not contain a \"..\" path component",
+            "bin.3 : invalid value (a|b), must not contain any of the characters *$`\"&^|<>()%!; nor control characters"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "bin-number",
+        "config": "{\"name\":\"acme/pkg\",\"bin\":5,\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "bin : should be an array, int given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "scripts-description",
+        "config": "{\"name\":\"acme/pkg\",\"scripts\":\"x\",\"description\":5,\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "scripts : should be an array, string given",
+            "description : should be a string, int given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "description-blank",
+        "config": "{\"name\":\"acme/pkg\",\"description\":\"  \",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "homepage",
+        "config": "{\"name\":\"acme/pkg\",\"homepage\":\"ftp://example.com\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "homepage : invalid value (ftp://example.com), must be an http/https URL"
+        ]
+    },
+    {
+        "name": "homepage-not-a-string",
+        "config": "{\"name\":\"acme/pkg\",\"homepage\":5,\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "homepage : should be a string, int given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "homepage-empty",
+        "config": "{\"name\":\"acme/pkg\",\"homepage\":\"\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "keywords",
+        "config": "{\"name\":\"acme/pkg\",\"keywords\":[\"ok\",5,[\"x\"],\"bad!\",\"ünïcode ok\"],\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "keywords.2 : must be a string or int, array given"
+        ],
+        "warnings": [
+            "keywords.3 : invalid value (bad!), must match [\\p{N}\\p{L} ._-]+"
+        ]
+    },
+    {
+        "name": "keywords-string",
+        "config": "{\"name\":\"acme/pkg\",\"keywords\":\"x\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "keywords : should be an array, string given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "time-not-a-string",
+        "config": "{\"name\":\"acme/pkg\",\"time\":5,\"license\":\"Not-A-License\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "time : should be a string, int given"
+        ],
+        "warnings": [
+            "License \"Not-A-License\" is not a valid SPDX license identifier, see https://spdx.org/licenses/ if you use an open license.\nIf the software is closed-source, you may use \"proprietary\" as license."
+        ]
+    },
+    {
+        "name": "time-old",
+        "config": "{\"name\":\"acme/pkg\",\"time\":\"2001-01-01\",\"license\":\"Not-A-License\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "time-old-with-time",
+        "config": "{\"name\":\"acme/pkg\",\"time\":\"2001-01-01 10:00:00\",\"license\":\"Not-A-License\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "time-future-iso",
+        "config": "{\"name\":\"acme/pkg\",\"time\":\"2999-01-01T00:00:00Z\",\"license\":\"Not-A-License\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "License \"Not-A-License\" is not a valid SPDX license identifier, see https://spdx.org/licenses/ if you use an open license.\nIf the software is closed-source, you may use \"proprietary\" as license."
+        ]
+    },
+    {
+        "name": "time-future-offset",
+        "config": "{\"name\":\"acme/pkg\",\"time\":\"2999-01-01T10:00:00+02:00\",\"license\":\"Not-A-License\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "License \"Not-A-License\" is not a valid SPDX license identifier, see https://spdx.org/licenses/ if you use an open license.\nIf the software is closed-source, you may use \"proprietary\" as license."
+        ]
+    },
+    {
+        "name": "time-old-offset",
+        "config": "{\"name\":\"acme/pkg\",\"time\":\"2001-01-01T10:00:00.5-0130\",\"license\":\"Not-A-License\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "license-invalid",
+        "config": "{\"name\":\"acme/pkg\",\"license\":\"Not-A-License\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "License \"Not-A-License\" is not a valid SPDX license identifier, see https://spdx.org/licenses/ if you use an open license.\nIf the software is closed-source, you may use \"proprietary\" as license."
+        ]
+    },
+    {
+        "name": "license-spaces",
+        "config": "{\"name\":\"acme/pkg\",\"license\":\" MIT \",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "License \" MIT \" must not contain extra spaces, make sure to trim it."
+        ]
+    },
+    {
+        "name": "license-list",
+        "config": "{\"name\":\"acme/pkg\",\"license\":[\"MIT\",\"Not-A-License\",\"proprietary\"],\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "License \"Not-A-License\" is not a valid SPDX license identifier, see https://spdx.org/licenses/ if you use an open license.\nIf the software is closed-source, you may use \"proprietary\" as license."
+        ]
+    },
+    {
+        "name": "license-expressions",
+        "config": "{\"name\":\"acme/pkg\",\"license\":[\"MIT OR Apache-2.0\",\"(MIT AND GPL-2.0-or-later)\",\"GPL-2.0+ WITH Classpath-exception-2.0\",\"LicenseRef-mine\",\"DocumentRef-a:LicenseRef-b\",\"NONE\",\"NOASSERTION\",\"proprietary OR MIT\",\"MIT OR\",\"MIT WITH Not-An-Exception\",\"(MIT\"],\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "License \"MIT OR\" is not a valid SPDX license identifier, see https://spdx.org/licenses/ if you use an open license.\nIf the software is closed-source, you may use \"proprietary\" as license.",
+            "License \"MIT WITH Not-An-Exception\" is not a valid SPDX license identifier, see https://spdx.org/licenses/ if you use an open license.\nIf the software is closed-source, you may use \"proprietary\" as license.",
+            "License \"(MIT\" is not a valid SPDX license identifier, see https://spdx.org/licenses/ if you use an open license.\nIf the software is closed-source, you may use \"proprietary\" as license."
+        ]
+    },
+    {
+        "name": "license-object",
+        "config": "{\"name\":\"acme/pkg\",\"license\":{\"a\":\"MIT\",\"b\":\"Nope\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "License \"Nope\" is not a valid SPDX license identifier, see https://spdx.org/licenses/ if you use an open license.\nIf the software is closed-source, you may use \"proprietary\" as license."
+        ]
+    },
+    {
+        "name": "license-number",
+        "config": "{\"name\":\"acme/pkg\",\"license\":5,\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "License must be a string or array of strings, got 5."
+        ]
+    },
+    {
+        "name": "license-non-strings",
+        "config": "{\"name\":\"acme/pkg\",\"license\":[\"MIT\",5,[\"x\"]],\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "License 5 should be a string.",
+            "License [\"x\"] should be a string."
+        ]
+    },
+    {
+        "name": "authors-string",
+        "config": "{\"name\":\"acme/pkg\",\"authors\":\"x\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "authors : should be an array, string given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "authors",
+        "config": "{\"name\":\"acme/pkg\",\"authors\":[5,{\"name\":5,\"email\":\"bad\",\"homepage\":\"ftp://x\",\"role\":[]},[],[],{\"name\":\"A\",\"email\":\"a@example.com\",\"homepage\":\"https://example.com\"}],\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "authors.0 : should be an array, int given",
+            "authors.1.name : invalid value, must be a string",
+            "authors.1.role : invalid value, must be a string"
+        ],
+        "warnings": [
+            "authors.1.homepage : invalid value (ftp://x), must be an http/https URL",
+            "authors.1.email : invalid value (bad), must be a valid email address"
+        ]
+    },
+    {
+        "name": "authors-all-dropped",
+        "config": "{\"name\":\"acme/pkg\",\"authors\":[{\"email\":\"bad\"}],\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "authors.0.email : invalid value (bad), must be a valid email address"
+        ]
+    },
+    {
+        "name": "support-string",
+        "config": "{\"name\":\"acme/pkg\",\"support\":\"x\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "support : should be an array, string given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "support",
+        "config": "{\"name\":\"acme/pkg\",\"support\":{\"email\":5,\"irc\":\"http://x\",\"issues\":\"ftp://x\",\"rss\":\"x\",\"forum\":\"https://example.com\",\"chat\":5},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "support.email : invalid value, must be a string",
+            "support.chat : invalid value, must be a string"
+        ],
+        "warnings": [
+            "support.irc : invalid value (http://x), must be a irc://<server>/<channel> or ircs:// URL",
+            "support.issues : invalid value (ftp://x), must be an http/https URL"
+        ]
+    },
+    {
+        "name": "support-email",
+        "config": "{\"name\":\"acme/pkg\",\"support\":{\"email\":\"bad\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "support.email : invalid value (bad), must be a valid email address"
+        ]
+    },
+    {
+        "name": "support-empty",
+        "config": "{\"name\":\"acme/pkg\",\"support\":[],\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "support-all-dropped",
+        "config": "{\"name\":\"acme/pkg\",\"support\":{\"irc\":\"http://x\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "support.irc : invalid value (http://x), must be a irc://<server>/<channel> or ircs:// URL"
+        ]
+    },
+    {
+        "name": "funding-string",
+        "config": "{\"name\":\"acme/pkg\",\"funding\":\"x\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "funding : should be an array, string given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "funding",
+        "config": "{\"name\":\"acme/pkg\",\"funding\":[5,{\"type\":5,\"url\":\"ftp://x\"},[],[\"x\"],{\"type\":\"github\",\"url\":\"https://example.com\"}],\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "funding.0 : should be an array, int given",
+            "funding.1.type : invalid value, must be a string"
+        ],
+        "warnings": [
+            "funding.1.url : invalid value (ftp://x), must be an http/https URL"
+        ]
+    },
+    {
+        "name": "funding-all-dropped",
+        "config": "{\"name\":\"acme/pkg\",\"funding\":[{\"url\":\"ftp://x\"}],\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "funding.0.url : invalid value (ftp://x), must be an http/https URL"
+        ]
+    },
+    {
+        "name": "php-ext-string",
+        "config": "{\"name\":\"acme/pkg\",\"php-ext\":\"x\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext : should be an array, string given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-wrong-type",
+        "config": "{\"name\":\"acme/pkg\",\"php-ext\":{\"extension-name\":5},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext can only be set by packages of type \"php-ext\" or \"php-ext-zend\" which must be C extensions"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-fields",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"php-ext\",\"php-ext\":{\"extension-name\":5,\"priority\":\"x\",\"support-zts\":\"y\",\"support-nts\":1,\"build-path\":5},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext.extension-name : should be a string, int given",
+            "php-ext.priority : should be an integer, string given",
+            "php-ext.support-zts : should be a boolean, string given",
+            "php-ext.support-nts : should be a boolean, int given",
+            "php-ext.build-path : should be a string or null, int given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-build-path-null",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"php-ext-zend\",\"php-ext\":{\"build-path\":null,\"extension-name\":\"a\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-download-number",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"php-ext\",\"php-ext\":{\"download-url-method\":5},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext.download-url-method : should be an array or a string, int given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-download-empty",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"php-ext\",\"php-ext\":{\"download-url-method\":[]},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext.download-url-method : must contain at least one element"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-download-list",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"php-ext\",\"php-ext\":{\"download-url-method\":[5,\"bad\",\"pre-packaged-source\"]},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext.download-url-method.0 : should be a string, int given",
+            "php-ext.download-url-method.1 : invalid value (bad), must be one of composer-default, pre-packaged-source, pre-packaged-binary"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-download-string",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"php-ext\",\"php-ext\":{\"download-url-method\":\"bad\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext.download-url-method.0 : invalid value (bad), must be one of composer-default, pre-packaged-source, pre-packaged-binary"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-os-both",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"php-ext\",\"php-ext\":{\"os-families\":[\"linux\"],\"os-families-exclude\":[\"bsd\"]},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext : os-families and os-families-exclude cannot both be specified"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-os-string",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"php-ext\",\"php-ext\":{\"os-families\":\"x\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext.os-families : should be an array, string given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-os-empty",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"php-ext\",\"php-ext\":{\"os-families-exclude\":[]},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext.os-families-exclude : must contain at least one element"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-os-list",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"php-ext\",\"php-ext\":{\"os-families\":[5,\"bad\",\"linux\"]},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext.os-families.0 : should be a string, int given",
+            "php-ext.os-families.1 : invalid value (bad), must be one of windows, bsd, darwin, solaris, linux, unknown"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-os-all-dropped",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"php-ext\",\"php-ext\":{\"os-families\":[\"bad\"]},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext.os-families.0 : invalid value (bad), must be one of windows, bsd, darwin, solaris, linux, unknown"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-configure-string",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"php-ext\",\"php-ext\":{\"configure-options\":\"x\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext.configure-options : should be an array, string given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-configure",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"php-ext\",\"php-ext\":{\"configure-options\":[5,[],{\"name\":5},{\"name\":\"x\",\"needs-value\":\"y\",\"description\":5},{\"name\":\"y\",\"needs-value\":true,\"description\":\"d\"}]},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext.configure-options.0 : should be an array, int given",
+            "php-ext.configure-options.1.name : must be present",
+            "php-ext.configure-options.2.name : should be a string, int given",
+            "php-ext.configure-options.3.needs-value : should be a boolean, string given",
+            "php-ext.configure-options.3.description : should be a string, int given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-configure-all-dropped",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"php-ext\",\"php-ext\":{\"configure-options\":[{\"description\":\"d\"}]},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext.configure-options.0.name : must be present"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "php-ext-empty-after",
+        "config": "{\"name\":\"acme/pkg\",\"type\":\"php-ext\",\"php-ext\":{\"priority\":\"x\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "php-ext.priority : should be an integer, string given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "links-string",
+        "config": "{\"name\":\"acme/pkg\",\"require\":\"x\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "require : should be an array, string given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "links",
+        "config": "{\"name\":\"acme/app\",\"require\":{\"acme/app\":\"^1\",\"Acme/Upper\":\"^1\",\"lib-icu+x\":\"^1\",\"acme/a\":5,\"acme/b\":\"self.version\",\"acme/c\":\"nope\",\"acme/d\":\"*\",\"acme/e\":\">=1\",\"acme/f\":\"dev-main\",\"acme/g\":\"1.0.0\",\"acme/h\":\"==1.0\",\"acme/i\":\">2 <1\",\"php\":\"*\",\"acme/j\":\"^1 || >=2\",\"acme/k\":\"<0.0.0.0-dev\",\"acme/l\":\"1.0.0@dev\",\"acme/m\":\"1.0.0 || dev-x\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "require.acme/app : a package cannot set a require on itself",
+            "require.acme/a : invalid value, must be a string containing a version constraint",
+            "require.acme/c : invalid version constraint (Could not parse version constraint nope: Invalid version string \"nope\")"
+        ],
+        "warnings": [
+            "require.Acme/Upper is invalid, it should not contain uppercase characters. Please use acme/upper instead.",
+            "require.lib-icu+x is invalid, it should have a vendor name, a forward slash, and a package name. The vendor and package name can be words separated by -, . or _. The complete name should match \"^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]?|-{0,2})[a-z0-9]+)*$\".",
+            "require.acme/d : unbound version constraints (*) should be avoided",
+            "require.acme/e : unbound version constraints (>=1) should be avoided",
+            "require.acme/g : exact version constraints (1.0.0) should be avoided if the package follows semantic versioning",
+            "require.acme/h : exact version constraints (==1.0) should be avoided if the package follows semantic versioning",
+            "require.acme/i : this version constraint cannot possibly match anything (>2 <1)",
+            "require.acme/j : unbound version constraints (^1 || >=2) should be avoided",
+            "require.acme/l : exact version constraints (1.0.0@dev) should be avoided if the package follows semantic versioning"
+        ]
+    },
+    {
+        "name": "links-no-checks",
+        "config": "{\"name\":\"acme/pkg\",\"require\":{\"acme/d\":\"*\",\"acme/g\":\"1.0.0\",\"acme/i\":\">2 <1\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "require.acme/d : unbound version constraints (*) should be avoided",
+            "require.acme/g : exact version constraints (1.0.0) should be avoided if the package follows semantic versioning",
+            "require.acme/i : this version constraint cannot possibly match anything (>2 <1)"
+        ]
+    },
+    {
+        "name": "links-no-checks",
+        "config": "{\"name\":\"acme/pkg\",\"require\":{\"acme/d\":\"*\",\"acme/g\":\"1.0.0\",\"acme/i\":\">2 <1\"},\"version\":\"1.0.0\"}",
+        "constraints": false,
+        "errors": [],
+        "warnings": [
+            "require.acme/i : this version constraint cannot possibly match anything (>2 <1)"
+        ]
+    },
+    {
+        "name": "links-dev-and-conflict",
+        "config": "{\"name\":\"acme/pkg\",\"require-dev\":{\"acme/d\":\"*\",\"acme/g\":\"1.0.0\",\"acme/i\":\">2 <1\"},\"conflict\":{\"acme/r\":\"1.0\",\"acme/s\":\"1.0\"},\"replace\":{\"acme/r\":\"1.0\",\"acme/t\":\"1.0\"},\"provide\":{\"acme/p\":\"1.0\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "conflict.acme/r : you cannot conflict with a package that is also replaced, as replace already creates an implicit conflict rule"
+        ],
+        "warnings": [
+            "require-dev.acme/i : this version constraint cannot possibly match anything (>2 <1)"
+        ]
+    },
+    {
+        "name": "links-conflict-not-a-string",
+        "config": "{\"name\":\"acme/pkg\",\"conflict\":{\"acme/e\":1,\"acme/g\":\"1.0\"},\"replace\":{\"acme/e\":\"*\",\"acme/g\":\"*\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "conflict.acme/e : invalid value, must be a string containing a version constraint",
+            "conflict.acme/e : you cannot conflict with a package that is also replaced, as replace already creates an implicit conflict rule",
+            "conflict.acme/g : you cannot conflict with a package that is also replaced, as replace already creates an implicit conflict rule"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "links-self-in-replace",
+        "config": "{\"name\":\"acme/app\",\"replace\":{\"ACME/APP\":\"1.0\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "replace.ACME/APP : a package cannot set a replace on itself"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "suggest",
+        "config": "{\"name\":\"acme/pkg\",\"suggest\":{\"acme/a\":5,\"acme/b\":\"why\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "suggest.acme/a : invalid value, must be a string describing why the package is suggested"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "suggest-string",
+        "config": "{\"name\":\"acme/pkg\",\"suggest\":\"x\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "suggest : should be an array, string given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "minimum-stability-number",
+        "config": "{\"name\":\"acme/pkg\",\"minimum-stability\":5,\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "minimum-stability : should be a string, int given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "minimum-stability-RC",
+        "config": "{\"name\":\"acme/pkg\",\"minimum-stability\":\"RC\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "minimum-stability-rc",
+        "config": "{\"name\":\"acme/pkg\",\"minimum-stability\":\"rc\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "minimum-stability : invalid value (rc), must be one of stable, RC, beta, alpha, dev"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "minimum-stability-Beta",
+        "config": "{\"name\":\"acme/pkg\",\"minimum-stability\":\"Beta\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "minimum-stability-bad",
+        "config": "{\"name\":\"acme/pkg\",\"minimum-stability\":\"nope\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "minimum-stability : invalid value (nope), must be one of stable, RC, beta, alpha, dev"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "autoload-string",
+        "config": "{\"name\":\"acme/pkg\",\"autoload\":\"x\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "autoload : should be an array, string given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "autoload",
+        "config": "{\"name\":\"acme/pkg\",\"autoload\":{\"psr-4\":{\"Acme\":\"src\",\"\":\"lib\",\"Ok\\\\\":\"ok\"},\"unknown\":[],\"psr-0\":{\"\":\"x\"},\"classmap\":[\"a\"]},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "autoload.psr-4 : invalid value (Acme), namespaces must end with a namespace separator, should be Acme\\\\",
+            "autoload : invalid value (unknown), must be one of psr-0, psr-4, classmap, files, exclude-from-classmap"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "target-dir-psr4",
+        "config": "{\"name\":\"acme/pkg\",\"target-dir\":\"x\",\"autoload\":{\"psr-4\":{\"Acme\\\\\":\"src\"}},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "target-dir : this can not be used together with the autoload.psr-4 setting, remove target-dir to upgrade to psr-4"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "source-string",
+        "config": "{\"name\":\"acme/pkg\",\"source\":\"x\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "source : should be an array, string given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "source-empty",
+        "config": "{\"name\":\"acme/pkg\",\"source\":[],\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "source-missing",
+        "config": "{\"name\":\"acme/pkg\",\"source\":{\"type\":\"git\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "source.url : must be present",
+            "source.reference : must be present"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "source-types",
+        "config": "{\"name\":\"acme/pkg\",\"source\":{\"type\":5,\"url\":5,\"reference\":[]},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "source.type : should be a string, int given",
+            "source.url : should be a string, int given",
+            "source.reference : should be a string or int, array given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "source-dashes",
+        "config": "{\"name\":\"acme/pkg\",\"source\":{\"type\":\"git\",\"url\":\" -u\",\"reference\":\"-r\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "source.reference : must not start with a \"-\", \"-r\" given",
+            "source.url : must not start with a \"-\", \" -u\" given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "source-int-reference",
+        "config": "{\"name\":\"acme/pkg\",\"source\":{\"type\":\"git\",\"url\":\"https://example.com\",\"reference\":5},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "source-perforce",
+        "config": "{\"name\":\"acme/pkg\",\"source\":{\"type\":\"perforce\",\"url\":\"rsh:x\",\"reference\":\"r\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "source.url : invalid Perforce port (\"rsh:x\"), it must be of the form [tcp|ssl:][host:]port"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "source-perforce-ok",
+        "config": "{\"name\":\"acme/pkg\",\"source\":{\"type\":\"perforce\",\"url\":\"ssl:host:1666\",\"reference\":\"r\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": []
+    },
+    {
+        "name": "source-perforce-bad",
+        "config": "{\"name\":\"acme/pkg\",\"source\":{\"type\":\"perforce\",\"url\":\"host name\",\"reference\":\"r\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "source.url : invalid Perforce port (\"host name\"), it must be of the form [tcp|ssl:][host:]port"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "dist",
+        "config": "{\"name\":\"acme/pkg\",\"dist\":{\"url\":5,\"type\":5,\"reference\":\" -x\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "dist.type : should be a string, int given",
+            "dist.url : should be a string, int given",
+            "dist.reference : must not start with a \"-\", \" -x\" given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "dist-missing",
+        "config": "{\"name\":\"acme/pkg\",\"dist\":{\"reference\":\"r\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "dist.type : must be present",
+            "dist.url : must be present"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "include-path",
+        "config": "{\"name\":\"acme/pkg\",\"include-path\":[\"a\",5,[]],\"transport-options\":\"x\",\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "include-path.2 : must be a string or int, array given",
+            "transport-options : should be an array, string given"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "branch-alias-string",
+        "config": "{\"name\":\"acme/pkg\",\"extra\":{\"branch-alias\":\"x\"},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [
+            "extra.branch-alias : must be an array of versions => aliases"
+        ],
+        "warnings": []
+    },
+    {
+        "name": "branch-alias",
+        "config": "{\"name\":\"acme/pkg\",\"extra\":{\"branch-alias\":{\"dev-main\":5,\"dev-a\":\"2.0\",\"dev-b\":\"next-dev\",\"dev-1.x\":\"2.0.x-dev\",\"dev-2.x\":\"2.1.x-dev\",\"3.x-dev\":\"3.1.x-dev\",\"dev-c\":\"1.0-dev\"}},\"version\":\"1.0.0\"}",
+        "constraints": true,
+        "errors": [],
+        "warnings": [
+            "extra.branch-alias.dev-main : the target branch (5) must be a string, \"int\" received.",
+            "extra.branch-alias.dev-a : the target branch (2.0) must end in -dev",
+            "extra.branch-alias.dev-b : the target branch (next-dev) must be a parseable number like 2.0-dev"
+        ]
+    }
+]

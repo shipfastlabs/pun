@@ -452,6 +452,199 @@ fn parse_one(constraint: &str) -> Result<Vec<Constraint>> {
     Ok(vec![Constraint::Single(op, version)])
 }
 
+/// Whether `Intervals::compactConstraint` makes `constraint` a `MatchNoneConstraint`: a multi-constraint whose intervals
+/// (`Intervals::generateIntervals`) hold no numeric range and no branch name. A single constraint stays as it is.
+pub fn matches_nothing(constraint: &Constraint) -> bool {
+    if !matches!(constraint, Constraint::Multi(..)) {
+        return false;
+    }
+    let (numeric, branches) = intervals(constraint);
+    numeric.is_empty() && branches.names.is_empty()
+}
+
+/// One end of an interval: `Interval`'s start or end constraint.
+type End = (&'static str, String);
+
+/// `Interval::anyDev()` (`exclude`: every branch but `names`) and `Interval::noDev()` (only `names`).
+struct Branches {
+    names: Vec<String>,
+    exclude: bool,
+}
+
+/// `Interval::fromZero()`, `Interval::untilPositiveInfinity()`.
+fn from_zero() -> End {
+    (">=", "0.0.0.0-dev".into())
+}
+
+fn until_infinity() -> End {
+    ("<", format!("{}.0.0.0", i64::MAX))
+}
+
+fn op_str(op: Op) -> &'static str {
+    match op {
+        Op::Eq => "==",
+        Op::Lt => "<",
+        Op::Le => "<=",
+        Op::Gt => ">",
+        Op::Ge => ">=",
+        Op::Ne => "!=",
+    }
+}
+
+/// `Intervals::generateIntervals`: the numeric ranges and the branches a constraint matches.
+fn intervals(constraint: &Constraint) -> (Vec<(End, End)>, Branches) {
+    let any_dev = || Branches {
+        names: vec![],
+        exclude: true,
+    };
+    let no_dev = || Branches {
+        names: vec![],
+        exclude: false,
+    };
+    let (op, version) = match constraint {
+        Constraint::Any => return (vec![(from_zero(), until_infinity())], any_dev()),
+        Constraint::Multi(items, conjunctive) => return multi_intervals(items, *conjunctive),
+        Constraint::Single(op, version) => (op_str(*op), version.clone()),
+    };
+    if version.starts_with("dev-") {
+        return match op {
+            "!=" => (
+                vec![(from_zero(), until_infinity())],
+                Branches {
+                    names: vec![version],
+                    exclude: true,
+                },
+            ),
+            "==" => (
+                vec![],
+                Branches {
+                    names: vec![version],
+                    exclude: false,
+                },
+            ),
+            _ => (vec![], no_dev()),
+        };
+    }
+    match op {
+        ">" | ">=" => (vec![((op, version), until_infinity())], no_dev()),
+        "<" if version == "0.0.0.0-dev" => (vec![], no_dev()),
+        "<" | "<=" => (vec![(from_zero(), (op, version))], no_dev()),
+        "!=" => (
+            vec![
+                (from_zero(), ("<", version.clone())),
+                ((">", version), until_infinity()),
+            ],
+            any_dev(),
+        ),
+        _ => (vec![((">=", version.clone()), ("<=", version))], no_dev()),
+    }
+}
+
+/// `array_diff`, `array_intersect` and `array_merge` on lists of names, which keep the first list's order.
+fn diff(a: &[String], b: &[String]) -> Vec<String> {
+    a.iter().filter(|n| !b.contains(n)).cloned().collect()
+}
+
+fn intersect(a: &[String], b: &[String]) -> Vec<String> {
+    a.iter().filter(|n| b.contains(n)).cloned().collect()
+}
+
+fn multi_intervals(items: &[Constraint], conjunctive: bool) -> (Vec<(End, End)>, Branches) {
+    let results: Vec<(Vec<(End, End)>, Branches)> = items.iter().map(intervals).collect();
+    let mut branches = Branches {
+        names: vec![],
+        exclude: conjunctive,
+    };
+    for (_, b) in &results {
+        branches = match (conjunctive, branches.exclude, b.exclude) {
+            (false, true, true) => Branches {
+                names: intersect(&branches.names, &b.names),
+                exclude: true,
+            },
+            (false, false, true) => Branches {
+                names: diff(&b.names, &branches.names),
+                exclude: true,
+            },
+            (false, true, false) => Branches {
+                names: diff(&branches.names, &b.names),
+                exclude: true,
+            },
+            (false, false, false) => Branches {
+                names: branches.names.iter().chain(&b.names).cloned().collect(),
+                exclude: false,
+            },
+            (true, true, true) => Branches {
+                names: branches.names.iter().chain(&b.names).cloned().collect(),
+                exclude: true,
+            },
+            (true, false, true) => Branches {
+                names: diff(&branches.names, &b.names),
+                exclude: false,
+            },
+            (true, true, false) => Branches {
+                names: diff(&b.names, &branches.names),
+                exclude: false,
+            },
+            (true, false, false) => Branches {
+                names: intersect(&branches.names, &b.names),
+                exclude: false,
+            },
+        };
+    }
+    let mut unique = vec![];
+    for name in branches.names {
+        if !unique.contains(&name) {
+            unique.push(name);
+        }
+    }
+    branches.names = unique;
+    if results.len() == 1 {
+        let (numeric, _) = results.into_iter().next().expect("one group");
+        return (numeric, branches);
+    }
+    // Every group's borders, by version then `Intervals::$opSortOrder`.
+    let order = |op: &str| match op {
+        ">=" => -3,
+        "<" => -2,
+        ">" => 2,
+        _ => 3,
+    };
+    let mut borders: Vec<(&str, String, bool)> = vec![];
+    for (numeric, _) in &results {
+        for (start, end) in numeric {
+            borders.push((start.0, start.1.clone(), true));
+            borders.push((end.0, end.1.clone(), false));
+        }
+    }
+    borders.sort_by(|a, b| match crate::version::compare(&a.1, &b.1) {
+        0 => order(a.0).cmp(&order(b.0)),
+        c => c.cmp(&0),
+    });
+    let threshold = if conjunctive {
+        results.len().cast_signed()
+    } else {
+        1
+    };
+    let (mut active, mut start, mut numeric) = (0isize, None::<End>, vec![]);
+    for (op, version, is_start) in borders {
+        if is_start {
+            active += 1;
+        } else {
+            active -= 1;
+        }
+        if start.is_none() && active >= threshold {
+            start = Some((op, version));
+        } else if let Some(from) = start.take_if(|_| active < threshold) {
+            let empty = crate::version::compare(&from.1, &version) == 0
+                && ((from.0 == ">" && op == "<=") || (from.0 == ">=" && op == "<"));
+            if !empty {
+                numeric.push((from, (op, version)));
+            }
+        }
+    }
+    (numeric, branches)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

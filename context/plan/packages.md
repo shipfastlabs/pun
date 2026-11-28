@@ -19,7 +19,7 @@ The everyday commands are top-level, with Composer's names and flags:
 | `pun update [packages]` | `composer update` | Resolves again, writes composer.lock, installs |
 | `pun require <pkg[:constraint]>` | `composer require` | Adds to composer.json, then a partial update |
 | `pun remove <pkg>` | `composer remove` | Removes from composer.json, then a partial update |
-| `pun composer <command>` | `composer <command>` | Every other Composer command. Built: `dump-autoload`, `run-script`, `exec`. Not built: `show`, `outdated`, `why`, `why-not`, `audit`, `validate`, `licenses`, `check-platform-reqs`, `config`, ... |
+| `pun composer <command>` | `composer <command>` | Every other Composer command. Built: `dump-autoload`, `run-script`, `exec`, `validate`. Not built: `show`, `outdated`, `why`, `why-not`, `audit`, `licenses`, `check-platform-reqs`, `config`, ... |
 
 `pun composer install` and `pun install` are the same command. A `pun composer` command Pun has not built yet is a
 run error (exit 2) that names it; Pun does not shell out to the Composer CLI.
@@ -112,8 +112,8 @@ teammates run, and it needs no resolver.
    *Left:* `.oracle/composer` and `scripts/install-parity.sh`.
 2. **Version parsing and constraints.** Done.
 3. **composer.json and composer.lock.** Models, `content-hash`, the lock writer, and `pun composer validate`. Done
-   when every corpus lock round-trips byte for byte and `validate` matches Composer's messages and exit codes.
-   *Left:* `pun composer validate`.
+   when every corpus lock round-trips byte for byte and `validate` matches Composer's messages and exit codes. Built;
+   `validate` matches Composer 2.11.2 on the cases of `crates/pun-cli/tests/fixtures/validate.json`.
 4. **`pun install` from a lock.** Done when install-parity gives identical vendor trees on pinkary,
    laravel-framework, larastan, laravel-pint and pest. Built; shown on pinkary.
 5. **`pun composer dump-autoload`.** Done when Composer's autoload fixtures pass and the corpus `vendor/composer/` is

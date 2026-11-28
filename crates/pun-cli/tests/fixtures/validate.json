@@ -1,0 +1,2324 @@
+[
+ {
+  "name": "valid",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "valid-file-argument",
+  "files": {
+   "sub/composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [
+   "sub/composer.json"
+  ],
+  "exit": 0,
+  "stdout": "sub/composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "missing-file",
+  "files": {},
+  "args": [],
+  "exit": 3,
+  "stdout": "",
+  "stderr": "./composer.json not found.\n"
+ },
+ {
+  "name": "missing-file-argument",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [
+   "nope.json"
+  ],
+  "exit": 3,
+  "stdout": "",
+  "stderr": "nope.json not found.\n"
+ },
+ {
+  "name": "warnings",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- No license specified, it is recommended to do so. For closed-source software you may use \"proprietary\" as license.\n"
+ },
+ {
+  "name": "warnings-strict",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [
+   "--strict"
+  ],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- No license specified, it is recommended to do so. For closed-source software you may use \"proprietary\" as license.\n"
+ },
+ {
+  "name": "errors",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"replace\": {\n        \"acme/a\": \"1.0\"\n    },\n    \"conflict\": {\n        \"acme/a\": \"<1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is invalid, the following errors/warnings were found:\n# General errors\n- conflict.acme/a : you cannot conflict with a package that is also replaced, as replace already creates an implicit conflict rule\n"
+ },
+ {
+  "name": "errors-and-warnings",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"replace\": {\n        \"acme/a\": \"1.0\"\n    },\n    \"conflict\": {\n        \"acme/a\": \"<1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is invalid, the following errors/warnings were found:\n# General errors\n- conflict.acme/a : you cannot conflict with a package that is also replaced, as replace already creates an implicit conflict rule\n# General warnings\n- No license specified, it is recommended to do so. For closed-source software you may use \"proprietary\" as license.\n"
+ },
+ {
+  "name": "errors-and-publish-errors",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"replace\": {\n        \"acme/a\": \"1.0\"\n    },\n    \"conflict\": {\n        \"acme/a\": \"<1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is invalid, the following errors/warnings were found:\n# General errors\n- conflict.acme/a : you cannot conflict with a package that is also replaced, as replace already creates an implicit conflict rule\n# Publish errors\n- description : The property description is required\n"
+ },
+ {
+  "name": "warnings-no-check-publish",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [
+   "--no-check-publish"
+  ],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- No license specified, it is recommended to do so. For closed-source software you may use \"proprietary\" as license.\n"
+ },
+ {
+  "name": "publish-errors",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is valid for simple usage with Composer but has\nstrict errors that make it unable to be published as a package\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# Publish errors\n- description : The property description is required\n"
+ },
+ {
+  "name": "publish-errors-no-check-publish",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [
+   "--no-check-publish"
+  ],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "publish-errors-and-warnings",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is valid for simple usage with Composer but has\nstrict errors that make it unable to be published as a package\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# Publish errors\n- description : The property description is required\n# General warnings\n- No license specified, it is recommended to do so. For closed-source software you may use \"proprietary\" as license.\n"
+ },
+ {
+  "name": "version-field",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"version\": \"1.0.0\"\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- The version field is present, it is recommended to leave it out if the package is published on Packagist.\n"
+ },
+ {
+  "name": "version-field-no-check-version",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"version\": \"1.0.0\"\n}\n"
+  },
+  "args": [
+   "--no-check-version"
+  ],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "constraints",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/a\": \"*\",\n        \"acme/b\": \"1.2.3\",\n        \"acme/c\": \">=1.0\",\n        \"acme/d\": \"==2.0.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- require.acme/a : unbound version constraints (*) should be avoided\n- require.acme/b : exact version constraints (1.2.3) should be avoided if the package follows semantic versioning\n- require.acme/c : unbound version constraints (>=1.0) should be avoided\n- require.acme/d : exact version constraints (==2.0.0) should be avoided if the package follows semantic versioning\n"
+ },
+ {
+  "name": "constraints-no-check-all",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/a\": \"*\",\n        \"acme/b\": \"1.2.3\"\n    }\n}\n"
+  },
+  "args": [
+   "--no-check-all"
+  ],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "constraints-strict",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/a\": \"*\"\n    }\n}\n"
+  },
+  "args": [
+   "--strict"
+  ],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- require.acme/a : unbound version constraints (*) should be avoided\n"
+ },
+ {
+  "name": "parse-error-trailing-comma",
+  "files": {
+   "composer.json": "{\"name\": \"acme/app\",}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                    \n  \"./composer.json\" does not contain valid JSON                     \n  Parse error on line 1:                                            \n  {\"name\": \"acme/app\",}                                             \n  -------------------^                                              \n  Expected: 'STRING' - It appears you have an extra trailing comma  \n                                                                    \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"name\": \"acme/app\",}",
+   "-------------------^",
+   "Expected: 'STRING' - It appears you have an extra trailing comma"
+  ]
+ },
+ {
+  "name": "parse-error-missing-brace",
+  "files": {
+   "composer.json": "{\"name\": \"acme/app\"\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                 \n  \"./composer.json\" does not contain valid JSON  \n  Parse error on line 1:                         \n  {\"name\": \"acme/app\"                            \n  ------------------^                            \n  Expected one of: '}', ','                      \n                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"name\": \"acme/app\"",
+   "------------------^",
+   "Expected one of: '}', ','"
+  ]
+ },
+ {
+  "name": "parse-error-single-quotes",
+  "files": {
+   "composer.json": "{'name': 'acme/app'}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                              \n  \"./composer.json\" does not contain valid JSON                               \n  Parse error on line 1:                                                      \n  {'name': 'acme/app'}                                                        \n  ^                                                                           \n  Invalid string, it appears you used single quotes instead of double quotes  \n                                                                              \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{'name': 'acme/app'}",
+   "^",
+   "Invalid string, it appears you used single quotes instead of double quotes"
+  ]
+ },
+ {
+  "name": "parse-error-empty",
+  "files": {
+   "composer.json": ""
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                          \n  \"./composer.json\" does not contain valid JSON                           \n  Parse error on line 1:                                                  \n                                                                          \n  ^                                                                       \n  Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['  \n                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "^",
+   "Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['"
+  ]
+ },
+ {
+  "name": "not-an-object",
+  "files": {
+   "composer.json": "[]\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                              \n  \"./composer.json\" does not match the expected JSON schema:  \n   - Array value found, but an object is required             \n                                                              \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - Array value found, but an object is required"
+  ]
+ },
+ {
+  "name": "schema-lax-name",
+  "files": {
+   "composer.json": "{\n    \"name\": \"Acme/App\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                                                              \n  \"./composer.json\" does not match the expected JSON schema:                                                  \n   - name : Does not match the regex pattern ^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$  \n                                                                                                              \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - name : Does not match the regex pattern ^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$"
+  ]
+ },
+ {
+  "name": "schema-lax-type",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": 5,\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                  \n  \"./composer.json\" does not match the expected JSON schema:      \n   - description : Integer value found, but a string is required  \n                                                                  \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - description : Integer value found, but a string is required"
+  ]
+ },
+ {
+  "name": "schema-unknown-property",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"unknown-key\": 1\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is valid for simple usage with Composer but has\nstrict errors that make it unable to be published as a package\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# Publish errors\n- The property unknown-key is not defined and the definition does not allow additional properties\n"
+ },
+ {
+  "name": "schema-lax-enum",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"minimum-stability\": \"nightly\"\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                                                             \n  \"./composer.json\" does not match the expected JSON schema:                                                 \n   - minimum-stability : Does not have a value in the enumeration [\"dev\",\"alpha\",\"beta\",\"rc\",\"RC\",\"stable\"]  \n                                                                                                             \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - minimum-stability : Does not have a value in the enumeration [\"dev\",\"alpha\",\"beta\",\"rc\",\"RC\",\"stable\"]"
+  ]
+ },
+ {
+  "name": "schema-lax-email",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"authors\": [\n        {\n            \"name\": \"A\",\n            \"email\": \"not-an-email\"\n        }\n    ]\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                              \n  \"./composer.json\" does not match the expected JSON schema:  \n   - authors[0].email : Invalid email                         \n                                                              \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - authors[0].email : Invalid email"
+  ]
+ },
+ {
+  "name": "schema-lax-several",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": 5,\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"minimum-stability\": \"nightly\",\n    \"keywords\": \"x\"\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                                                             \n  \"./composer.json\" does not match the expected JSON schema:                                                 \n   - description : Integer value found, but a string is required                                             \n   - keywords : String value found, but an array is required                                                 \n   - minimum-stability : Does not have a value in the enumeration [\"dev\",\"alpha\",\"beta\",\"rc\",\"RC\",\"stable\"]  \n                                                                                                             \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - description : Integer value found, but a string is required",
+   " - keywords : String value found, but an array is required",
+   " - minimum-stability : Does not have a value in the enumeration [\"dev\",\"alpha\",\"beta\",\"rc\",\"RC\",\"stable\"]"
+  ]
+ },
+ {
+  "name": "schema-lax-nested",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"autoload\": {\n        \"psr-4\": {\n            \"Acme\\\\\": 5\n        }\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                                       \n  \"./composer.json\" does not match the expected JSON schema:                           \n   - autoload.psr-4.Acme\\ : Integer value found, but a string or an array is required  \n                                                                                       \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - autoload.psr-4.Acme\\ : Integer value found, but a string or an array is required"
+  ]
+ },
+ {
+  "name": "schema-uri-format",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"support\": {\n        \"issues\": \"not a uri\",\n        \"source\": \"https://example.com/a{b\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                              \n  \"./composer.json\" does not match the expected JSON schema:  \n   - support.issues : Invalid URL format                      \n   - support.source : Invalid URL format                      \n                                                              \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - support.issues : Invalid URL format",
+   " - support.source : Invalid URL format"
+  ]
+ },
+ {
+  "name": "schema-email-format",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"support\": {\n        \"email\": \"\\u00fcnicode@example.com\"\n    },\n    \"authors\": [\n        {\n            \"name\": \"A\",\n            \"email\": \"a@example\"\n        }\n    ]\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                              \n  \"./composer.json\" does not match the expected JSON schema:  \n   - authors[0].email : Invalid email                         \n                                                              \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - authors[0].email : Invalid email"
+  ]
+ },
+ {
+  "name": "schema-require-empty-array",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": []\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                              \n  \"./composer.json\" does not match the expected JSON schema:  \n   - require : Array value found, but an object is required   \n                                                              \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - require : Array value found, but an object is required"
+  ]
+ },
+ {
+  "name": "schema-require-empty-object",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {}\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "schema-require-number",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"acme/a\": 5\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "",
+  "crash": "Composer\\Pcre\\Preg::isMatch(): Argument #2 ($subject) must be of type string, int given"
+ },
+ {
+  "name": "schema-root-number",
+  "files": {
+   "composer.json": "5\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "",
+  "crash": "Cannot use a scalar value as an array"
+ },
+ {
+  "name": "schema-root-null",
+  "files": {
+   "composer.json": "null\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                              \n  \"./composer.json\" does not match the expected JSON schema:  \n   - NULL value found, but an object is required              \n                                                              \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - NULL value found, but an object is required"
+  ]
+ },
+ {
+  "name": "schema-root-string",
+  "files": {
+   "composer.json": "\"x\"\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "",
+  "crash": "Cannot access offset of type string on string"
+ },
+ {
+  "name": "schema-license-number",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": 5,\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "",
+  "crash": "strtolower(): Argument #1 ($string) must be of type string, int given"
+ },
+ {
+  "name": "schema-license-mixed-array",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": [\n        \"MIT\",\n        5\n    ],\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "",
+  "crash": "strtolower(): Argument #1 ($string) must be of type string, int given"
+ },
+ {
+  "name": "schema-policy-reserved",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"config\": {\n        \"policy\": {\n            \"ignore-x\": {},\n            \"package\": {}\n        }\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                    \n  \"./composer.json\" does not match the expected JSON schema:        \n   - config.policy.ignore-x : Matched a schema which it should not  \n   - config.policy.package : Matched a schema which it should not   \n                                                                    \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - config.policy.ignore-x : Matched a schema which it should not",
+   " - config.policy.package : Matched a schema which it should not"
+  ]
+ },
+ {
+  "name": "schema-process-timeout",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"config\": {\n        \"process-timeout\": \"soon\",\n        \"platform\": {\n            \"php\": true\n        }\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                              \n  \"./composer.json\" does not match the expected JSON schema:                  \n   - config.process-timeout : String value found, but an integer is required  \n                                                                              \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - config.process-timeout : String value found, but an integer is required"
+  ]
+ },
+ {
+  "name": "schema-repositories",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"repositories\": [\n        {\n            \"type\": \"composer\"\n        },\n        {\n            \"type\": \"vcs\",\n            \"url\": 5\n        },\n        {\n            \"type\": \"nope\",\n            \"url\": \"x\"\n        },\n        \"not-an-object\"\n    ]\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                                                                                                                           \n  \"./composer.json\" does not match the expected JSON schema:                                                                                                               \n   - repositories[0].url : The property url is required                                                                                                                    \n   - repositories[0].type : Does not have a value in the enumeration [\"vcs\",\"github\",\"git\",\"gitlab\",\"bitbucket\",\"git-bitbucket\",\"hg\",\"fossil\",\"perforce\",\"svn\",\"forgejo\"]  \n   - repositories[0].type : Does not have a value in the enumeration [\"path\"]                                                                                              \n   - repositories[0].type : Does not have a value in the enumeration [\"artifact\"]                                                                                          \n   - repositories[0].type : Does not have a value in the enumeration [\"pear\"]                                                                                              \n   - repositories[0].package : The property package is required                                                                                                            \n   - repositories[0].type : Does not have a value in the enumeration [\"package\"]                                                                                           \n   - repositories[0] : Failed to match at least one schema                                                                                                                 \n   - repositories[0].type : String value found, but a boolean is required                                                                                                  \n   - repositories[0].type : Does not have a value in the enumeration [false]                                                                                               \n   - repositories[1].type : Does not have a value in the enumeration [\"composer\"]                                                                                          \n   - repositories[1].url : Integer value found, but a string is required                                                                                                   \n   - repositories[1].type : Does not have a value in the enumeration [\"path\"]                                                                                              \n   - repositories[1].type : Does not have a value in the enumeration [\"artifact\"]                                                                                          \n   - repositories[1].type : Does not have a value in the enumeration [\"pear\"]                                                                                              \n   - repositories[1].package : The property package is required                                                                                                            \n   - repositories[1].type : Does not have a value in the enumeration [\"package\"]                                                                                           \n   - repositories[1] : Failed to match at least one schema                                                                                                                 \n   - repositories[1] : Must contain no more than 1 properties                                                                                                              \n   - repositories[1].type : String value found, but a boolean is required                                                                                                  \n   - repositories[1].type : Does not have a value in the enumeration [false]                                                                                               \n   - repositories[1].url : Integer value found, but a boolean is required                                                                                                  \n   - repositories[1].url : Does not have a value in the enumeration [false]                                                                                                \n   - repositories[2].type : Does not have a value in the enumeration [\"composer\"]                                                                                          \n   - repositories[2].type : Does not have a value in the enumeration [\"vcs\",\"github\",\"git\",\"gitlab\",\"bitbucket\",\"git-bitbucket\",\"hg\",\"fossil\",\"perforce\",\"svn\",\"forgejo\"]  \n   - repositories[2].type : Does not have a value in the enumeration [\"path\"]                                                                                              \n   - repositories[2].type : Does not have a value in the enumeration [\"artifact\"]                                                                                          \n   - repositories[2].type : Does not have a value in the enumeration [\"pear\"]                                                                                              \n   - repositories[2].package : The property package is required                                                                                                            \n   - repositories[2].type : Does not have a value in the enumeration [\"package\"]                                                                                           \n   - repositories[2] : Failed to match at least one schema                                                                                                                 \n   - repositories[2] : Must contain no more than 1 properties                                                                                                              \n   - repositories[2].type : String value found, but a boolean is required                                                                                                  \n   - repositories[2].type : Does not have a value in the enumeration [false]                                                                                               \n   - repositories[2].url : String value found, but a boolean is required                                                                                                   \n   - repositories[2].url : Does not have a value in the enumeration [false]                                                                                                \n   - repositories[3] : String value found, but an object is required                                                                                                       \n   - repositories[3] : Failed to match at least one schema                                                                                                                 \n                                                                                                                                                                           \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - repositories[0].url : The property url is required",
+   " - repositories[0].type : Does not have a value in the enumeration [\"vcs\",\"github\",\"git\",\"gitlab\",\"bitbucket\",\"git-bitbucket\",\"hg\",\"fossil\",\"perforce\",\"svn\",\"forgejo\"]",
+   " - repositories[0].type : Does not have a value in the enumeration [\"path\"]",
+   " - repositories[0].type : Does not have a value in the enumeration [\"artifact\"]",
+   " - repositories[0].type : Does not have a value in the enumeration [\"pear\"]",
+   " - repositories[0].package : The property package is required",
+   " - repositories[0].type : Does not have a value in the enumeration [\"package\"]",
+   " - repositories[0] : Failed to match at least one schema",
+   " - repositories[0].type : String value found, but a boolean is required",
+   " - repositories[0].type : Does not have a value in the enumeration [false]",
+   " - repositories[1].type : Does not have a value in the enumeration [\"composer\"]",
+   " - repositories[1].url : Integer value found, but a string is required",
+   " - repositories[1].type : Does not have a value in the enumeration [\"path\"]",
+   " - repositories[1].type : Does not have a value in the enumeration [\"artifact\"]",
+   " - repositories[1].type : Does not have a value in the enumeration [\"pear\"]",
+   " - repositories[1].package : The property package is required",
+   " - repositories[1].type : Does not have a value in the enumeration [\"package\"]",
+   " - repositories[1] : Failed to match at least one schema",
+   " - repositories[1] : Must contain no more than 1 properties",
+   " - repositories[1].type : String value found, but a boolean is required",
+   " - repositories[1].type : Does not have a value in the enumeration [false]",
+   " - repositories[1].url : Integer value found, but a boolean is required",
+   " - repositories[1].url : Does not have a value in the enumeration [false]",
+   " - repositories[2].type : Does not have a value in the enumeration [\"composer\"]",
+   " - repositories[2].type : Does not have a value in the enumeration [\"vcs\",\"github\",\"git\",\"gitlab\",\"bitbucket\",\"git-bitbucket\",\"hg\",\"fossil\",\"perforce\",\"svn\",\"forgejo\"]",
+   " - repositories[2].type : Does not have a value in the enumeration [\"path\"]",
+   " - repositories[2].type : Does not have a value in the enumeration [\"artifact\"]",
+   " - repositories[2].type : Does not have a value in the enumeration [\"pear\"]",
+   " - repositories[2].package : The property package is required",
+   " - repositories[2].type : Does not have a value in the enumeration [\"package\"]",
+   " - repositories[2] : Failed to match at least one schema",
+   " - repositories[2] : Must contain no more than 1 properties",
+   " - repositories[2].type : String value found, but a boolean is required",
+   " - repositories[2].type : Does not have a value in the enumeration [false]",
+   " - repositories[2].url : String value found, but a boolean is required",
+   " - repositories[2].url : Does not have a value in the enumeration [false]",
+   " - repositories[3] : String value found, but an object is required",
+   " - repositories[3] : Failed to match at least one schema"
+  ]
+ },
+ {
+  "name": "schema-repositories-object",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"repositories\": {\n        \"a\": {\n            \"type\": \"path\"\n        },\n        \"packagist.org\": false\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                                                                                                                          \n  \"./composer.json\" does not match the expected JSON schema:                                                                                                              \n   - repositories.a.url : The property url is required                                                                                                                    \n   - repositories.a.type : Does not have a value in the enumeration [\"composer\"]                                                                                          \n   - repositories.a.type : Does not have a value in the enumeration [\"vcs\",\"github\",\"git\",\"gitlab\",\"bitbucket\",\"git-bitbucket\",\"hg\",\"fossil\",\"perforce\",\"svn\",\"forgejo\"]  \n   - repositories.a.type : Does not have a value in the enumeration [\"artifact\"]                                                                                          \n   - repositories.a.type : Does not have a value in the enumeration [\"pear\"]                                                                                              \n   - repositories.a.package : The property package is required                                                                                                            \n   - repositories.a.type : Does not have a value in the enumeration [\"package\"]                                                                                           \n   - repositories.a : Failed to match at least one schema                                                                                                                 \n   - repositories.a : Failed to match all schemas                                                                                                                         \n   - repositories.a : Object value found, but a boolean is required                                                                                                       \n   - repositories.a : Does not have a value in the enumeration [false]                                                                                                    \n                                                                                                                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - repositories.a.url : The property url is required",
+   " - repositories.a.type : Does not have a value in the enumeration [\"composer\"]",
+   " - repositories.a.type : Does not have a value in the enumeration [\"vcs\",\"github\",\"git\",\"gitlab\",\"bitbucket\",\"git-bitbucket\",\"hg\",\"fossil\",\"perforce\",\"svn\",\"forgejo\"]",
+   " - repositories.a.type : Does not have a value in the enumeration [\"artifact\"]",
+   " - repositories.a.type : Does not have a value in the enumeration [\"pear\"]",
+   " - repositories.a.package : The property package is required",
+   " - repositories.a.type : Does not have a value in the enumeration [\"package\"]",
+   " - repositories.a : Failed to match at least one schema",
+   " - repositories.a : Failed to match all schemas",
+   " - repositories.a : Object value found, but a boolean is required",
+   " - repositories.a : Does not have a value in the enumeration [false]"
+  ]
+ },
+ {
+  "name": "schema-authors-extra",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"authors\": [\n        {\n            \"name\": \"A\",\n            \"age\": 3\n        },\n        \"B\"\n    ]\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                                                           \n  \"./composer.json\" does not match the expected JSON schema:                                               \n   - authors[0] : The property age is not defined and the definition does not allow additional properties  \n   - authors[1] : String value found, but an object is required                                            \n                                                                                                           \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - authors[0] : The property age is not defined and the definition does not allow additional properties",
+   " - authors[1] : String value found, but an object is required"
+  ]
+ },
+ {
+  "name": "schema-autoload",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"autoload\": {\n        \"psr-4\": {\n            \"Acme\\\\\": [\n                \"src/\",\n                5\n            ]\n        },\n        \"classmap\": \"src/\",\n        \"unknown\": []\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                              \n  \"./composer.json\" does not match the expected JSON schema:                  \n   - autoload.psr-4.Acme\\[1] : Integer value found, but a string is required  \n   - autoload.classmap : String value found, but an array is required         \n                                                                              \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - autoload.psr-4.Acme\\[1] : Integer value found, but a string is required",
+   " - autoload.classmap : String value found, but an array is required"
+  ]
+ },
+ {
+  "name": "schema-scripts",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"scripts\": {\n        \"a\": 5,\n        \"b\": [\n            \"x\",\n            6\n        ],\n        \"c\": true\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "schema-bin-and-type",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"bin\": 5,\n    \"type\": [\n        \"library\"\n    ]\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                      \n  \"./composer.json\" does not match the expected JSON schema:          \n   - type : Array value found, but a string is required               \n   - bin : Integer value found, but a string or an array is required  \n                                                                      \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - type : Array value found, but a string is required",
+   " - bin : Integer value found, but a string or an array is required"
+  ]
+ },
+ {
+  "name": "schema-dollar-schema-strict",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"$schema\": \"https://getcomposer.org/schema.json\"\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "schema-float-and-bool",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"config\": {\n        \"process-timeout\": 1.5,\n        \"optimize-autoloader\": \"yes\",\n        \"sort-packages\": 1\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                                 \n  \"./composer.json\" does not match the expected JSON schema:                     \n   - config.process-timeout : Double value found, but an integer is required     \n   - config.optimize-autoloader : String value found, but a boolean is required  \n   - config.sort-packages : Integer value found, but a boolean is required       \n                                                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - config.process-timeout : Double value found, but an integer is required",
+   " - config.optimize-autoloader : String value found, but a boolean is required",
+   " - config.sort-packages : Integer value found, but a boolean is required"
+  ]
+ },
+ {
+  "name": "schema-funding",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"funding\": [\n        {\n            \"type\": \"github\"\n        },\n        {\n            \"url\": \"not a uri\"\n        },\n        5\n    ]\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                  \n  \"./composer.json\" does not match the expected JSON schema:      \n   - funding[1].url : Invalid URL format                          \n   - funding[2] : Integer value found, but an object is required  \n                                                                  \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - funding[1].url : Invalid URL format",
+   " - funding[2] : Integer value found, but an object is required"
+  ]
+ },
+ {
+  "name": "schema-archive",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"archive\": {\n        \"exclude\": \"x\",\n        \"name\": 5\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "",
+  "crash": "Composer\\Package\\CompletePackage::setArchiveName(): Argument #1 ($name) must be of type ?string, int given"
+ },
+ {
+  "name": "schema-strict-several",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"extra-root\": 1,\n    \"license\": \"MIT\",\n    \"other\": 2\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is valid for simple usage with Composer but has\nstrict errors that make it unable to be published as a package\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# Publish errors\n- description : The property description is required\n- The property extra-root is not defined and the definition does not allow additional properties\n- The property other is not defined and the definition does not allow additional properties\n"
+ },
+ {
+  "name": "schema-minimum",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"type\": \"php-ext\",\n    \"php-ext\": {\n        \"priority\": 5\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                               \n  \"./composer.json\" does not match the expected JSON schema:                   \n   - php-ext.priority : Must have a minimum value greater than or equal to 10  \n                                                                               \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - php-ext.priority : Must have a minimum value greater than or equal to 10"
+  ]
+ },
+ {
+  "name": "schema-maximum-numeric-string",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"type\": \"php-ext\",\n    \"php-ext\": {\n        \"priority\": \"120\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                            \n  \"./composer.json\" does not match the expected JSON schema:                \n   - php-ext.priority : String value found, but an integer is required      \n   - php-ext.priority : Must have a maximum value less than or equal to 99  \n                                                                            \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - php-ext.priority : String value found, but an integer is required",
+   " - php-ext.priority : Must have a maximum value less than or equal to 99"
+  ]
+ },
+ {
+  "name": "schema-policy-period",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"config\": {\n        \"policy\": {\n            \"mine\": {\n                \"cooldown\": {\n                    \"period\": -1\n                }\n            }\n        }\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "schema-null-values",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"type\": \"php-ext\",\n    \"php-ext\": {\n        \"build-path\": 5\n    },\n    \"description\": null\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                                   \n  \"./composer.json\" does not match the expected JSON schema:                       \n   - description : NULL value found, but a string is required                      \n   - php-ext.build-path : Integer value found, but a string or a null is required  \n                                                                                   \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - description : NULL value found, but a string is required",
+   " - php-ext.build-path : Integer value found, but a string or a null is required"
+  ]
+ },
+ {
+  "name": "schema-dependency-errors",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/dep\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"install-path\": \"../acme/dep\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+   "vendor/acme/dep/composer.json": "{\n    \"name\": \"acme/dep\",\n    \"description\": 5,\n    \"require\": [],\n    \"extra\": \"x\"\n}\n"
+  },
+  "args": [
+   "-A"
+  ],
+  "exit": 2,
+  "stdout": "./composer.json is valid\n",
+  "stderr": "acme/dep is invalid, the following errors/warnings were found:\n# General errors\n- description : Integer value found, but a string is required\n- require : Array value found, but an object is required\n- extra : String value found, but an object or an array is required\n- extra : should be an array, string given\n- description : should be a string, int given\n# General warnings\n- No license specified, it is recommended to do so. For closed-source software you may use \"proprietary\" as license.\n"
+ },
+ {
+  "name": "parse-error-unterminated-string",
+  "files": {
+   "composer.json": "{\"name\": \"acme/app}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                                                                          \n  \"./composer.json\" does not contain valid JSON                                                                           \n  Parse error on line 1:                                                                                                  \n  {\"name\": \"acme/app}                                                                                                     \n  --------^                                                                                                               \n  Invalid string, it appears you forgot to terminate a string, or attempted to write a multiline string which is invalid  \n                                                                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"name\": \"acme/app}",
+   "--------^",
+   "Invalid string, it appears you forgot to terminate a string, or attempted to write a multiline string which is invalid"
+  ]
+ },
+ {
+  "name": "parse-error-invalid-escape",
+  "files": {
+   "composer.json": "{\"name\": \"acme\\x/app\"}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                        \n  \"./composer.json\" does not contain valid JSON                         \n  Parse error on line 1:                                                \n  {\"name\": \"acme\\x/app\"}                                                \n  --------^                                                             \n  Invalid string, it appears you have an unescaped backslash at: \\x/ap  \n                                                                        \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"name\": \"acme\\x/app\"}",
+   "--------^",
+   "Invalid string, it appears you have an unescaped backslash at: \\x/ap"
+  ]
+ },
+ {
+  "name": "parse-error-later-line",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\"\n    \"license\": \"MIT\"\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                 \n  \"./composer.json\" does not contain valid JSON  \n  Parse error on line 3:                         \n  ...tion\": \"An app\"    \"license\": \"MIT\"}        \n  ---------------------^                         \n  Expected one of: 'EOF', '}', ':', ',', ']'     \n                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 3:",
+   "...tion\": \"An app\"    \"license\": \"MIT\"}",
+   "---------------------^",
+   "Expected one of: 'EOF', '}', ':', ',', ']'"
+  ]
+ },
+ {
+  "name": "parse-error-trailing-garbage",
+  "files": {
+   "composer.json": "{\"name\": \"acme/app\"} x\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                 \n  \"./composer.json\" does not contain valid JSON  \n  Parse error on line 1:                         \n  ...\"name\": \"acme/app\"} x                       \n  ----------------------^                        \n  Expected one of: 'EOF', '}', ',', ']'          \n                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "...\"name\": \"acme/app\"} x",
+   "----------------------^",
+   "Expected one of: 'EOF', '}', ',', ']'"
+  ]
+ },
+ {
+  "name": "parse-error-bom",
+  "files": {
+   "composer.json": "﻿{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                                 \n  \"./composer.json\" does not contain valid JSON                                  \n  BOM detected, make sure your input does not include a Unicode Byte-Order-Mark  \n                                                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "BOM detected, make sure your input does not include a Unicode Byte-Order-Mark"
+  ]
+ },
+ {
+  "name": "parse-error-comment",
+  "files": {
+   "composer.json": "{\n    // a comment\n    \"name\": \"acme/app\"\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                      \n  \"./composer.json\" does not contain valid JSON       \n  Lexical error on line 2. Comments are not allowed.  \n  {    // a comment    \"na                            \n  ----^                                               \n                                                      \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Lexical error on line 2. Comments are not allowed.",
+   "{    // a comment    \"na",
+   "----^"
+  ]
+ },
+ {
+  "name": "duplicate-key-multiline-value",
+  "files": {
+   "composer.json": "{\n\"name\": \"acme/app\",\n\"description\": \"d\",\n\"license\": \"MIT\",\n\"extra\": {\"a\": 1},\n\"extra\": {\n\"b\": 2\n}\n,\"type\": \"library\"\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- Key extra is a duplicate in ./composer.json at line 8\n"
+ },
+ {
+  "name": "duplicate-key-split",
+  "files": {
+   "composer.json": "{\n\"name\": \"acme/app\",\n\"description\": \"d\",\n\"license\": \"MIT\",\n\"type\": \"library\",\n\"type\"\n:\n\"project\"\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- Key type is a duplicate in ./composer.json at line 8\n"
+ },
+ {
+  "name": "duplicate-key-after-null",
+  "files": {
+   "composer.json": "{\n\"name\": \"acme/app\",\n\"description\": \"d\",\n\"license\": \"MIT\",\n\"homepage\": null,\n\"homepage\": \"https://example.com\"\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "duplicate-key-inner-first",
+  "files": {
+   "composer.json": "{\n\"name\": \"acme/app\",\n\"description\": \"d\",\n\"license\": \"MIT\",\n\"extra\": {\"a\": 1},\n\"extra\": {\n\"b\": 1,\n\"b\": 2\n}\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- Key b is a duplicate in ./composer.json at line 8\n"
+ },
+ {
+  "name": "parse-error-array",
+  "files": {
+   "composer.json": "{\"name\": \"acme/app\", \"keywords\": [\"a\", \"b\",]}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                                                                        \n  \"./composer.json\" does not contain valid JSON                                                                         \n  Parse error on line 1:                                                                                                \n  ...eywords\": [\"a\", \"b\",]}                                                                                             \n  ----------------------^                                                                                               \n  Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '[' - It appears you have an extra trailing comma  \n                                                                                                                        \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "...eywords\": [\"a\", \"b\",]}",
+   "----------------------^",
+   "Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '[' - It appears you have an extra trailing comma"
+  ]
+ },
+ {
+  "name": "parse-error-array-missing-comma",
+  "files": {
+   "composer.json": "{\"keywords\": [\"a\" \"b\"]}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                 \n  \"./composer.json\" does not contain valid JSON  \n  Parse error on line 1:                         \n  {\"keywords\": [\"a\" \"b\"]}                        \n  -----------------^                             \n  Expected one of: 'EOF', '}', ':', ',', ']'     \n                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"keywords\": [\"a\" \"b\"]}",
+   "-----------------^",
+   "Expected one of: 'EOF', '}', ':', ',', ']'"
+  ]
+ },
+ {
+  "name": "parse-error-missing-colon",
+  "files": {
+   "composer.json": "{\"name\" \"acme/app\"}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                 \n  \"./composer.json\" does not contain valid JSON  \n  Parse error on line 1:                         \n  {\"name\" \"acme/app\"}                            \n  -------^                                       \n  Expected one of: 'EOF', '}', ':', ',', ']'     \n                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"name\" \"acme/app\"}",
+   "-------^",
+   "Expected one of: 'EOF', '}', ':', ',', ']'"
+  ]
+ },
+ {
+  "name": "parse-error-block-comment",
+  "files": {
+   "composer.json": "{/* x */\"name\": \"acme/app\"}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                      \n  \"./composer.json\" does not contain valid JSON       \n  Lexical error on line 1. Comments are not allowed.  \n  {/* x */\"name\": \"acme                               \n  ^                                                   \n                                                      \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Lexical error on line 1. Comments are not allowed.",
+   "{/* x */\"name\": \"acme",
+   "^"
+  ]
+ },
+ {
+  "name": "parse-error-close-comment",
+  "files": {
+   "composer.json": "{\"name\": \"acme/app\" */}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                 \n  \"./composer.json\" does not contain valid JSON  \n  Lexical error on line 1. Unexpected token.     \n  {\"name\": \"acme/app\" */}                        \n  -------------------^                           \n                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Lexical error on line 1. Unexpected token.",
+   "{\"name\": \"acme/app\" */}",
+   "-------------------^"
+  ]
+ },
+ {
+  "name": "parse-error-literal",
+  "files": {
+   "composer.json": "{\"name\": tru}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                          \n  \"./composer.json\" does not contain valid JSON                           \n  Parse error on line 1:                                                  \n  {\"name\": tru}                                                           \n  --------^                                                               \n  Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['  \n                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"name\": tru}",
+   "--------^",
+   "Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['"
+  ]
+ },
+ {
+  "name": "parse-error-leading-zero",
+  "files": {
+   "composer.json": "{\"a\": 01}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                          \n  \"./composer.json\" does not contain valid JSON                           \n  Parse error on line 1:                                                  \n  {\"a\": 01}                                                               \n  -----^                                                                  \n  Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['  \n                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"a\": 01}",
+   "-----^",
+   "Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['"
+  ]
+ },
+ {
+  "name": "parse-error-trailing-point",
+  "files": {
+   "composer.json": "{\"a\": 1.}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                 \n  \"./composer.json\" does not contain valid JSON  \n  Parse error on line 1:                         \n  {\"a\": 1.}                                      \n  ------^                                        \n  Expected one of: 'EOF', '}', ',', ']'          \n                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"a\": 1.}",
+   "------^",
+   "Expected one of: 'EOF', '}', ',', ']'"
+  ]
+ },
+ {
+  "name": "parse-error-leading-point",
+  "files": {
+   "composer.json": "{\"a\": .5}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                          \n  \"./composer.json\" does not contain valid JSON                           \n  Parse error on line 1:                                                  \n  {\"a\": .5}                                                               \n  -----^                                                                  \n  Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['  \n                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"a\": .5}",
+   "-----^",
+   "Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['"
+  ]
+ },
+ {
+  "name": "parse-error-plus",
+  "files": {
+   "composer.json": "{\"a\": +1}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                          \n  \"./composer.json\" does not contain valid JSON                           \n  Parse error on line 1:                                                  \n  {\"a\": +1}                                                               \n  -----^                                                                  \n  Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['  \n                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"a\": +1}",
+   "-----^",
+   "Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['"
+  ]
+ },
+ {
+  "name": "parse-error-exponent",
+  "files": {
+   "composer.json": "{\"a\": 1e}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                          \n  \"./composer.json\" does not contain valid JSON                           \n  Parse error on line 1:                                                  \n  {\"a\": 1e}                                                               \n  -----^                                                                  \n  Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['  \n                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"a\": 1e}",
+   "-----^",
+   "Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['"
+  ]
+ },
+ {
+  "name": "parse-error-control-character",
+  "files": {
+   "composer.json": "{\"a\": \"x\ty\"}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                                                                          \n  \"./composer.json\" does not contain valid JSON                                                                           \n  Parse error on line 1:                                                                                                  \n  {\"a\": \"x\ty\"}                                                                                                             \n  -----^                                                                                                                  \n  Invalid string, it appears you forgot to terminate a string, or attempted to write a multiline string which is invalid  \n                                                                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"a\": \"x\ty\"}",
+   "-----^",
+   "Invalid string, it appears you forgot to terminate a string, or attempted to write a multiline string which is invalid"
+  ]
+ },
+ {
+  "name": "parse-error-short-unicode",
+  "files": {
+   "composer.json": "{\"a\": \"\\u12\"}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                                                                          \n  \"./composer.json\" does not contain valid JSON                                                                           \n  Parse error on line 1:                                                                                                  \n  {\"a\": \"\\u12\"}                                                                                                           \n  -----^                                                                                                                  \n  Invalid string, it appears you forgot to terminate a string, or attempted to write a multiline string which is invalid  \n                                                                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"a\": \"\\u12\"}",
+   "-----^",
+   "Invalid string, it appears you forgot to terminate a string, or attempted to write a multiline string which is invalid"
+  ]
+ },
+ {
+  "name": "parse-error-backslash-end",
+  "files": {
+   "composer.json": "{\"a\": \"x\\\"}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                                                                          \n  \"./composer.json\" does not contain valid JSON                                                                           \n  Parse error on line 1:                                                                                                  \n  {\"a\": \"x\\\"}                                                                                                             \n  -----^                                                                                                                  \n  Invalid string, it appears you forgot to terminate a string, or attempted to write a multiline string which is invalid  \n                                                                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"a\": \"x\\\"}",
+   "-----^",
+   "Invalid string, it appears you forgot to terminate a string, or attempted to write a multiline string which is invalid"
+  ]
+ },
+ {
+  "name": "parse-error-at-start",
+  "files": {
+   "composer.json": "x\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                          \n  \"./composer.json\" does not contain valid JSON                           \n  Parse error on line 1:                                                  \n  x...                                                                    \n  ^                                                                       \n  Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['  \n                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "x...",
+   "^",
+   "Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['"
+  ]
+ },
+ {
+  "name": "parse-error-second-byte",
+  "files": {
+   "composer.json": "{x}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                 \n  \"./composer.json\" does not contain valid JSON  \n  Parse error on line 1:                         \n  {x}                                            \n  ^                                              \n  Expected one of: 'STRING', '}'                 \n                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{x}",
+   "^",
+   "Expected one of: 'STRING', '}'"
+  ]
+ },
+ {
+  "name": "parse-error-long-line",
+  "files": {
+   "composer.json": "{\"description\": \"a very long description that goes on and on\", \"name\" \"acme/app\"}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                 \n  \"./composer.json\" does not contain valid JSON  \n  Parse error on line 1:                         \n  ... on and on\", \"name\" \"acme/app\"}             \n  ----------------------^                        \n  Expected one of: 'EOF', '}', ':', ',', ']'     \n                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "... on and on\", \"name\" \"acme/app\"}",
+   "----------------------^",
+   "Expected one of: 'EOF', '}', ':', ',', ']'"
+  ]
+ },
+ {
+  "name": "parse-error-crlf",
+  "files": {
+   "composer.json": "{\r\n    \"name\": \"acme/app\",\r\n    \"license\" \"MIT\"\r\n}\r\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                 \n  \"./composer.json\" does not contain valid JSON  \n  Parse error on line 3:                         \n  ...pp\",\n    \"license\" \"MIT\"\n}                    \n  ---------------------^                         \n  Expected one of: 'EOF', '}', ':', ',', ']'     \n                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 3:",
+   "...pp\",",
+   "  \"license\" \"MIT\"",
+   "}",
+   "---------------------^",
+   "Expected one of: 'EOF', '}', ':', ',', ']'"
+  ]
+ },
+ {
+  "name": "parse-error-tabs",
+  "files": {
+   "composer.json": "{\n\t\"name\": \"acme/app\"\n\t\"license\": \"MIT\"\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                 \n  \"./composer.json\" does not contain valid JSON  \n  Parse error on line 2:                         \n  ...\"name\": \"acme/app\"\t\"license\": \"MIT\"}         \n  ---------------------^                         \n  Expected one of: 'EOF', '}', ':', ',', ']'     \n                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 2:",
+   "...\"name\": \"acme/app\"\t\"license\": \"MIT\"}",
+   "---------------------^",
+   "Expected one of: 'EOF', '}', ':', ',', ']'"
+  ]
+ },
+ {
+  "name": "parse-error-unicode-context",
+  "files": {
+   "composer.json": "{\"description\": \"ünïcödé text before\", \"name\" \"acme/app\"}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                 \n  \"./composer.json\" does not contain valid JSON  \n  Parse error on line 1:                         \n  ...ext before\", \"name\" \"acme/app\"}             \n  ----------------------^                        \n  Expected one of: 'EOF', '}', ':', ',', ']'     \n                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "...ext before\", \"name\" \"acme/app\"}",
+   "----------------------^",
+   "Expected one of: 'EOF', '}', ':', ',', ']'"
+  ]
+ },
+ {
+  "name": "parse-error-nested",
+  "files": {
+   "composer.json": "{\"require\": {\"php\": \"^8.3\",}, \"name\": \"acme/app\"}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                    \n  \"./composer.json\" does not contain valid JSON                     \n  Parse error on line 1:                                            \n  ...re\": {\"php\": \"^8.3\",}, \"name\": \"acme/app                       \n  ----------------------^                                           \n  Expected: 'STRING' - It appears you have an extra trailing comma  \n                                                                    \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "...re\": {\"php\": \"^8.3\",}, \"name\": \"acme/app",
+   "----------------------^",
+   "Expected: 'STRING' - It appears you have an extra trailing comma"
+  ]
+ },
+ {
+  "name": "parse-error-second-value",
+  "files": {
+   "composer.json": "{\"name\": \"acme/app\"}\n{}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                 \n  \"./composer.json\" does not contain valid JSON  \n  Parse error on line 1:                         \n  ...\"name\": \"acme/app\"}{}                       \n  ---------------------^                         \n  Expected one of: 'EOF', '}', ',', ']'          \n                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "...\"name\": \"acme/app\"}{}",
+   "---------------------^",
+   "Expected one of: 'EOF', '}', ',', ']'"
+  ]
+ },
+ {
+  "name": "parse-error-only-whitespace",
+  "files": {
+   "composer.json": "  \n  \n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                          \n  \"./composer.json\" does not contain valid JSON                           \n  Parse error on line 1:                                                  \n                                                                          \n  ---^                                                                    \n  Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['  \n                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "---^",
+   "Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['"
+  ]
+ },
+ {
+  "name": "not-utf8",
+  "files": {
+   "composer.json": {
+    "hex": "7b226e616d65223a202261636d652fff61707022207d0a"
+   }
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 388:\n                                                           \n  \"./composer.json\" is not UTF-8, could not parse as JSON  \n                                                           \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" is not UTF-8, could not parse as JSON"
+  ]
+ },
+ {
+  "name": "parse-error-dependency",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/dep\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"install-path\": \"../acme/dep\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+   "vendor/acme/dep/composer.json": "{\"name\": \"acme/dep\",}\n"
+  },
+  "args": [
+   "-A"
+  ],
+  "exit": 2,
+  "stdout": "./composer.json is valid\n",
+  "stderr": "acme/dep is invalid, the following errors/warnings were found:\n# General errors\n- \"{dir}/vendor/acme/dep/composer.json\" does not contain valid JSON\nParse error on line 1:\n{\"name\": \"acme/dep\",}\n-------------------^\nExpected: 'STRING' - It appears you have an extra trailing comma\n"
+ },
+ {
+  "name": "parse-error-unterminated-at-end",
+  "files": {
+   "composer.json": "{\"name\": \""
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                                                                          \n  \"./composer.json\" does not contain valid JSON                                                                           \n  Parse error on line 1:                                                                                                  \n  {\"name\": \"                                                                                                              \n  --------^                                                                                                               \n  Invalid string, it appears you forgot to terminate a string, or attempted to write a multiline string which is invalid  \n                                                                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"name\": \"",
+   "--------^",
+   "Invalid string, it appears you forgot to terminate a string, or attempted to write a multiline string which is invalid"
+  ]
+ },
+ {
+  "name": "lone-surrogate",
+  "files": {
+   "composer.json": "{\"name\": \"acme/app\", \"description\": \"\\ud800\", \"license\": \"MIT\"}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                              \n  \"./composer.json\" does not match the expected JSON schema:  \n   - NULL value found, but an object is required              \n                                                              \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - NULL value found, but an object is required"
+  ]
+ },
+ {
+  "name": "deep-nesting",
+  "files": {
+   "composer.json": "{\"name\": \"acme/app\", \"description\": \"d\", \"license\": \"MIT\", \"extra\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": 1}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "nesting-511",
+  "files": {
+   "composer.json": "{\"name\": \"acme/app\", \"description\": \"d\", \"license\": \"MIT\", \"extra\": [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[1]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "nesting-512",
+  "files": {
+   "composer.json": "{\"name\": \"acme/app\", \"description\": \"d\", \"license\": \"MIT\", \"extra\": [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[1]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                              \n  \"./composer.json\" does not match the expected JSON schema:  \n   - NULL value found, but an object is required              \n                                                              \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - NULL value found, but an object is required"
+  ]
+ },
+ {
+  "name": "composer-env",
+  "files": {
+   "custom.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "custom.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- No license specified, it is recommended to do so. For closed-source software you may use \"proprietary\" as license.\n",
+  "env": {
+   "COMPOSER": "custom.json"
+  }
+ },
+ {
+  "name": "duplicate-key-nested",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"php\": \"^8.4\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- Key php is a duplicate in ./composer.json at line 7\n"
+ },
+ {
+  "name": "duplicate-key",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"license\": \"MIT\"\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- Key license is a duplicate in ./composer.json at line 5\n"
+ },
+ {
+  "name": "license-proprietary",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"proprietary\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "license-array",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": [\n        \"MIT\",\n        \"proprietary\"\n    ],\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "license-empty-array",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": [],\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- No license specified, it is recommended to do so. For closed-source software you may use \"proprietary\" as license.\n"
+ },
+ {
+  "name": "license-gpl-plus",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"GPL-2.0+\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- License \"GPL-2.0+\" is a deprecated SPDX license identifier, use \"GPL-2.0-or-later\" instead\n"
+ },
+ {
+  "name": "license-gpl",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"LGPL-3.0\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- License \"LGPL-3.0\" is a deprecated SPDX license identifier, use \"LGPL-3.0-only\" or \"LGPL-3.0-or-later\" instead\n"
+ },
+ {
+  "name": "license-deprecated-other",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"eCos-2.0\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- License \"eCos-2.0\" is a deprecated SPDX license identifier, see https://spdx.org/licenses/\n"
+ },
+ {
+  "name": "license-unknown",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"Not-A-License\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- License \"Not-A-License\" is not a valid SPDX license identifier, see https://spdx.org/licenses/ if you use an open license.\nIf the software is closed-source, you may use \"proprietary\" as license.\n"
+ },
+ {
+  "name": "composer-installer",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"type\": \"composer-installer\"\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- The package type 'composer-installer' is deprecated. Please distribute your custom installers as plugins from now on. See https://getcomposer.org/doc/articles/plugins.md for plugin documentation.\n"
+ },
+ {
+  "name": "require-and-require-dev-one",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/a\": \"^1.0\"\n    },\n    \"require-dev\": {\n        \"acme/a\": \"^1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- acme/a is required both in require and require-dev, this can lead to unexpected behavior\n"
+ },
+ {
+  "name": "require-and-require-dev-two",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/a\": \"^1.0\",\n        \"acme/b\": \"^1.0\"\n    },\n    \"require-dev\": {\n        \"acme/a\": \"^1.0\",\n        \"acme/b\": \"^1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- acme/a, acme/b are required both in require and require-dev, this can lead to unexpected behavior\n"
+ },
+ {
+  "name": "provide-and-replace",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/a\": \"^1.0\"\n    },\n    \"require-dev\": {\n        \"acme/b\": \"^1.0\"\n    },\n    \"provide\": {\n        \"acme/a\": \"1.0\"\n    },\n    \"replace\": {\n        \"acme/b\": \"1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- The package acme/a in require is also listed in provide which satisfies the requirement. Remove it from provide if you wish to install it.\n- The package acme/b in require-dev is also listed in replace which satisfies the requirement. Remove it from replace if you wish to install it.\n"
+ },
+ {
+  "name": "commit-ref",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/a\": \"dev-main#abc123\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- The package \"acme/a\" is pointing to a commit-ref, this is bad practice and can cause unforeseen issues.\n"
+ },
+ {
+  "name": "scripts-descriptions-and-aliases",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"scripts\": {\n        \"test\": \"phpunit\"\n    },\n    \"scripts-descriptions\": {\n        \"test\": \"Tests\",\n        \"lint\": \"Lint\"\n    },\n    \"scripts-aliases\": {\n        \"lint\": [\n            \"l\"\n        ]\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- Description for non-existent script \"lint\" found in \"scripts-descriptions\"\n- Aliases for non-existent script \"lint\" found in \"scripts-aliases\"\n"
+ },
+ {
+  "name": "autoload-empty-prefix",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"autoload\": {\n        \"psr-0\": {\n            \"\": \"src/\"\n        },\n        \"psr-4\": {\n            \"\": \"src/\"\n        }\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- Defining autoload.psr-0 with an empty namespace prefix is a bad idea for performance\n- Defining autoload.psr-4 with an empty namespace prefix is a bad idea for performance\n"
+ },
+ {
+  "name": "authors",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"authors\": [\n        {\n            \"name\": \"A\",\n            \"email\": \"a@example.com\",\n            \"homepage\": \"ftp://x\"\n        },\n        {\n            \"name\": \"B\",\n            \"homepage\": \"https://example.com\"\n        }\n    ]\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- authors.0.homepage : invalid value (ftp://x), must be an http/https URL\n"
+ },
+ {
+  "name": "support",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"support\": {\n        \"irc\": \"http://x\",\n        \"issues\": \"ftp://x\",\n        \"source\": \"https://example.com\",\n        \"chat\": \"ftp://y\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- support.irc : invalid value (http://x), must be a irc://<server>/<channel> or ircs:// URL\n- support.issues : invalid value (ftp://x), must be an http/https URL\n- support.chat : invalid value (ftp://y), must be an http/https URL\n"
+ },
+ {
+  "name": "php-ext",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"type\": \"php-ext\",\n    \"php-ext\": {\n        \"extension-name\": \"acme\",\n        \"priority\": \"high\",\n        \"support-zts\": \"yes\",\n        \"download-url-method\": [],\n        \"os-families\": [\n            \"windows\",\n            \"plan9\"\n        ],\n        \"configure-options\": [\n            {\n                \"name\": \"with-x\",\n                \"needs-value\": \"no\"\n            },\n            {\n                \"description\": \"x\"\n            }\n        ]\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                                                                                              \n  \"./composer.json\" does not match the expected JSON schema:                                                                                  \n   - php-ext.priority : String value found, but an integer is required                                                                        \n   - php-ext.support-zts : String value found, but a boolean is required                                                                      \n   - php-ext.download-url-method : There must be a minimum of 1 items in the array, 0 found                                                   \n   - php-ext.download-url-method : Array value found, but a string is required                                                                \n   - php-ext.download-url-method : Does not have a value in the enumeration [\"composer-default\",\"pre-packaged-source\",\"pre-packaged-binary\"]  \n   - php-ext.download-url-method : Failed to match exactly one schema                                                                         \n   - php-ext.os-families[1] : Does not have a value in the enumeration [\"windows\",\"bsd\",\"darwin\",\"solaris\",\"linux\",\"unknown\"]                 \n   - php-ext.configure-options[0].needs-value : String value found, but a boolean is required                                                 \n   - php-ext.configure-options[1].name : The property name is required                                                                        \n                                                                                                                                              \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - php-ext.priority : String value found, but an integer is required",
+   " - php-ext.support-zts : String value found, but a boolean is required",
+   " - php-ext.download-url-method : There must be a minimum of 1 items in the array, 0 found",
+   " - php-ext.download-url-method : Array value found, but a string is required",
+   " - php-ext.download-url-method : Does not have a value in the enumeration [\"composer-default\",\"pre-packaged-source\",\"pre-packaged-binary\"]",
+   " - php-ext.download-url-method : Failed to match exactly one schema",
+   " - php-ext.os-families[1] : Does not have a value in the enumeration [\"windows\",\"bsd\",\"darwin\",\"solaris\",\"linux\",\"unknown\"]",
+   " - php-ext.configure-options[0].needs-value : String value found, but a boolean is required",
+   " - php-ext.configure-options[1].name : The property name is required"
+  ]
+ },
+ {
+  "name": "php-ext-wrong-type",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"php-ext\": {\n        \"extension-name\": \"acme\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is invalid, the following errors/warnings were found:\n# General errors\n- php-ext can only be set by packages of type \"php-ext\" or \"php-ext-zend\" which must be C extensions\n"
+ },
+ {
+  "name": "php-ext-os-families-both",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"type\": \"php-ext\",\n    \"php-ext\": {\n        \"os-families\": [\n            \"linux\"\n        ],\n        \"os-families-exclude\": [\n            \"windows\"\n        ]\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                              \n  \"./composer.json\" does not match the expected JSON schema:  \n   - php-ext : Matched a schema which it should not           \n   - php-ext : Failed to match all schemas                    \n                                                              \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - php-ext : Matched a schema which it should not",
+   " - php-ext : Failed to match all schemas"
+  ]
+ },
+ {
+  "name": "funding",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"funding\": [\n        {\n            \"type\": \"github\",\n            \"url\": \"ftp://x\"\n        }\n    ]\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- funding.0.url : invalid value (ftp://x), must be an http/https URL\n"
+ },
+ {
+  "name": "homepage",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"homepage\": \"ftp://example.com\"\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- homepage : invalid value (ftp://example.com), must be an http/https URL\n"
+ },
+ {
+  "name": "keywords",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"keywords\": [\n        \"ok\",\n        \"bad!keyword\"\n    ]\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- keywords.1 : invalid value (bad!keyword), must match [\\p{N}\\p{L} ._-]+\n"
+ },
+ {
+  "name": "link-self",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/app\": \"^1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn RootPackageLoader.php line 169:\n                                                                          \n  Root package 'acme/app' cannot require itself in its composer.json      \n  Did you accidentally name your root package after an external package?  \n                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "Root package 'acme/app' cannot require itself in its composer.json",
+   "Did you accidentally name your root package after an external package?"
+  ]
+ },
+ {
+  "name": "link-invalid-name",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/a b\": \"^1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn RootPackageLoader.php line 179:\n                                                                                                                                                                                                                                                                      \n  require.acme/a b is invalid, it should have a vendor name, a forward slash, and a package name. The vendor and package name can be words separated by -, . or _. The complete name should match \"^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]?|-{0,2})[a-z0-9]+)*$\".  \n                                                                                                                                                                                                                                                                      \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "require.acme/a b is invalid, it should have a vendor name, a forward slash, and a package name. The vendor and package name can be words separated by -, . or _. The complete name should match \"^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]?|-{0,2})[a-z0-9]+)*$\"."
+  ]
+ },
+ {
+  "name": "link-invalid-constraint",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/a\": \"not a constraint\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn ArrayLoader.php line 420:\n                                                                                                              \n  Link constraint in acme/app requires > acme/a should be a valid version constraint, got \"not a constraint\"  \n                                                                                                              \n\nIn VersionParser.php line 542:\n                                                                        \n  Could not parse version constraint not: Invalid version string \"not\"  \n                                                                        \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "Link constraint in acme/app requires > acme/a should be a valid version constraint, got \"not a constraint\"",
+   "Could not parse version constraint not: Invalid version string \"not\""
+  ]
+ },
+ {
+  "name": "root-name-reserved",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/nul\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn RootPackageLoader.php line 88:\n                                                                                                                                                                                                                          \n  Your package name acme/nul is reserved, package and vendor names can not match any of: nul, con, prn, aux, com1, com2, com3, com4, com5, com6, com7, com8, com9, lpt1, lpt2, lpt3, lpt4, lpt5, lpt6, lpt7, lpt8, lpt9.  \n                                                                                                                                                                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "Your package name acme/nul is reserved, package and vendor names can not match any of: nul, con, prn, aux, com1, com2, com3, com4, com5, com6, com7, com8, com9, lpt1, lpt2, lpt3, lpt4, lpt5, lpt6, lpt7, lpt8, lpt9."
+  ]
+ },
+ {
+  "name": "root-name-json",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app.json\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn RootPackageLoader.php line 88:\n                                                                                                                                                 \n  Your package name acme/app.json is invalid, package names can not end in .json, consider renaming it or perhaps using a -json suffix instead.  \n                                                                                                                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "Your package name acme/app.json is invalid, package names can not end in .json, consider renaming it or perhaps using a -json suffix instead."
+  ]
+ },
+ {
+  "name": "root-invalid-version",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"version\": \"not a version\"\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Factory.php line 319:\n                                                                                                                                                                                                                                                                                 \n  \"./composer.json\" does not match the expected JSON schema:                                                                                                                                                                                                                     \n   - version : Does not match the regex pattern ^[vV]?\\d+(?:[.-]\\d+){0,3}[._-]?(?:(?:[sS][tT][aA][bB][lL][eE]|[bB][eE][tT][aA]|[bB]|[rR][cC]|[aA][lL][pP][hH][aA]|[aA]|[pP][aA][tT][cC][hH]|[pP][lL]|[pP])(?:(?:[.-]?\\d+)*)?)?(?:[.-]?[dD][eE][vV]|\\.x-dev)?(?:\\+.*)?$|^dev-.*$  \n                                                                                                                                                                                                                                                                                 \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.json\" does not match the expected JSON schema:",
+   " - version : Does not match the regex pattern ^[vV]?\\d+(?:[.-]\\d+){0,3}[._-]?(?:(?:[sS][tT][aA][bB][lL][eE]|[bB][eE][tT][aA]|[bB]|[rR][cC]|[aA][lL][pP][hH][aA]|[aA]|[pP][aA][tT][cC][hH]|[pP][lL]|[pP])(?:(?:[.-]?\\d+)*)?)?(?:[.-]?[dD][eE][vV]|\\.x-dev)?(?:\\+.*)?$|^dev-.*$"
+  ]
+ },
+ {
+  "name": "link-invalid-constraint-conflict",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"conflict\": {\n        \"acme/a\": \"nope\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn ArrayLoader.php line 420:\n                                                                                                   \n  Link constraint in acme/app conflicts > acme/a should be a valid version constraint, got \"nope\"  \n                                                                                                   \n\nIn VersionParser.php line 542:\n                                                                          \n  Could not parse version constraint nope: Invalid version string \"nope\"  \n                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "Link constraint in acme/app conflicts > acme/a should be a valid version constraint, got \"nope\"",
+   "Could not parse version constraint nope: Invalid version string \"nope\""
+  ]
+ },
+ {
+  "name": "link-invalid-constraint-require-dev",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"require-dev\": {\n        \"Acme/A\": \">=1 <\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn ArrayLoader.php line 420:\n                                                                                                      \n  Link constraint in acme/app devRequires > acme/a should be a valid version constraint, got \">=1 <\"  \n                                                                                                      \n\nIn VersionParser.php line 542:\n                                                                   \n  Could not parse version constraint <: Invalid version string \"\"  \n                                                                   \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "Link constraint in acme/app devRequires > acme/a should be a valid version constraint, got \">=1 <\"",
+   "Could not parse version constraint <: Invalid version string \"\""
+  ]
+ },
+ {
+  "name": "link-self-require-dev",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"require-dev\": {\n        \"acme/app\": \"^1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn RootPackageLoader.php line 169:\n                                                                          \n  Root package 'acme/app' cannot require itself in its composer.json      \n  Did you accidentally name your root package after an external package?  \n                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "Root package 'acme/app' cannot require itself in its composer.json",
+   "Did you accidentally name your root package after an external package?"
+  ]
+ },
+ {
+  "name": "link-self-replace",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"replace\": {\n        \"acme/app\": \"1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is invalid, the following errors/warnings were found:\n# General errors\n- replace.acme/app : a package cannot set a replace on itself\n"
+ },
+ {
+  "name": "link-uppercase-name",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"Acme/A\": \"^1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn RootPackageLoader.php line 179:\n                                                                                                     \n  require.Acme/A is invalid, it should not contain uppercase characters. Please use acme/a instead.  \n                                                                                                     \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "require.Acme/A is invalid, it should not contain uppercase characters. Please use acme/a instead."
+  ]
+ },
+ {
+  "name": "link-reserved-name-in-replace",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"replace\": {\n        \"acme/con\": \"1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn RootPackageLoader.php line 179:\n                                                                                                                                                                                                                \n  replace.acme/con is reserved, package and vendor names can not match any of: nul, con, prn, aux, com1, com2, com3, com4, com5, com6, com7, com8, com9, lpt1, lpt2, lpt3, lpt4, lpt5, lpt6, lpt7, lpt8, lpt9.  \n                                                                                                                                                                                                                \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "replace.acme/con is reserved, package and vendor names can not match any of: nul, con, prn, aux, com1, com2, com3, com4, com5, com6, com7, com8, com9, lpt1, lpt2, lpt3, lpt4, lpt5, lpt6, lpt7, lpt8, lpt9."
+  ]
+ },
+ {
+  "name": "alias-target-invalid",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/a\": \"1.0 as foo\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn VersionParser.php line 207:\n                                                                                    \n  Invalid version string \"foo\" in \"1.0 as foo\", the alias must be an exact version  \n                                                                                    \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "Invalid version string \"foo\" in \"1.0 as foo\", the alias must be an exact version"
+  ]
+ },
+ {
+  "name": "alias-source-range",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/a\": \">=1.0 as 2.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn VersionParser.php line 207:\n                                                                                                                                                      \n  Invalid version string \">=1.0\" in \">=1.0 as 2.0\", the alias source must be an exact version, if it is a branch name you should prefix it with dev-  \n                                                                                                                                                      \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "Invalid version string \">=1.0\" in \">=1.0 as 2.0\", the alias source must be an exact version, if it is a branch name you should prefix it with dev-"
+  ]
+ },
+ {
+  "name": "alias-source-branch",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"require-dev\": {\n        \"acme/a\": \"main as 1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn ArrayLoader.php line 420:\n                                                                                                            \n  Link constraint in acme/app devRequires > acme/a should be a valid version constraint, got \"main as 1.0\"  \n                                                                                                            \n\nIn VersionParser.php line 542:\n                                                                          \n  Could not parse version constraint main: Invalid version string \"main\"  \n                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "Link constraint in acme/app devRequires > acme/a should be a valid version constraint, got \"main as 1.0\"",
+   "Could not parse version constraint main: Invalid version string \"main\""
+  ]
+ },
+ {
+  "name": "alias-valid",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/a\": \"dev-main as 1.0.x-dev\",\n        \"acme/b\": \"1.0 as 2.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- require.acme/b : exact version constraints (1.0 as 2.0) should be avoided if the package follows semantic versioning\n"
+ },
+ {
+  "name": "alias-in-or",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/a\": \"^2.0 || 1.0 as 1.5\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "alias-with-reference",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/a\": \"dev-main#abc123 as 1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- The package \"acme/a\" is pointing to a commit-ref, this is bad practice and can cause unforeseen issues.\n"
+ },
+ {
+  "name": "link-impossible",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/a\": \">2.0 <1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- require.acme/a : this version constraint cannot possibly match anything (>2.0 <1.0)\n"
+ },
+ {
+  "name": "link-conflict-replaced",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"replace\": {\n        \"acme/a\": \"1.0\"\n    },\n    \"conflict\": {\n        \"acme/a\": \"<1.0\"\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is invalid, the following errors/warnings were found:\n# General errors\n- conflict.acme/a : you cannot conflict with a package that is also replaced, as replace already creates an implicit conflict rule\n"
+ },
+ {
+  "name": "autoload-psr4-separator",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"autoload\": {\n        \"psr-4\": {\n            \"Acme\": \"src/\"\n        }\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is invalid, the following errors/warnings were found:\n# General errors\n- autoload.psr-4 : invalid value (Acme), namespaces must end with a namespace separator, should be Acme\\\\\n"
+ },
+ {
+  "name": "target-dir-and-psr4",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"target-dir\": \"Acme\",\n    \"autoload\": {\n        \"psr-4\": {\n            \"Acme\\\\\": \"src/\"\n        }\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is invalid, the following errors/warnings were found:\n# General errors\n- target-dir : this can not be used together with the autoload.psr-4 setting, remove target-dir to upgrade to psr-4\n"
+ },
+ {
+  "name": "branch-alias",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"extra\": {\n        \"branch-alias\": {\n            \"dev-main\": \"2.0\",\n            \"dev-next\": \"next-dev\",\n            \"dev-old\": \"1.x-dev\"\n        }\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- extra.branch-alias.dev-main : the target branch (2.0) must end in -dev\n- extra.branch-alias.dev-next : the target branch (next-dev) must be a parseable number like 2.0-dev\n"
+ },
+ {
+  "name": "bin",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"bin\": [\n        \"bin/tool\",\n        \"../escape\"\n    ]\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is invalid, the following errors/warnings were found:\n# General errors\n- bin.1 : invalid value (../escape), must not contain a \"..\" path component\n"
+ },
+ {
+  "name": "time",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"time\": \"not a time\"\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is invalid, the following errors/warnings were found:\n# General errors\n- time : invalid value (not a time): Failed to parse time string (not a time) at position 0 (n): The timezone could not be found in the database\n"
+ },
+ {
+  "name": "config-platform",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"config\": {\n        \"platform\": {\n            \"php\": \"not a version\"\n        }\n    }\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is invalid, the following errors/warnings were found:\n# General errors\n- config.platform.php : invalid value (not a version): Invalid version string \"not a version\"\n"
+ },
+ {
+  "name": "lock-fresh",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/lib\": \"^1.0\"\n    },\n    \"repositories\": [\n        {\n            \"packagist.org\": false\n        },\n        {\n            \"type\": \"package\",\n            \"package\": [\n                {\n                    \"name\": \"acme/lib\",\n                    \"version\": \"1.2.0\",\n                    \"dist\": {\n                        \"type\": \"zip\",\n                        \"url\": \"https://example.com/lib.zip\"\n                    }\n                },\n                {\n                    \"name\": \"acme/tool\",\n                    \"version\": \"2.0.0\",\n                    \"dist\": {\n                        \"type\": \"zip\",\n                        \"url\": \"https://example.com/tool.zip\"\n                    }\n                }\n            ]\n        }\n    ]\n}\n",
+   "composer.lock": "{\n    \"_readme\": [\n        \"This file locks the dependencies of your project to a known state\",\n        \"Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies\",\n        \"This file is @generated automatically\"\n    ],\n    \"content-hash\": \"cd11f2b046f2730b0b3930f81e1bdd8d\",\n    \"packages\": [\n        {\n            \"name\": \"acme/lib\",\n            \"version\": \"1.2.0\",\n            \"dist\": {\n                \"type\": \"zip\",\n                \"url\": \"https://example.com/lib.zip\"\n            },\n            \"type\": \"library\"\n        }\n    ],\n    \"packages-dev\": [],\n    \"aliases\": [],\n    \"minimum-stability\": \"stable\",\n    \"stability-flags\": {},\n    \"prefer-stable\": false,\n    \"prefer-lowest\": false,\n    \"platform\": {\n        \"php\": \"^8.3\"\n    },\n    \"platform-dev\": {},\n    \"plugin-api-version\": \"2.11.0\"\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "lock-stale",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/lib\": \"^1.0\",\n        \"acme/tool\": \"^2.0\"\n    },\n    \"repositories\": [\n        {\n            \"packagist.org\": false\n        },\n        {\n            \"type\": \"package\",\n            \"package\": [\n                {\n                    \"name\": \"acme/lib\",\n                    \"version\": \"1.2.0\",\n                    \"dist\": {\n                        \"type\": \"zip\",\n                        \"url\": \"https://example.com/lib.zip\"\n                    }\n                },\n                {\n                    \"name\": \"acme/tool\",\n                    \"version\": \"2.0.0\",\n                    \"dist\": {\n                        \"type\": \"zip\",\n                        \"url\": \"https://example.com/tool.zip\"\n                    }\n                }\n            ]\n        }\n    ]\n}\n",
+   "composer.lock": "{\n    \"_readme\": [\n        \"This file locks the dependencies of your project to a known state\",\n        \"Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies\",\n        \"This file is @generated automatically\"\n    ],\n    \"content-hash\": \"cd11f2b046f2730b0b3930f81e1bdd8d\",\n    \"packages\": [\n        {\n            \"name\": \"acme/lib\",\n            \"version\": \"1.2.0\",\n            \"dist\": {\n                \"type\": \"zip\",\n                \"url\": \"https://example.com/lib.zip\"\n            },\n            \"type\": \"library\"\n        }\n    ],\n    \"packages-dev\": [],\n    \"aliases\": [],\n    \"minimum-stability\": \"stable\",\n    \"stability-flags\": {},\n    \"prefer-stable\": false,\n    \"prefer-lowest\": false,\n    \"platform\": {\n        \"php\": \"^8.3\"\n    },\n    \"platform-dev\": {},\n    \"plugin-api-version\": \"2.11.0\"\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "./composer.json is valid but your composer.lock has some errors\n",
+  "stderr": "# Lock file errors\n- The lock file is not up to date with the latest changes in composer.json, it is recommended that you run `composer update` or `composer update <package name>`.\n- Required package \"acme/tool\" is not present in the lock file.\nThis usually happens when composer files are incorrectly merged or the composer.json file is manually edited.\nRead more about correctly resolving merge conflicts https://getcomposer.org/doc/articles/resolving-merge-conflicts.md\nand prefer using the \"require\" command over editing the composer.json file directly https://getcomposer.org/doc/03-cli.md#require--r\n"
+ },
+ {
+  "name": "lock-stale-no-check-lock",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/lib\": \"^1.0\",\n        \"acme/tool\": \"^2.0\"\n    },\n    \"repositories\": [\n        {\n            \"packagist.org\": false\n        },\n        {\n            \"type\": \"package\",\n            \"package\": [\n                {\n                    \"name\": \"acme/lib\",\n                    \"version\": \"1.2.0\",\n                    \"dist\": {\n                        \"type\": \"zip\",\n                        \"url\": \"https://example.com/lib.zip\"\n                    }\n                },\n                {\n                    \"name\": \"acme/tool\",\n                    \"version\": \"2.0.0\",\n                    \"dist\": {\n                        \"type\": \"zip\",\n                        \"url\": \"https://example.com/tool.zip\"\n                    }\n                }\n            ]\n        }\n    ]\n}\n",
+   "composer.lock": "{\n    \"_readme\": [\n        \"This file locks the dependencies of your project to a known state\",\n        \"Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies\",\n        \"This file is @generated automatically\"\n    ],\n    \"content-hash\": \"cd11f2b046f2730b0b3930f81e1bdd8d\",\n    \"packages\": [\n        {\n            \"name\": \"acme/lib\",\n            \"version\": \"1.2.0\",\n            \"dist\": {\n                \"type\": \"zip\",\n                \"url\": \"https://example.com/lib.zip\"\n            },\n            \"type\": \"library\"\n        }\n    ],\n    \"packages-dev\": [],\n    \"aliases\": [],\n    \"minimum-stability\": \"stable\",\n    \"stability-flags\": {},\n    \"prefer-stable\": false,\n    \"prefer-lowest\": false,\n    \"platform\": {\n        \"php\": \"^8.3\"\n    },\n    \"platform-dev\": {},\n    \"plugin-api-version\": \"2.11.0\"\n}\n"
+  },
+  "args": [
+   "--no-check-lock"
+  ],
+  "exit": 0,
+  "stdout": "./composer.json is valid but your composer.lock has some warnings\n",
+  "stderr": "# Lock file warnings\n- The lock file is not up to date with the latest changes in composer.json, it is recommended that you run `composer update` or `composer update <package name>`.\n- Required package \"acme/tool\" is not present in the lock file.\nThis usually happens when composer files are incorrectly merged or the composer.json file is manually edited.\nRead more about correctly resolving merge conflicts https://getcomposer.org/doc/articles/resolving-merge-conflicts.md\nand prefer using the \"require\" command over editing the composer.json file directly https://getcomposer.org/doc/03-cli.md#require--r\n"
+ },
+ {
+  "name": "lock-stale-config-lock-false",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/lib\": \"^1.0\",\n        \"acme/tool\": \"^2.0\"\n    },\n    \"repositories\": [\n        {\n            \"packagist.org\": false\n        },\n        {\n            \"type\": \"package\",\n            \"package\": [\n                {\n                    \"name\": \"acme/lib\",\n                    \"version\": \"1.2.0\",\n                    \"dist\": {\n                        \"type\": \"zip\",\n                        \"url\": \"https://example.com/lib.zip\"\n                    }\n                },\n                {\n                    \"name\": \"acme/tool\",\n                    \"version\": \"2.0.0\",\n                    \"dist\": {\n                        \"type\": \"zip\",\n                        \"url\": \"https://example.com/tool.zip\"\n                    }\n                }\n            ]\n        }\n    ],\n    \"config\": {\n        \"lock\": false\n    }\n}\n",
+   "composer.lock": "{\n    \"_readme\": [\n        \"This file locks the dependencies of your project to a known state\",\n        \"Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies\",\n        \"This file is @generated automatically\"\n    ],\n    \"content-hash\": \"cd11f2b046f2730b0b3930f81e1bdd8d\",\n    \"packages\": [\n        {\n            \"name\": \"acme/lib\",\n            \"version\": \"1.2.0\",\n            \"dist\": {\n                \"type\": \"zip\",\n                \"url\": \"https://example.com/lib.zip\"\n            },\n            \"type\": \"library\"\n        }\n    ],\n    \"packages-dev\": [],\n    \"aliases\": [],\n    \"minimum-stability\": \"stable\",\n    \"stability-flags\": {},\n    \"prefer-stable\": false,\n    \"prefer-lowest\": false,\n    \"platform\": {\n        \"php\": \"^8.3\"\n    },\n    \"platform-dev\": {},\n    \"plugin-api-version\": \"2.11.0\"\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": "./composer.lock is present but ignored as the \"lock\" config option is disabled.\n./composer.lock is present but ignored as the \"lock\" config option is disabled.\n"
+ },
+ {
+  "name": "lock-stale-config-lock-false-check-lock",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/lib\": \"^1.0\",\n        \"acme/tool\": \"^2.0\"\n    },\n    \"repositories\": [\n        {\n            \"packagist.org\": false\n        },\n        {\n            \"type\": \"package\",\n            \"package\": [\n                {\n                    \"name\": \"acme/lib\",\n                    \"version\": \"1.2.0\",\n                    \"dist\": {\n                        \"type\": \"zip\",\n                        \"url\": \"https://example.com/lib.zip\"\n                    }\n                },\n                {\n                    \"name\": \"acme/tool\",\n                    \"version\": \"2.0.0\",\n                    \"dist\": {\n                        \"type\": \"zip\",\n                        \"url\": \"https://example.com/tool.zip\"\n                    }\n                }\n            ]\n        }\n    ],\n    \"config\": {\n        \"lock\": false\n    }\n}\n",
+   "composer.lock": "{\n    \"_readme\": [\n        \"This file locks the dependencies of your project to a known state\",\n        \"Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies\",\n        \"This file is @generated automatically\"\n    ],\n    \"content-hash\": \"cd11f2b046f2730b0b3930f81e1bdd8d\",\n    \"packages\": [\n        {\n            \"name\": \"acme/lib\",\n            \"version\": \"1.2.0\",\n            \"dist\": {\n                \"type\": \"zip\",\n                \"url\": \"https://example.com/lib.zip\"\n            },\n            \"type\": \"library\"\n        }\n    ],\n    \"packages-dev\": [],\n    \"aliases\": [],\n    \"minimum-stability\": \"stable\",\n    \"stability-flags\": {},\n    \"prefer-stable\": false,\n    \"prefer-lowest\": false,\n    \"platform\": {\n        \"php\": \"^8.3\"\n    },\n    \"platform-dev\": {},\n    \"plugin-api-version\": \"2.11.0\"\n}\n"
+  },
+  "args": [
+   "--check-lock"
+  ],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": "./composer.lock is present but ignored as the \"lock\" config option is disabled.\n./composer.lock is present but ignored as the \"lock\" config option is disabled.\n"
+ },
+ {
+  "name": "lock-config-false-and-warnings",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    },\n    \"config\": {\n        \"lock\": false\n    }\n}\n",
+   "composer.lock": "{\n    \"content-hash\": \"x\",\n    \"packages\": [],\n    \"packages-dev\": []\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "./composer.lock is present but ignored as the \"lock\" config option is disabled.\n./composer.lock is present but ignored as the \"lock\" config option is disabled.\n./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# General warnings\n- No license specified, it is recommended to do so. For closed-source software you may use \"proprietary\" as license.\n"
+ },
+ {
+  "name": "lock-without-packages-dev",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "composer.lock": "{\n    \"content-hash\": \"x\",\n    \"packages\": []\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Locker.php line 188:\n                                                                                                                                                                  \n  The lock file does not contain require-dev information, run install with the --no-dev option or delete it and run composer update to generate a new lock file.  \n                                                                                                                                                                  \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "The lock file does not contain require-dev information, run install with the --no-dev option or delete it and run composer update to generate a new lock file."
+  ]
+ },
+ {
+  "name": "lock-legacy-hash-fresh",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "composer.lock": "{\n    \"hash\": \"b3dfff88d0e47663f5a60549c201783c\",\n    \"packages\": [],\n    \"packages-dev\": []\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "lock-legacy-hash-stale",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "composer.lock": "{\n    \"hash\": \"abc\",\n    \"packages\": [],\n    \"packages-dev\": []\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "./composer.json is valid but your composer.lock has some errors\n",
+  "stderr": "# Lock file errors\n- The lock file is not up to date with the latest changes in composer.json, it is recommended that you run `composer update` or `composer update <package name>`.\n"
+ },
+ {
+  "name": "lock-packages-null",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "composer.lock": "{\n    \"content-hash\": \"x\",\n    \"packages\": null\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "lock-packages-dev-null",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "composer.lock": "{\n    \"content-hash\": \"x\",\n    \"packages\": [],\n    \"packages-dev\": null\n}\n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Locker.php line 188:\n                                                                                                                                                                  \n  The lock file does not contain require-dev information, run install with the --no-dev option or delete it and run composer update to generate a new lock file.  \n                                                                                                                                                                  \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "The lock file does not contain require-dev information, run install with the --no-dev option or delete it and run composer update to generate a new lock file."
+  ]
+ },
+ {
+  "name": "file-without-json-extension",
+  "files": {
+   "config": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "config.lock": "{\n    \"content-hash\": \"x\",\n    \"packages\": [],\n    \"packages-dev\": []\n}\n"
+  },
+  "args": [
+   "config"
+  ],
+  "exit": 2,
+  "stdout": "config is valid but your composer.lock has some errors\n",
+  "stderr": "# Lock file errors\n- The lock file is not up to date with the latest changes in composer.json, it is recommended that you run `composer update` or `composer update <package name>`.\n"
+ },
+ {
+  "name": "lock-not-object",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "composer.lock": "[]\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "lock-without-packages",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "composer.lock": "{\n    \"content-hash\": \"abc\"\n}\n"
+  },
+  "args": [],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "lock-invalid-json",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "composer.lock": "{\"content-hash\": \n"
+  },
+  "args": [],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn JsonFile.php line 401:\n                                                                          \n  \"./composer.lock\" does not contain valid JSON                           \n  Parse error on line 1:                                                  \n  {\"content-hash\":                                                        \n  ----------------^                                                       \n  Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['  \n                                                                          \n\nvalidate [--no-check-all] [--check-lock] [--no-check-lock] [--no-check-publish] [--no-check-version] [-A|--with-dependencies] [--strict] [--] [<file>]\n\n",
+  "message": [
+   "\"./composer.lock\" does not contain valid JSON",
+   "Parse error on line 1:",
+   "{\"content-hash\":",
+   "----------------^",
+   "Expected one of: 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '['"
+  ]
+ },
+ {
+  "name": "lock-missing-requirement",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/lib\": \"^1.0\"\n    },\n    \"repositories\": [\n        {\n            \"packagist.org\": false\n        },\n        {\n            \"type\": \"package\",\n            \"package\": [\n                {\n                    \"name\": \"acme/lib\",\n                    \"version\": \"1.2.0\",\n                    \"dist\": {\n                        \"type\": \"zip\",\n                        \"url\": \"https://example.com/lib.zip\"\n                    }\n                },\n                {\n                    \"name\": \"acme/tool\",\n                    \"version\": \"2.0.0\",\n                    \"dist\": {\n                        \"type\": \"zip\",\n                        \"url\": \"https://example.com/tool.zip\"\n                    }\n                }\n            ]\n        }\n    ]\n}\n",
+   "composer.lock": "{\n    \"_readme\": [\n        \"This file locks the dependencies of your project to a known state\",\n        \"Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies\",\n        \"This file is @generated automatically\"\n    ],\n    \"content-hash\": \"cd11f2b046f2730b0b3930f81e1bdd8d\",\n    \"packages\": [],\n    \"packages-dev\": [],\n    \"aliases\": [],\n    \"minimum-stability\": \"stable\",\n    \"stability-flags\": {},\n    \"prefer-stable\": false,\n    \"prefer-lowest\": false,\n    \"platform\": {\n        \"php\": \"^8.3\"\n    },\n    \"platform-dev\": {},\n    \"plugin-api-version\": \"2.11.0\"\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "./composer.json is valid but your composer.lock has some errors\n",
+  "stderr": "# Lock file errors\n- Required package \"acme/lib\" is not present in the lock file.\nThis usually happens when composer files are incorrectly merged or the composer.json file is manually edited.\nRead more about correctly resolving merge conflicts https://getcomposer.org/doc/articles/resolving-merge-conflicts.md\nand prefer using the \"require\" command over editing the composer.json file directly https://getcomposer.org/doc/03-cli.md#require--r\n"
+ },
+ {
+  "name": "lock-and-warnings",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\",\n        \"acme/lib\": \"^1.0\",\n        \"acme/tool\": \"*\"\n    },\n    \"repositories\": [\n        {\n            \"packagist.org\": false\n        },\n        {\n            \"type\": \"package\",\n            \"package\": [\n                {\n                    \"name\": \"acme/lib\",\n                    \"version\": \"1.2.0\",\n                    \"dist\": {\n                        \"type\": \"zip\",\n                        \"url\": \"https://example.com/lib.zip\"\n                    }\n                },\n                {\n                    \"name\": \"acme/tool\",\n                    \"version\": \"2.0.0\",\n                    \"dist\": {\n                        \"type\": \"zip\",\n                        \"url\": \"https://example.com/tool.zip\"\n                    }\n                }\n            ]\n        }\n    ]\n}\n",
+   "composer.lock": "{\n    \"_readme\": [\n        \"This file locks the dependencies of your project to a known state\",\n        \"Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies\",\n        \"This file is @generated automatically\"\n    ],\n    \"content-hash\": \"cd11f2b046f2730b0b3930f81e1bdd8d\",\n    \"packages\": [\n        {\n            \"name\": \"acme/lib\",\n            \"version\": \"1.2.0\",\n            \"dist\": {\n                \"type\": \"zip\",\n                \"url\": \"https://example.com/lib.zip\"\n            },\n            \"type\": \"library\"\n        }\n    ],\n    \"packages-dev\": [],\n    \"aliases\": [],\n    \"minimum-stability\": \"stable\",\n    \"stability-flags\": {},\n    \"prefer-stable\": false,\n    \"prefer-lowest\": false,\n    \"platform\": {\n        \"php\": \"^8.3\"\n    },\n    \"platform-dev\": {},\n    \"plugin-api-version\": \"2.11.0\"\n}\n"
+  },
+  "args": [],
+  "exit": 2,
+  "stdout": "",
+  "stderr": "./composer.json is valid, but with a few warnings\nSee https://getcomposer.org/doc/04-schema.md for details on the schema\n# Lock file errors\n- The lock file is not up to date with the latest changes in composer.json, it is recommended that you run `composer update` or `composer update <package name>`.\n- Required package \"acme/tool\" is not present in the lock file.\nThis usually happens when composer files are incorrectly merged or the composer.json file is manually edited.\nRead more about correctly resolving merge conflicts https://getcomposer.org/doc/articles/resolving-merge-conflicts.md\nand prefer using the \"require\" command over editing the composer.json file directly https://getcomposer.org/doc/03-cli.md#require--r\n# General warnings\n- require.acme/tool : unbound version constraints (*) should be avoided\n"
+ },
+ {
+  "name": "with-dependencies",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/dep\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"install-path\": \"../acme/dep\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+   "vendor/acme/dep/composer.json": "{\n    \"name\": \"acme/dep\",\n    \"require\": {\n        \"acme/x\": \"*\"\n    }\n}\n"
+  },
+  "args": [
+   "--with-dependencies"
+  ],
+  "exit": 2,
+  "stdout": "./composer.json is valid\n",
+  "stderr": "acme/dep is valid for simple usage with Composer but has\nstrict errors that make it unable to be published as a package\n# Publish errors\n- description : The property description is required\n# General warnings\n- No license specified, it is recommended to do so. For closed-source software you may use \"proprietary\" as license.\n- require.acme/x : unbound version constraints (*) should be avoided\n"
+ },
+ {
+  "name": "with-dependencies-vendor-path",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/dep\",\n            \"version\": \"1.0.0\",\n            \"type\": \"library\",\n            \"install-path\": \"../elsewhere/dep\"\n        },\n        {\n            \"name\": \"acme/meta\",\n            \"version\": \"1.0.0\",\n            \"type\": \"metapackage\"\n        },\n        {\n            \"name\": \"acme/gone\",\n            \"version\": \"1.0.0\",\n            \"type\": \"library\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+   "vendor/elsewhere/dep/composer.json": "{\n    \"name\": \"acme/dep\",\n    \"description\": \"d\",\n    \"license\": \"MIT\",\n    \"version\": \"1.0.0\"\n}\n",
+   "vendor/acme/dep/composer.json": "{\n    \"name\": \"acme/dep\",\n    \"description\": \"d\",\n    \"license\": \"MIT\",\n    \"keywords\": [\n        \"bad!\"\n    ]\n}\n"
+  },
+  "args": [
+   "-A"
+  ],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": "acme/dep is valid, but with a few warnings\n# General warnings\n- keywords.0 : invalid value (bad!), must match [\\p{N}\\p{L} ._-]+\n"
+ },
+ {
+  "name": "with-dependencies-uppercase-name",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/dep\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"install-path\": \"../acme/dep\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+   "vendor/acme/dep/composer.json": "{\n    \"name\": \"Acme/FooBAR-BazQux\",\n    \"description\": \"d\",\n    \"license\": \"MIT\"\n}\n"
+  },
+  "args": [
+   "-A"
+  ],
+  "exit": 2,
+  "stdout": "./composer.json is valid\n",
+  "stderr": "acme/dep is invalid, the following errors/warnings were found:\n# General errors\n- name : Does not match the regex pattern ^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$\n- name : Acme/FooBAR-BazQux is invalid, it should not contain uppercase characters. We suggest using acme/foo-bar-baz-qux instead.\n# Publish errors\n- Name \"Acme/FooBAR-BazQux\" does not match the best practice (e.g. lower-cased/with-dashes). We suggest using \"acme/foo-bar-baz-qux\" instead. As such you will not be able to submit it to Packagist.\n"
+ },
+ {
+  "name": "with-dependencies-working-dir",
+  "files": {
+   "sub/composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "sub/vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/dep\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"install-path\": \"../acme/dep\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+   "sub/vendor/acme/dep/composer.json": "{\n    \"name\": \"acme/dep\",\n    \"description\": \"d\",\n    \"license\": \"MIT\",\n    \"license\": \"MIT\"\n}\n"
+  },
+  "args": [
+   "-d",
+   "sub",
+   "-A"
+  ],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": "acme/dep is valid, but with a few warnings\n# General warnings\n- Key license is a duplicate in {dir}/sub/vendor/acme/dep/composer.json at line 5\n"
+ },
+ {
+  "name": "working-dir-missing",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n"
+  },
+  "args": [
+   "-d",
+   "nope"
+  ],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "\nIn Application.php line 573:\n                                                             \n  Invalid working directory specified, nope does not exist.  \n                                                             \n\n",
+  "message": [
+   "Invalid working directory specified, nope does not exist."
+  ]
+ },
+ {
+  "name": "with-dependencies-branch-alias",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/dep\",\n            \"version\": \"dev-master\",\n            \"version_normalized\": \"dev-master\",\n            \"type\": \"library\",\n            \"extra\": {\n                \"branch-alias\": {\n                    \"dev-master\": \"1.x-dev\"\n                }\n            }\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+   "vendor/acme/dep/composer.json": "{\n    \"name\": \"acme/dep\",\n    \"description\": \"d\",\n    \"license\": \"MIT\",\n    \"keywords\": [\n        \"bad!\"\n    ]\n}\n"
+  },
+  "args": [
+   "-A"
+  ],
+  "exit": 0,
+  "stdout": "./composer.json is valid\n",
+  "stderr": "acme/dep is valid, but with a few warnings\n# General warnings\n- keywords.0 : invalid value (bad!), must match [\\p{N}\\p{L} ._-]+\nacme/dep is valid, but with a few warnings\n# General warnings\n- keywords.0 : invalid value (bad!), must match [\\p{N}\\p{L} ._-]+\n"
+ },
+ {
+  "name": "with-dependencies-default-branch",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/dep\",\n            \"version\": \"dev-main\",\n            \"version_normalized\": \"dev-main\",\n            \"type\": \"library\",\n            \"default-branch\": true\n        },\n        {\n            \"name\": \"acme/other\",\n            \"version\": \"dev-1.x\",\n            \"version_normalized\": \"1.9999999.9999999.9999999-dev\",\n            \"type\": \"library\",\n            \"default-branch\": true\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+   "vendor/acme/dep/composer.json": "{\n    \"name\": \"acme/dep\",\n    \"description\": \"d\",\n    \"license\": \"MIT\"\n}\n",
+   "vendor/acme/other/composer.json": "{\n    \"name\": \"acme/other\",\n    \"description\": \"d\",\n    \"license\": \"MIT\"\n}\n"
+  },
+  "args": [
+   "-A"
+  ],
+  "exit": 0,
+  "stdout": "./composer.json is valid\nacme/dep is valid\nacme/dep is valid\nacme/other is valid\nacme/other is valid\n",
+  "stderr": ""
+ },
+ {
+  "name": "with-dependencies-list-duplicate-key",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/dep\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"install-path\": \"../acme/dep\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+   "vendor/acme/dep/composer.json": "[{\"a\": 1, \"a\": 2}]\n"
+  },
+  "args": [
+   "-A"
+  ],
+  "exit": 2,
+  "stdout": "./composer.json is valid\n",
+  "stderr": "acme/dep is invalid, the following errors/warnings were found:\n# General errors\n- Array value found, but an object is required\n# General warnings\n- Key a is a duplicate in {dir}/vendor/acme/dep/composer.json at line 1\n- No license specified, it is recommended to do so. For closed-source software you may use \"proprietary\" as license.\n"
+ },
+ {
+  "name": "with-dependencies-strict",
+  "files": {
+   "composer.json": "{\n    \"name\": \"acme/app\",\n    \"description\": \"An app\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"php\": \"^8.3\"\n    }\n}\n",
+   "vendor/composer/installed.json": "{\n    \"packages\": [\n        {\n            \"name\": \"acme/dep\",\n            \"version\": \"1.0.0\",\n            \"version_normalized\": \"1.0.0.0\",\n            \"type\": \"library\",\n            \"install-path\": \"../acme/dep\"\n        }\n    ],\n    \"dev\": true,\n    \"dev-package-names\": []\n}\n",
+   "vendor/acme/dep/composer.json": "{\n    \"name\": \"acme/dep\",\n    \"description\": \"d\",\n    \"license\": \"MIT\",\n    \"require\": {\n        \"acme/x\": \"*\"\n    }\n}\n"
+  },
+  "args": [
+   "-A",
+   "--strict"
+  ],
+  "exit": 1,
+  "stdout": "./composer.json is valid\n",
+  "stderr": "acme/dep is valid, but with a few warnings\n# General warnings\n- require.acme/x : unbound version constraints (*) should be avoided\n"
+ }
+]

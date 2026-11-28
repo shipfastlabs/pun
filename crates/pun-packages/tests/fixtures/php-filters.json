@@ -1,0 +1,315 @@
+{
+    "email": {
+        "a@example.com": true,
+        "first.last@example.com": true,
+        "a+tag@example.co.uk": true,
+        "user@sub.example.com": true,
+        "x@localhost": false,
+        "not-an-email": false,
+        "@example.com": false,
+        "a@": false,
+        "a@@example.com": false,
+        "a b@example.com": false,
+        "\"a b\"@example.com": false,
+        "\"a\\\"b\"@example.com": true,
+        "a.@example.com": false,
+        ".a@example.com": false,
+        "a..b@example.com": false,
+        "a@example": false,
+        "a@-example.com": false,
+        "a@example-.com": false,
+        "a@exa_mple.com": false,
+        "a@[127.0.0.1]": true,
+        "a@[IPv6:::1]": true,
+        "a@[IPv6:2001:db8::1]": true,
+        "a@[256.0.0.1]": false,
+        "a@example.c": true,
+        "a@1example.com": true,
+        "a@example.123": false,
+        "a@xn--bcher-kva.example": true,
+        "a@EXAMPLE.COM": true,
+        "a@example.com\n": false,
+        " a@example.com": false,
+        "a@example.com ": false,
+        "ünicode@example.com": false,
+        "a@ünicode.com": false,
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com": true,
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com": false,
+        "a@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.com": true,
+        "a@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.com": false,
+        "a@abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.com": false,
+        "a!#$%&'*+/=?^_`{|}~-@example.com": true,
+        "a(b)@example.com": false,
+        "a@example.com.": false,
+        "a@.example.com": false,
+        "": false,
+        "a@b.c.d.e.f.gh": true
+    },
+    "email_unicode": {
+        "a@example.com": true,
+        "first.last@example.com": true,
+        "a+tag@example.co.uk": true,
+        "user@sub.example.com": true,
+        "x@localhost": false,
+        "not-an-email": false,
+        "@example.com": false,
+        "a@": false,
+        "a@@example.com": false,
+        "a b@example.com": false,
+        "\"a b\"@example.com": false,
+        "\"a\\\"b\"@example.com": true,
+        "a.@example.com": false,
+        ".a@example.com": false,
+        "a..b@example.com": false,
+        "a@example": false,
+        "a@-example.com": false,
+        "a@example-.com": false,
+        "a@exa_mple.com": false,
+        "a@[127.0.0.1]": true,
+        "a@[IPv6:::1]": true,
+        "a@[IPv6:2001:db8::1]": true,
+        "a@[256.0.0.1]": false,
+        "a@example.c": true,
+        "a@1example.com": true,
+        "a@example.123": false,
+        "a@xn--bcher-kva.example": true,
+        "a@EXAMPLE.COM": true,
+        "a@example.com\n": false,
+        " a@example.com": false,
+        "a@example.com ": false,
+        "ünicode@example.com": true,
+        "a@ünicode.com": false,
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com": true,
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com": false,
+        "a@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.com": true,
+        "a@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.com": false,
+        "a@abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.abcd.com": false,
+        "a!#$%&'*+/=?^_`{|}~-@example.com": true,
+        "a(b)@example.com": false,
+        "a@example.com.": false,
+        "a@.example.com": false,
+        "": false,
+        "a@b.c.d.e.f.gh": true
+    },
+    "url": {
+        "https://example.com": {
+            "scheme": "https",
+            "host": "example.com"
+        },
+        "http://example.com/path?q=1#f": {
+            "scheme": "http",
+            "host": "example.com"
+        },
+        "HTTPS://EXAMPLE.COM": {
+            "scheme": "HTTPS",
+            "host": "EXAMPLE.COM"
+        },
+        "ftp://example.com": {
+            "scheme": "ftp",
+            "host": "example.com"
+        },
+        "example.com": {
+            "scheme": null,
+            "host": null
+        },
+        "//example.com": {
+            "scheme": null,
+            "host": "example.com"
+        },
+        "http://": false,
+        "http:///path": false,
+        "http:/example.com": {
+            "scheme": "http",
+            "host": null
+        },
+        "http:example.com": {
+            "scheme": "http",
+            "host": null
+        },
+        "https://user:pass@example.com:8080/x": {
+            "scheme": "https",
+            "host": "example.com"
+        },
+        "https://example.com:99999": false,
+        "https://example.com:0": {
+            "scheme": "https",
+            "host": "example.com"
+        },
+        "https://example.com:abc": false,
+        "https://[::1]:8080/": {
+            "scheme": "https",
+            "host": "[::1]"
+        },
+        "https://[::1": {
+            "scheme": "https",
+            "host": "[:"
+        },
+        "irc://irc.libera.chat/composer": {
+            "scheme": "irc",
+            "host": "irc.libera.chat"
+        },
+        "ircs://irc.libera.chat:6697/x": {
+            "scheme": "ircs",
+            "host": "irc.libera.chat"
+        },
+        "mailto:a@example.com": {
+            "scheme": "mailto",
+            "host": null
+        },
+        "https://ex ample.com": {
+            "scheme": "https",
+            "host": "ex ample.com"
+        },
+        "https://example.com:": {
+            "scheme": "https",
+            "host": "example.com"
+        },
+        "https://@example.com": {
+            "scheme": "https",
+            "host": "example.com"
+        },
+        "h-t.tp+s://example.com": {
+            "scheme": "h-t.tp+s",
+            "host": "example.com"
+        },
+        "1http://example.com": {
+            "scheme": "1http",
+            "host": "example.com"
+        },
+        "http//example.com": {
+            "scheme": null,
+            "host": null
+        },
+        "localhost:8080": {
+            "scheme": null,
+            "host": "localhost"
+        },
+        "https://exa mple.com/path": {
+            "scheme": "https",
+            "host": "exa mple.com"
+        },
+        "https://example.com\n": {
+            "scheme": "https",
+            "host": "example.com_"
+        },
+        "https://example.com/a b": {
+            "scheme": "https",
+            "host": "example.com"
+        },
+        "https://ünicode.com": {
+            "scheme": "https",
+            "host": "ünicode.com"
+        },
+        "https://example.com?x": {
+            "scheme": "https",
+            "host": "example.com"
+        },
+        "https://example.com#x": {
+            "scheme": "https",
+            "host": "example.com"
+        },
+        "https:// example.com": {
+            "scheme": "https",
+            "host": " example.com"
+        },
+        "https://example.com:80:80": {
+            "scheme": "https",
+            "host": "example.com:80"
+        },
+        "javascript:alert(1)": {
+            "scheme": "javascript",
+            "host": null
+        },
+        "https:": {
+            "scheme": "https",
+            "host": null
+        },
+        ":https://example.com": {
+            "scheme": null,
+            "host": null
+        },
+        "https://a@b@c.com": {
+            "scheme": "https",
+            "host": "c.com"
+        },
+        "https://example.com/../x": {
+            "scheme": "https",
+            "host": "example.com"
+        },
+        "http://example.com:65535": {
+            "scheme": "http",
+            "host": "example.com"
+        },
+        "http://example.com:65536": false,
+        "https://exam%20ple.com": {
+            "scheme": "https",
+            "host": "exam%20ple.com"
+        }
+    },
+    "uri": {
+        "https://example.com": true,
+        "http://example.com/path?q=1#f": true,
+        "HTTPS://EXAMPLE.COM": true,
+        "ftp://example.com": true,
+        "example.com": false,
+        "//example.com": false,
+        "http://": false,
+        "http:///path": false,
+        "http:/example.com": false,
+        "http:example.com": false,
+        "https://user:pass@example.com:8080/x": true,
+        "https://example.com:99999": false,
+        "https://example.com:0": true,
+        "https://example.com:abc": false,
+        "https://[::1]:8080/": true,
+        "https://[::1": false,
+        "irc://irc.libera.chat/composer": true,
+        "ircs://irc.libera.chat:6697/x": true,
+        "mailto:a@example.com": true,
+        "https://ex ample.com": false,
+        "https://example.com:": false,
+        "https://@example.com": false,
+        "h-t.tp+s://example.com": true,
+        "1http://example.com": false,
+        "http//example.com": false,
+        "localhost:8080": false,
+        "https://exa mple.com/path": false,
+        "https://example.com\n": true,
+        "https://example.com/a b": false,
+        "https://ünicode.com": false,
+        "https://example.com?x": true,
+        "https://example.com#x": true,
+        "https:// example.com": false,
+        "https://example.com:80:80": false,
+        "javascript:alert(1)": false,
+        "https:": false,
+        ":https://example.com": false,
+        "https://a@b@c.com": false,
+        "https://example.com/../x": true,
+        "http://example.com:65535": true,
+        "http://example.com:65536": false,
+        "https://exam%20ple.com": false,
+        "https://example.com/a/b?c=d#e": true,
+        "https://example.com/a{b": false,
+        "https://example.com/a<b": false,
+        "https://exa..mple.com": false,
+        "https://[2001:db8::1]/": true,
+        "https://example.com:0/": true,
+        "https://example.com:65535/": true,
+        "https://user@example.com/": true,
+        "mailto:not-an-email": false,
+        "urn:isbn:0451450523": true,
+        "news:comp.lang.php": true,
+        "news:bad group": false,
+        "tel:+1-201-555-0123": true,
+        "tel:abc": false,
+        "data:text/plain,hi": true,
+        "file:/etc/passwd": true,
+        "MAILTO:A@EXAMPLE.COM": true,
+        "ftp://x": true,
+        "git+ssh://example.com/repo": true,
+        "https://example.com/%7Euser": true,
+        "https://example.com/a\nb": false,
+        "https://": false
+    }
+}
