@@ -1,0 +1,26 @@
+{
+    "test": "Type/PunFinalStaticTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-final-static.php",
+            "declares": [
+                "punfinalstatic\\hasstatus",
+                "punfinalstatic\\makemodel",
+                "punfinalstatic\\openpost",
+                "punfinalstatic\\post"
+            ],
+            "asserts": [],
+            "errors": [
+                {
+                    "line": 40,
+                    "identifier": "return.type",
+                    "message": "Method PunFinalStatic\\OpenPost::prunable() should return Illuminate\\Database\\Eloquent\\Builder<static(PunFinalStatic\\OpenPost)> but returns Illuminate\\Database\\Eloquent\\Builder<PunFinalStatic\\OpenPost>.",
+                    "tip": null
+                }
+            ]
+        }
+    ]
+}

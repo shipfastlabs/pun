@@ -213,6 +213,19 @@ pub(in super::super) fn method(c: &mut Checker, m: &Method) {
         });
         late(c, &declared, Some(context), !native)
     });
+    // MutatingScope::transformStaticType(): in a final class, an anonymous one too, `static` is the class itself
+    fn static_to_object(t: &Type) -> Type {
+        match t {
+            Type::Static(n, args) => Type::Object(n.clone(), args.clone(), false),
+            _ => t.traverse(&static_to_object),
+        }
+    }
+    let ret =
+        if context.flags.is_final() || context.name.as_bytes().starts_with(b"{anonymous-class:") {
+            static_to_object(&ret)
+        } else {
+            ret
+        };
     let of = format!("Method {}::{}()", c.display(context), method_name(c, m));
     body(c, b, &ret, &of);
 }

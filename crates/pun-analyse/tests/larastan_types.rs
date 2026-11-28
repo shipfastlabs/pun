@@ -121,6 +121,8 @@
 //! level 8 in a Laravel 13.44.1 app.
 //! Type/PunVariantClassTest.json (a model named `Variant`, which shadows the built-in class) has its assertion from
 //! PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
+//! Type/PunFinalStaticTest.json (`Builder<static>` returned by a final class and an anonymous class, a trait's scope
+//! included) has its errors from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
