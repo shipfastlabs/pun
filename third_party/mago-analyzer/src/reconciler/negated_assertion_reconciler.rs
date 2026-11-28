@@ -238,6 +238,7 @@ fn subtract_complex_type<A>(
                     }
 
                     // handle __Sealed classes, negating where possible
+                    mago_codex::reads::record_descendants(class_like_metadata.name.to_ascii_lowercase());
                     if let Some(child_classlikes) = class_like_metadata.child_class_likes.as_ref()
                         && child_classlikes.contains(&assertion_classlike_name)
                     {

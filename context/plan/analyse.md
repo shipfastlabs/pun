@@ -105,7 +105,7 @@ The groups are the topic groups (config.md Build 1), so `undefined/method` and `
 | `--error-format=json/github/gitlab/checkstyle/junit/raw/teamcity` | `--format` (or `--error-format`), the same formats; no `table` or `prettyJson` (PLAN.md §2, 2026-11-23) |
 | `--memory-limit` | not needed: Pun has no PHP memory limit (removed 2026-11-23) |
 | `--xdebug`, `--debug` | not needed |
-| `clear-result-cache` | not needed: analyse has no result cache (format and lint have one, PLAN.md §1) |
+| `clear-result-cache` | `--no-cache` (the result cache, PLAN.md §1) |
 | `--pro`, `--watch` | no `--watch` on `pun analyse` yet (`pun format --watch` has one) |
 
 ## 6. Build
@@ -134,8 +134,8 @@ after config.md Build 1-3.
    `tests/fixtures/larastan*/gaps.txt`. Left: the seven improvements.
 7. **Pest built in** (§9), with the PHPUnit typing it needs. **After 1.0**: until then test files are analysed as
    plain PHP; `[analyse] exclude` globs leave them out entirely.
-8. **No result cache.** Done as decided: every run checks every file. Format, lint and check have a result cache
-   (PLAN.md §1); analyse does not.
+8. **A result cache.** Done (PLAN.md §1): a run analyses again only the files whose contents, or what they read,
+   changed.
 9. **`pun migrate` for phpstan.neon** (migrate.md Build 5). Done.
 
 ## 7. What Pun builds on
@@ -242,7 +242,7 @@ Pushpak's answers:
   A rule is on or off (or a table of options). `off` stays because PHPStan users already turn rules off and migrate
   needs it to keep a project's rule set.
 - Analyse never edits files; `pun check` runs it after lint and format.
-- **No result cache** for analyse; format, lint and check have one (PLAN.md §1).
+- **A result cache** for analyse, as format, lint and check have (PLAN.md §1).
 - **Extensions:** no third-party extension system now; built-in extensions only (extensions.md). Built in: Laravel
   (§8), Pest with the PHPUnit part it needs (after 1.0), deprecation rules and strict-rules (§9). A project's own
   PHPStan PHP code is named as unsupported by migrate.

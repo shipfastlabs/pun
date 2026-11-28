@@ -331,7 +331,7 @@ impl Project {
             .collect();
         for path in strings(params, "paths") {
             let p = Path::new(path);
-            let found = if p.is_file() {
+            let found = if crate::io::is_file(&p) {
                 vec![p.to_path_buf()]
             } else {
                 php_files(p, &extensions)
@@ -574,7 +574,7 @@ impl Project {
             treat_php_doc_types_as_certain: optional_flag("treatPhpDocTypesAsCertain"),
             only_files: strings(params, "paths")
                 .iter()
-                .all(|p| Path::new(p).is_file()),
+                .all(|p| crate::io::is_file(&Path::new(p))),
             dynamic_constant_types: params
                 .get_str("dynamicConstantNames")
                 .and_then(Value::as_array)
@@ -741,7 +741,7 @@ enum Source {
 
 fn composer_files(root: &Path, extensions: &[String]) -> (Vec<PathBuf>, Vec<Autoloaded>) {
     let read =
-        |p: PathBuf| -> Option<Json> { serde_json::from_slice(&std::fs::read(p).ok()?).ok() };
+        |p: PathBuf| -> Option<Json> { serde_json::from_slice(&crate::io::read(p).ok()?).ok() };
     let mut sources = Vec::new();
     let mut add = |base: &Path, autoload: &Json| {
         for kind in ["psr-4", "psr-0"] {
@@ -798,7 +798,7 @@ fn composer_files(root: &Path, extensions: &[String]) -> (Vec<PathBuf>, Vec<Auto
                 by_class(&d, prefix.as_bytes(), false, extensions),
             ),
             Source::Psr0(d) => (Vec::new(), by_class(&d, b"", true, extensions)),
-            Source::Classmap(p) if p.is_dir() => (php_files(&p, extensions), Vec::new()),
+            Source::Classmap(p) if crate::io::is_dir(&p) => (php_files(&p, extensions), Vec::new()),
             Source::File(p) => {
                 let mut files = vec![p];
                 required_files(root, 0, &mut files);
@@ -815,7 +815,7 @@ fn composer_files(root: &Path, extensions: &[String]) -> (Vec<PathBuf>, Vec<Auto
     }
     for class in ["InstalledVersions.php", "ClassLoader.php"] {
         let path = installed_dir.join(class);
-        if path.is_file() {
+        if crate::io::is_file(&path) {
             out.push(path);
         }
     }
@@ -848,7 +848,7 @@ fn required_files(root: &Path, at: usize, files: &mut Vec<PathBuf>) {
         T_VARIABLE, T_WHITESPACE,
     };
     let path = files[at].clone();
-    let (Ok(code), Some(dir)) = (std::fs::read(&path), path.parent()) else {
+    let (Ok(code), Some(dir)) = (crate::io::read(&path), path.parent()) else {
         return;
     };
     let tokens: Vec<_> = (pun_tokens::tokenize(&code).into_iter())
@@ -889,7 +889,7 @@ fn required_files(root: &Path, at: usize, files: &mut Vec<PathBuf>) {
             found.extend(
                 [root.join(path), dir.join(path)]
                     .into_iter()
-                    .find(|p| p.is_file())
+                    .find(crate::io::is_file)
                     .map(|p| p.display().to_string()),
             );
             continue;
@@ -929,7 +929,7 @@ fn required_files(root: &Path, at: usize, files: &mut Vec<PathBuf>) {
         }
     }
     for file in found.into_iter().map(PathBuf::from) {
-        if file.is_file() && !files.contains(&file) {
+        if crate::io::is_file(&file) && !files.contains(&file) {
             files.push(file);
             required_files(root, files.len() - 1, files);
         }

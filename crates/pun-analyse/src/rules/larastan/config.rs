@@ -53,25 +53,36 @@ pub(super) fn check<'arena>(c: &mut Checker<'_, 'arena>, call: &StaticMethodCall
             .unwrap_or_default()
     });
     let class = c.class_scope();
-    let mut scope = declared::scope_at(c, call.span(), class);
-    let function = c.functions.last().and_then(|function| match function.kind {
-        FunctionScopeKind::Function => {
-            let name = scope.names.namespace_name().map_or_else(
-                || function.name.clone(),
-                |namespace| format!("{}\\{}", String::from_utf8_lossy(namespace), function.name),
-            );
-            c.codebase.get_function(name.as_bytes())
+    // The config types are memoized for every file in this call's scope: what building the scope reads goes with the
+    // memoized value, so a file that reuses it depends on it too (`Configs::types`).
+    let (scope, scope_reads) = mago_codex::reads::recording(|| {
+        let mut scope = declared::scope_at(c, call.span(), class);
+        let function = c.functions.last().and_then(|function| match function.kind {
+            FunctionScopeKind::Function => {
+                let name = scope.names.namespace_name().map_or_else(
+                    || function.name.clone(),
+                    |namespace| {
+                        format!("{}\\{}", String::from_utf8_lossy(namespace), function.name)
+                    },
+                );
+                c.codebase.get_function(name.as_bytes())
+            }
+            FunctionScopeKind::Method { .. } => class.and_then(|class| {
+                c.codebase
+                    .get_method(class.name.as_bytes(), function.name.as_bytes())
+            }),
+        });
+        if let Some(function) = function {
+            scope = declared::value_scope(c, function, class);
         }
-        FunctionScopeKind::Method { .. } => class.and_then(|class| {
-            c.codebase
-                .get_method(class.name.as_bytes(), function.name.as_bytes())
-        }),
+        scope
     });
-    if let Some(function) = function {
-        scope = declared::value_scope(c, function, class);
-    }
-    let mut types =
-        declared::with_classes(c, || larastan.configs.types(&keys, &scope)).unwrap_or_default();
+    let mut types = declared::with_classes(c, || {
+        larastan
+            .configs
+            .types(&keys, &scope, &scope_reads, c.file.id)
+    })
+    .unwrap_or_default();
     if let Some(default) = args.get(1) {
         let default = c
             .type_of(default.value())

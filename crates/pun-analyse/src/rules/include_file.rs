@@ -219,7 +219,7 @@ fn does_file_exist(c: &Checker, path: &str) -> bool {
     {
         return phar_file(&c.include_settings.cwd, rest).unwrap_or(false);
     }
-    candidates(c, path).iter().any(|p| p.is_file())
+    candidates(c, path).iter().any(|p| crate::io::is_file(&p))
 }
 
 fn phar_file(cwd: &Path, path: &str) -> Option<bool> {
@@ -237,7 +237,7 @@ fn phar_file(cwd: &Path, path: &str) -> Option<bool> {
             continue;
         }
         let archive = cwd.join(archive);
-        if !archive.is_file() {
+        if !crate::io::is_file(&archive) {
             continue;
         }
         let mut parts = Vec::new();
@@ -249,7 +249,7 @@ fn phar_file(cwd: &Path, path: &str) -> Option<bool> {
             }
         }
         let member = parts.join("/");
-        let bytes = std::fs::read(archive).ok()?;
+        let bytes = crate::io::read(archive).ok()?;
         return archive_file(&bytes, member.as_bytes(), 3);
     }
     None

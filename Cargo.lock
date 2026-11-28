@@ -2126,6 +2126,7 @@ version = "0.4.5"
 dependencies = [
  "bincode",
  "bitflags 2.13.2",
+ "blake3",
  "flate2",
  "foldhash",
  "include_dir",

@@ -61,6 +61,14 @@ impl FunctionLikeTable {
     }
 
     pub fn get(&self, key: &SymbolIdentifier) -> Option<&Box<FunctionLikeMetadata>> {
+        // Pun: a method's metadata counts as its class's, a function's as its own (crate::reads)
+        if crate::reads::active() {
+            if key.0.is_empty() {
+                crate::reads::record_function(key.1);
+            } else {
+                crate::reads::record_class_like(key.0);
+            }
+        }
         self.files
             .iter()
             .find_map(|overlay| overlay.entries.get(key))
@@ -72,6 +80,7 @@ impl FunctionLikeTable {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&SymbolIdentifier, &Box<FunctionLikeMetadata>)> {
+        crate::reads::record_all();
         self.files
             .iter()
             .flat_map(|overlay| overlay.entries.iter())
@@ -81,6 +90,7 @@ impl FunctionLikeTable {
     /// [`Self::iter`]'s entries declared in `file`, in the same order: the file id is compared before the
     /// (costlier) overlay check, so asking once per analysed file stays cheap on a large codebase.
     pub fn iter_in_file(&self, file: FileId) -> impl Iterator<Item = (&SymbolIdentifier, &Box<FunctionLikeMetadata>)> {
+        crate::reads::record_file(file);
         self.files
             .iter()
             .flat_map(|overlay| overlay.entries.iter())

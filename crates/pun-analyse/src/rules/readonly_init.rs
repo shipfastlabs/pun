@@ -887,6 +887,7 @@ pub(crate) struct Cache(Mutex<HashMap<FileId, bool>>);
 
 impl Cache {
     fn may_add_nodes(&self, file: &File) -> bool {
+        mago_codex::reads::record_file(file.id);
         if let Some(&found) = self.0.lock().expect("trait property files").get(&file.id) {
             return found;
         }

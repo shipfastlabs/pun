@@ -4640,3 +4640,10 @@ is `bool` when the property is declared without a native type, whatever its PHPD
 [`RicherScopeGetTypeHelper::getIdenticalResult()`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Analyser/RicherScopeGetTypeHelper.php#L56).
 A promoted `public $user` documented `@param \Stringable $user` gave `identical.alwaysFalse` (shipfastlabs/pun#170).
 PHPStan's static property fetches are not covered.
+
+## Recorded subclass reads
+
+`statement/class_like/mod.rs` and `reconciler/negated_assertion_reconciler.rs` read a class's `child_class_likes`
+directly; each now records the class's descendants through `mago_codex::reads::record_descendants()` first, so Pun's
+analyse result cache analyses a file again when a subclass is added or removed (mago-codex's PATCHES.md, "Recorded
+codebase reads"). Behaviour is unchanged.

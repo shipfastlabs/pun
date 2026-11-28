@@ -18,6 +18,12 @@ pub(crate) struct Facts {
     /// merged where only whitespace separates them: the parts of a file that hold no constant or attribute
     /// initializer unless one is inside them.
     pub blankable: Vec<(u32, u32)>,
+    /// The hash of the file without the bodies of its functions and methods (`crate::incremental`): what another
+    /// file's analysis reads through these facts and the doc comments.
+    pub outline: [u8; 16],
+    /// The constants an analysed file names, as written (`crate::codebase::ConstantRef`): set by the codebase scan,
+    /// which resolves them against the populated codebase later without parsing the file again.
+    pub constant_refs: Vec<crate::codebase::ConstantRef>,
 }
 
 impl Facts {
@@ -45,8 +51,100 @@ impl Facts {
             declarations,
             strict_types,
             blankable: blankable(contents, program),
+            outline: outline(contents, program),
+            constant_refs: Vec::new(),
         }
     }
+}
+
+/// Whether a walked body declares a class-like, a function or a constant (`const` or `define()`), which the scanner
+/// registers wherever it is.
+struct Declares(bool);
+
+impl<'ast, 'arena> MutWalker<'ast, 'arena, ()> for Declares {
+    fn walk_in_class(&mut self, _: &'ast Class<'arena>, (): &mut ()) {
+        self.0 = true;
+    }
+    fn walk_in_interface(&mut self, _: &'ast Interface<'arena>, (): &mut ()) {
+        self.0 = true;
+    }
+    fn walk_in_trait(&mut self, _: &'ast Trait<'arena>, (): &mut ()) {
+        self.0 = true;
+    }
+    fn walk_in_enum(&mut self, _: &'ast Enum<'arena>, (): &mut ()) {
+        self.0 = true;
+    }
+    fn walk_in_function(&mut self, _: &'ast Function<'arena>, (): &mut ()) {
+        self.0 = true;
+    }
+    fn walk_in_constant(&mut self, _: &'ast Constant<'arena>, (): &mut ()) {
+        self.0 = true;
+    }
+    fn walk_in_function_call(&mut self, call: &'ast FunctionCall<'arena>, (): &mut ()) {
+        if let Expression::Identifier(name) = call.function
+            && name
+                .value()
+                .strip_prefix(b"\\")
+                .unwrap_or(name.value())
+                .eq_ignore_ascii_case(b"define")
+        {
+            self.0 = true;
+        }
+    }
+}
+
+/// The hash of `contents` with every top-level function and method body (the braces and what they hold) replaced by
+/// `{}`: a change inside a body leaves it as it was. A body that declares something the scanner registers ([`Declares`])
+/// keeps its text, as other files read that declaration, its value and its doc comment through the outline.
+fn outline(contents: &[u8], program: &Program) -> [u8; 16] {
+    fn body(block: &Block, out: &mut Vec<(u32, u32)>) {
+        let mut nested = Declares(false);
+        nested.walk_block(block, &mut ());
+        if !nested.0 {
+            let span = block.span();
+            out.push((span.start.offset, span.end.offset));
+        }
+    }
+    fn members<'a>(
+        members: impl Iterator<Item = &'a ClassLikeMember<'a>>,
+        out: &mut Vec<(u32, u32)>,
+    ) {
+        for member in members {
+            if let ClassLikeMember::Method(method) = member
+                && let MethodBody::Concrete(block) = &method.body
+            {
+                body(block, out);
+            }
+        }
+    }
+    fn statements<'a>(list: impl Iterator<Item = &'a Statement<'a>>, out: &mut Vec<(u32, u32)>) {
+        for statement in list {
+            match statement {
+                Statement::Namespace(n) => statements(n.statements().iter(), out),
+                Statement::Function(f) => body(&f.body, out),
+                Statement::Class(k) => members(k.members.iter(), out),
+                Statement::Interface(k) => members(k.members.iter(), out),
+                Statement::Trait(k) => members(k.members.iter(), out),
+                Statement::Enum(k) => members(k.members.iter(), out),
+                _ => {}
+            }
+        }
+    }
+    let mut bodies = Vec::new();
+    statements(program.statements.iter(), &mut bodies);
+    bodies.sort_unstable();
+    let mut h = blake3::Hasher::new();
+    let mut at = 0;
+    for (start, end) in bodies {
+        // the bodies of top-level declarations never overlap; `get` keeps a broken span from panicking
+        h.update(contents.get(at..start as usize).unwrap_or_default());
+        h.update(b"{}");
+        at = at.max(end as usize);
+    }
+    h.update(&contents[at.min(contents.len())..]);
+    let mut out = [0; 16];
+    out.copy_from_slice(&h.finalize().as_bytes()[..16]);
+    out
 }
 
 fn blankable(contents: &[u8], program: &Program) -> Vec<(u32, u32)> {
@@ -473,6 +571,45 @@ impl<'ast, 'arena> MutWalker<'ast, 'arena, ()> for DeclarationWalker<'_> {
             self.out
                 .starts
                 .insert(item.span().start.offset, k.span().start.offset);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn outline_of(code: &str) -> [u8; 16] {
+        let file = mago_database::file::File::ephemeral(
+            b"a.php".as_slice().into(),
+            code.as_bytes().to_vec().into(),
+        );
+        let arena = mago_allocator::LocalArena::new();
+        let program = mago_syntax::parser::parse_file(&arena, &file);
+        outline(code.as_bytes(), program)
+    }
+
+    /// A body that declares something the scanner registers keeps its text in the outline, whatever it declares; any
+    /// other body is left out, so editing it leaves the outline as it was.
+    #[test]
+    fn a_body_that_declares_keeps_its_text() {
+        let wrap = |inner: &str| format!("<?php\nfunction f() {{ if (true) {{ {inner} }} }}\n");
+        assert_eq!(outline_of(&wrap("$a = 1;")), outline_of(&wrap("$a = 2;")));
+        for declares in [
+            "/** @a */ class K {}",
+            "/** @a */ interface I {}",
+            "/** @a */ trait T {}",
+            "/** @a */ enum E {}",
+            "/** @a */ function g() {}",
+            "/** @a */ const C = 1;",
+            "define('C', 1); /** @a */",
+            "\\define('C', 1); /** @a */",
+        ] {
+            assert_ne!(
+                outline_of(&wrap(declares)),
+                outline_of(&wrap(&declares.replace("@a", "@b"))),
+                "{declares}"
+            );
         }
     }
 }

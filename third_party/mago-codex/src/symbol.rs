@@ -105,6 +105,7 @@ impl Symbols {
     #[inline]
     #[must_use]
     pub fn get_kind(&self, name: Word) -> Option<SymbolKind> {
+        crate::reads::record_class_like(name);
         self.all.get(&name).copied() // Use copied() since SymbolKind is Copy
     }
 
@@ -120,6 +121,7 @@ impl Symbols {
     #[inline]
     #[must_use]
     pub fn contains(&self, name: Word) -> bool {
+        crate::reads::record_class_like(name);
         self.all.contains_key(&name)
     }
 
@@ -134,6 +136,8 @@ impl Symbols {
     /// `true` if the namespace is present, `false` otherwise.
     #[must_use]
     pub fn contains_namespace(&self, namespace: Word) -> bool {
+        // a namespace exists while any declaration is in it: asking reads every declaration (only extensions ask)
+        crate::reads::record_all();
         self.namespaces.contains(&namespace)
     }
 

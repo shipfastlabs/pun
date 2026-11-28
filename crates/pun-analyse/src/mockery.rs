@@ -53,7 +53,7 @@ const BUNDLED: [(&str, &[u8]); 2] = [
 
 /// On with the switch. `pun_config` always sets `mockery.convertUnionToIntersectionType: true`, as extension.neon
 /// does (`pun migrate` reports a project's `false` as unsupported), so `TypeNodeResolverExtension` always runs.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
 pub struct Mockery;
 
 impl Mockery {
@@ -119,7 +119,7 @@ fn intersect_mock(codebase: &CodebaseMetadata, mock: &TAtomic, other: &TAtomic) 
 fn called_methods(contents: &[u8], out: &mut std::collections::BTreeSet<Vec<u8>>) {
     let ident = |b: u8| b.is_ascii_alphanumeric() || b == b'_' || b >= 0x80;
     let mut at = 0;
-    while let Some(arrow) = contents[at..].windows(2).position(|w| w == b"->") {
+    while let Some(arrow) = memchr::memmem::find(&contents[at..], b"->") {
         let start = at + arrow + 2;
         let end = start + contents[start..].iter().take_while(|&&b| ident(b)).count();
         let after = &contents[end..];
@@ -138,10 +138,18 @@ fn called_methods(contents: &[u8], out: &mut std::collections::BTreeSet<Vec<u8>>
 /// names up front: each interface gets a copy of its `__pun_stub()` for every method name the analysed files call,
 /// and the template itself goes.
 fn stub_methods(project: &Project, codebase: &mut CodebaseMetadata) {
-    let mut names = std::collections::BTreeSet::new();
-    for contents in (project.analysed.iter()).filter_map(|f| std::fs::read(f).ok()) {
-        called_methods(&contents, &mut names);
-    }
+    use rayon::prelude::*;
+    let names = (project.analysed.par_iter())
+        .filter_map(|f| crate::io::read(f).ok())
+        .map(|contents| {
+            let mut names = std::collections::BTreeSet::new();
+            called_methods(&contents, &mut names);
+            names
+        })
+        .reduce(std::collections::BTreeSet::new, |mut a, b| {
+            a.extend(b);
+            a
+        });
     let template = ascii_lowercase_word(b"__pun_stub");
     for stub in [
         b"phpstan\\mockery\\type\\allows".as_slice(),

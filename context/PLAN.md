@@ -98,7 +98,15 @@ All from Pushpak unless marked "assistant's call"; dated 2026-10-17 unless given
   binary; a lint result that read the project's codebase also keys on a fingerprint of the project. A file a fix run
   wrote, a run error and a contained Mago panic are not kept. Keeping findings, not only clean files, means a warm run
   with no change never scans the project. One cache file per project under `<cache dir>/results/`; `--no-cache` or
-  `PUN_NO_CACHE=1` turns it off. `pun analyse` (and check's analyse half) has no cache yet.
+  `PUN_NO_CACHE=1` turns it off.
+- **A result cache for analyse** (2026-11-27, reverses plan/analyse.md's "No result cache" after issue #24). `pun analyse`
+  and check's analyse half keep the last run's record under `<cache dir>/analyse/`, keyed on the binary, the resolved
+  config, the paths and the environment. A run with nothing changed reuses the whole analysis without building the
+  codebase; otherwise each file is analysed again only when its contents, or something it read, changed: the symbols
+  it looked up (compared by what the populated codebase holds about them, without positions), the outlines and
+  contents of other files it read, and other paths. The facts every check shares (Larastan's, Mockery's, `@internal`)
+  are one fingerprint that analyses everything again when it changes. `--no-cache` and `PUN_NO_CACHE=1` turn it off
+  (`crates/pun-analyse/src/incremental.rs`).
 - **No LSP** until after 1.0's commands.
 - **No compatibility-only flags** (Pushpak, 2026-11-23, before the first beta). `pun format`, `lint` and `check` drop
   `--bail`, `--cache-file`, `--ansi`/`--no-ansi` (`--color` covers them), `--format=txt|xml`, `--stdin` (`-` as the

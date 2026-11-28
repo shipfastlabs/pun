@@ -365,8 +365,8 @@ fn populate_codebase_inner(
             descendants::update(codebase, &class_likes_to_repopulate);
         } else {
             let (direct, all) = build_descendants(&mut codebase.class_likes);
-            codebase.direct_classlike_descendants = direct.into();
-            codebase.all_class_like_descendants = all.into();
+            codebase.direct_classlike_descendants = crate::metadata::recorded::Recorded::from(direct).into();
+            codebase.all_class_like_descendants = crate::metadata::recorded::Recorded::from(all).into();
         }
         trace_phase!("descendants");
 
@@ -403,8 +403,8 @@ fn populate_codebase_inner(
             || {
                 if !incremental || !class_likes_to_repopulate.is_empty() {
                     let (direct, all) = build_descendants(&mut codebase.class_likes);
-                    codebase.direct_classlike_descendants = direct.into();
-                    codebase.all_class_like_descendants = all.into();
+                    codebase.direct_classlike_descendants = crate::metadata::recorded::Recorded::from(direct).into();
+                    codebase.all_class_like_descendants = crate::metadata::recorded::Recorded::from(all).into();
                 }
 
                 let class_chunks = populate_chunks(codebase.class_likes.iter_mut(), |(name, metadata), references| {
@@ -527,8 +527,8 @@ fn populate_codebase_inner(
 
         if !incremental || !class_likes_to_repopulate.is_empty() {
             let (direct, all) = build_descendants(&mut codebase.class_likes);
-            codebase.direct_classlike_descendants = direct.into();
-            codebase.all_class_like_descendants = all.into();
+            codebase.direct_classlike_descendants = crate::metadata::recorded::Recorded::from(direct).into();
+            codebase.all_class_like_descendants = crate::metadata::recorded::Recorded::from(all).into();
         }
         trace_phase!("descendants");
 

@@ -172,7 +172,9 @@ fn in_config_directory(c: &Checker, larastan: &super::Larastan) -> bool {
         .config_directories
         .iter()
         .flat_map(|g| glob(g))
-        .any(|d| std::path::Path::new(&d).is_dir() && file.to_string_lossy().starts_with(&d))
+        .any(|d| {
+            crate::io::is_dir(&std::path::Path::new(&d)) && file.to_string_lossy().starts_with(&d)
+        })
 }
 
 fn glob(pattern: &str) -> Vec<String> {
@@ -187,7 +189,7 @@ fn glob(pattern: &str) -> Vec<String> {
         let mut next = Vec::new();
         for base in &found {
             let mut names: Vec<String> =
-                std::fs::read_dir(if base.is_empty() { "/" } else { base })
+                crate::io::read_dir(if base.is_empty() { "/" } else { base })
                     .into_iter()
                     .flatten()
                     .flatten()
@@ -202,7 +204,7 @@ fn glob(pattern: &str) -> Vec<String> {
         }
         found = next;
     }
-    found.retain(|p| std::path::Path::new(p).exists());
+    found.retain(|p| crate::io::exists(&std::path::Path::new(p)));
     found
 }
 

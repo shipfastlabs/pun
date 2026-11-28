@@ -209,7 +209,7 @@ impl Cache {
 
 /// Writes the cache owner-only: it holds diffs and fixed source of the checked files, which their own permissions may
 /// keep from other accounts.
-fn write(file: &Path, bytes: &[u8]) -> std::io::Result<()> {
+pub(crate) fn write(file: &Path, bytes: &[u8]) -> std::io::Result<()> {
     use std::io::Write;
     use std::os::unix::fs::DirBuilderExt;
     let dir = file.parent().unwrap_or(Path::new("."));

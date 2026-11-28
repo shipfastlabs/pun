@@ -88,6 +88,7 @@ impl Cache {
         file: impl FnOnce() -> Option<Arc<File>>,
         relative: &RelativePath,
     ) -> Option<Arc<HashMap<Vec<u8>, String>>> {
+        mago_codex::reads::record_file(id);
         if let Some(found) = self.0.lock().expect("anonymous names").get(&id) {
             return found.clone();
         }

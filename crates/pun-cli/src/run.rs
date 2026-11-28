@@ -283,7 +283,8 @@ pub(crate) fn stage(a: &FormatArgs, stage: Stage, lint: &LintOpts) -> Result<Exi
         && selected.as_ref().is_none_or(|(_, s)| !s.is_empty())
     {
         let paths = selected.as_ref().map_or(&a.paths, |(_, s)| s);
-        let analysed = crate::analyse::analyse(&cfg, paths, true)?;
+        let analysed =
+            crate::analyse::analyse(&cfg, paths, true, crate::analyse::cache_on(a.pun.no_cache))?;
         unmatched_analyse = analysed.unmatched_baseline;
         general.clone_from(&analysed.general);
         total = total.max(analysed.files);

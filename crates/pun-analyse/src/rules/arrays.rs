@@ -969,18 +969,9 @@ fn copied_key(c: &Checker, at: Span) -> Option<Type> {
     let (program, names) = crate::codebase::parse(&arena, &file);
     let mut find = Find { at, value: None };
     find.walk_program(program, &mut ());
-    let context = c
-        .codebase
-        .class_likes
-        .values()
-        .filter(|k| {
-            k.span.file_id == at.file_id
-                && k.span.start.offset <= at.start.offset
-                && at.end.offset <= k.span.end.offset
-        })
-        .min_by_key(|k| k.span.end.offset - k.span.start.offset);
+    let context = crate::codebase::initializer_class(c.codebase, at);
     let expression = find.value?;
-    let value = key_type(c, expression, &names, context.map(Box::as_ref));
+    let value = key_type(c, expression, &names, context);
     let run = super::infer::Run {
         arena: &arena,
         file: &file,

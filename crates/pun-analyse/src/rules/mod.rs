@@ -305,18 +305,28 @@ pub(crate) struct Checker<'a, 'arena> {
 }
 
 impl<'a, 'arena> Checker<'a, 'arena> {
+    /// A file's contents, for reading the text of its declarations (modifiers, native types, doc comments,
+    /// initializers): recorded as a read of its outline (`Facts::outline`), so a reader of a function or method body
+    /// of another file uses `Sources::get`, which records the whole file. The analysed file's own outline is recorded
+    /// too: a shared memo built here (`ClassCache`) hands what it read to files that do not depend on this one.
     fn file_contents(&self, id: FileId) -> Option<&'a [u8]> {
         if id == self.file.id {
+            mago_codex::reads::record_outline(id);
             return Some(&self.file.contents[..]);
         }
-        self.sources.scanned(id).map(|s| &s.file.contents[..])
+        self.sources
+            .scanned_outline(id)
+            .map(|s| &s.file.contents[..])
     }
 
+    /// A file's facts: its scopes, declarations and doc comments, which depend on its outline, not its bodies
+    /// (recorded for the analysed file too, as in `file_contents`).
     fn file_facts(&self, id: FileId) -> Option<&'a facts::Facts> {
         if id == self.file.id {
+            mago_codex::reads::record_outline(id);
             return Some(self.facts);
         }
-        self.sources.scanned(id).map(|s| &s.facts)
+        self.sources.scanned_outline(id).map(|s| &s.facts)
     }
 
     fn php_doc_comment(&self, id: FileId, offset: u32) -> Option<&'a [u8]> {

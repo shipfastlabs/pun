@@ -1,5 +1,7 @@
-use foldhash::HashMap;
-use foldhash::HashSet;
+// Pun: fixed-seeded, as `WordMap` is, so the analyse result cache hashes a class's metadata alike in every process
+// (mago-codex PATCHES.md, "Recorded codebase reads").
+type HashMap<K, V> = std::collections::HashMap<K, V, foldhash::fast::FixedState>;
+type HashSet<T> = std::collections::HashSet<T, foldhash::fast::FixedState>;
 use mago_word::Word;
 use mago_word::WordMap;
 

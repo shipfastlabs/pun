@@ -1,7 +1,7 @@
 use crate::finder::{Command, Exclusions};
 use crate::render::{Look, Renderer, Summary};
 use crate::report::Abort;
-use crate::{Exit, agent, analyse_report, baseline, github, render, root};
+use crate::{Exit, agent, analyse_report, baseline, cache, github, render, root};
 use anyhow::Result;
 use clap::Args;
 use pun_config::rule_of_identifier;
@@ -16,6 +16,10 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 #[derive(Args, Default, Clone)]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "one bool per command-line flag"
+)]
 pub(crate) struct AnalyseArgs {
     /// The files or directories to analyse (default: `[analyse] paths`, else `[files] paths`, else the project).
     paths: Vec<PathBuf>,
@@ -47,6 +51,9 @@ pub(crate) struct AnalyseArgs {
     /// Color the output: auto, always or never.
     #[arg(long, value_enum, value_name = "WHEN")]
     color: Option<render::ColorChoice>,
+    /// Analyse every file, without reading or writing the result cache (also `PUN_NO_CACHE=1`).
+    #[arg(long)]
+    no_cache: bool,
     /// `GITHUB_ACTIONS=true`: human output gets GitHub annotations after it.
     #[arg(skip)]
     pub(crate) github_actions: bool,
@@ -290,9 +297,112 @@ fn project(
     Ok(project)
 }
 
+/// Whether a run may use the result cache: not with `--no-cache`, `PUN_NO_CACHE` or `PUN_PROFILE`.
+pub(crate) fn cache_on(no_cache: bool) -> bool {
+    let set = |k: &str| std::env::var_os(k).is_some_and(|v| !v.is_empty() && v != "0");
+    !no_cache && !set("PUN_NO_CACHE") && std::env::var_os("PUN_PROFILE").is_none()
+}
+
+/// The result cache of `pun analyse` for one project: the record of its last run (`pun_analyse::Record`) under the
+/// key of that run, everything besides the project's files that can change a result: the binary, the resolved
+/// config, the paths asked for and the environment.
+struct ResultCache {
+    file: PathBuf,
+    key: cache::Digest,
+}
+
+const MAGIC: &[u8; 8] = b"PUNAC\0\0\x01";
+
+impl ResultCache {
+    fn open(cfg: &Config, paths: &[PathBuf]) -> Option<ResultCache> {
+        let name = blake3::hash(cfg.root.as_os_str().as_encoded_bytes()).to_hex();
+        let file = crate::x::cache_dir()
+            .ok()?
+            .join("analyse")
+            .join(format!("{}.bin", &name[..32]));
+        let exe = std::env::current_exe().ok()?;
+        let env = ["PUN_IGNORE_PHP_CONSTRAINT"];
+        let mut key = cache::Key::default();
+        (key.add("pun", env!("CARGO_PKG_VERSION")))
+            .add("exe", cache::stat(&exe))
+            .add("config", format!("{cfg:?}"))
+            .add("paths", format!("{paths:?}"))
+            .add("env", format!("{:?}", env.map(std::env::var_os)));
+        // `IgnoredErrors::new` asks whether each entry's `path` is a file, outside any recording: that answer decides
+        // the analysis as much as the config does.
+        let params = cfg.analyse.parameters_with_lint(&cfg.root, |_| false);
+        let ignores = params
+            .get_str("ignoreErrors")
+            .and_then(pun_phpstan::Value::as_array);
+        for entry in ignores.into_iter().flat_map(pun_phpstan::Array::values) {
+            let path = (entry.as_array())
+                .and_then(|e| e.get_str("path"))
+                .and_then(pun_phpstan::Value::to_php_string);
+            if let Some(path) = path {
+                let is_file = Path::new(&path).is_file();
+                key.add("ignore-path", format!("{path}\0{is_file}"));
+            }
+        }
+        Some(ResultCache {
+            file,
+            key: key.digest(),
+        })
+    }
+
+    /// The record of the last run, when it had this run's key.
+    fn read(&self) -> Option<pun_analyse::Record> {
+        let bytes = std::fs::read(&self.file).ok()?;
+        let rest = bytes.strip_prefix(MAGIC.as_slice())?;
+        let (key, body) = rest.split_at_checked(self.key.len())?;
+        (key == self.key)
+            .then(|| pun_analyse::Record::decode(body))
+            .flatten()
+    }
+
+    fn write(&self, record: &pun_analyse::Record) {
+        let mut bytes = MAGIC.to_vec();
+        bytes.extend_from_slice(&self.key);
+        bytes.extend_from_slice(&record.encode());
+        // a cache that cannot be written only costs the next run its speed
+        let _ = cache::write(&self.file, &bytes);
+    }
+}
+
+/// The engine's analysis of `project`, through the result cache when `cache` is on.
+fn engine(
+    cfg: &Config,
+    paths: &[PathBuf],
+    project: &pun_analyse::Project,
+    cache: bool,
+) -> Result<pun_analyse::Analysis> {
+    let failed = |e: pun_analyse::CouldNotReadFile| run_error(e.to_string(), None);
+    let Some(store) = cache.then(|| ResultCache::open(cfg, paths)).flatten() else {
+        return pun_analyse::analyse_project(project).map_err(failed);
+    };
+    let previous = store.read();
+    let (analysis, record, stats) =
+        pun_analyse::analyse_project_cached(project, previous).map_err(failed)?;
+    if std::env::var_os("PUN_CACHE_STATS").is_some() {
+        eprintln!(
+            "analyse cache: unchanged={} analysed={} reused={}",
+            stats.unchanged, stats.analysed, stats.reused
+        );
+    }
+    if !stats.unchanged {
+        store.write(&record);
+    }
+    Ok(analysis)
+}
+
 /// Analyse `paths` (or the configured paths) under `cfg`: enabled rules only, `@pun-ignore` comments and the
-/// baseline applied (unless `baseline` is false, for `--generate-baseline`).
-pub(crate) fn analyse(cfg: &Config, paths: &[PathBuf], use_baseline: bool) -> Result<Analysed> {
+/// baseline applied (unless `baseline` is false, for `--generate-baseline`). `cache` lets the run reuse and keep
+/// results in the result cache.
+pub(crate) fn analyse(
+    cfg: &Config,
+    paths: &[PathBuf],
+    use_baseline: bool,
+    cache: bool,
+) -> Result<Analysed> {
     // mimalloc returns freed pages to the OS after 100 ms instead of 1 s: the parse trees and scratch of one phase
     // are gone before the next one peaks, which takes 5-7% off the peak RSS of laravel-pint and larastan. A purge
     // already scheduled keeps its 1 s deadline, so the collection runs those now.
@@ -316,8 +426,7 @@ pub(crate) fn analyse(cfg: &Config, paths: &[PathBuf], use_baseline: bool) -> Re
         paths.push(cfg.root.clone());
     }
     let project = project(cfg, files, &paths)?;
-    let analysis =
-        pun_analyse::analyse_project(&project).map_err(|e| run_error(e.to_string(), None))?;
+    let analysis = engine(cfg, &paths, &project, cache)?;
     let mut errors = analysis.errors;
     errors.extend(syntax_errors(&project.analysed, &errors));
     let mut general = analysis.general;
@@ -497,7 +606,7 @@ pub(crate) fn run(a: &AnalyseArgs) -> Result<Exit> {
     if let Some(path) = &a.generate_baseline {
         return generate_baseline(a, &cfg, path.as_deref(), started);
     }
-    let analysed = analyse(&cfg, &a.paths, true)?;
+    let analysed = analyse(&cfg, &a.paths, true, cache_on(a.no_cache))?;
     present(a, &cfg, &analysed, started)
 }
 
@@ -593,7 +702,7 @@ fn generate_baseline(
             (cfg.analyse.baseline.as_deref()).unwrap_or(baseline::Kind::Analyse.default_file()),
         ),
     };
-    let mut analysed = analyse(cfg, &a.paths, false)?;
+    let mut analysed = analyse(cfg, &a.paths, false, cache_on(a.no_cache))?;
     if analysed
         .findings
         .iter()
