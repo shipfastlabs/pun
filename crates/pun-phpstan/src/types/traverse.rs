@@ -17,6 +17,22 @@ impl Type {
         }
     }
 
+    /// `generalize(GeneralizePrecision::moreSpecific())`: like `generalize()`,
+    /// except that constant strings and constant arrays keep their accessories.
+    pub fn generalize_more_specific(&self) -> Type {
+        match self {
+            Type::ConstString(s) => more_specific_string(s),
+            Type::ConstArray(a) => a.generalize_more_specific(),
+            Type::ConstInt(_)
+            | Type::IntRange(..)
+            | Type::ConstFloat(_)
+            | Type::ConstBool(_)
+            | Type::EnumCase(..) => self.generalize(),
+            Type::Accessory(a) if a.is_string_accessory() => Type::String,
+            _ => self.traverse(&Type::generalize_more_specific),
+        }
+    }
+
     pub fn traverse(&self, f: &dyn Fn(&Type) -> Type) -> Type {
         self.map_children(f)
     }
@@ -125,4 +141,27 @@ impl Type {
             _ => self.clone(),
         }
     }
+}
+
+// ConstantStringType::generalize() with GeneralizePrecision::moreSpecific().
+fn more_specific_string(s: &[u8]) -> Type {
+    let mut types = vec![Type::String, Type::Accessory(Accessory::LiteralString)];
+    if s.is_empty() {
+        return Type::Intersection(types);
+    }
+    if Type::ConstString(s.to_vec()).is_numeric_string().yes() {
+        types.push(Type::Accessory(Accessory::NumericString));
+    }
+    types.push(Type::Accessory(if s == b"0" {
+        Accessory::NonEmptyString
+    } else {
+        Accessory::NonFalsyString
+    }));
+    if s.to_ascii_lowercase() == s {
+        types.push(Type::Accessory(Accessory::LowercaseString));
+    }
+    if s.to_ascii_uppercase() == s {
+        types.push(Type::Accessory(Accessory::UppercaseString));
+    }
+    Type::Intersection(types)
 }

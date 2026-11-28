@@ -295,7 +295,9 @@ impl Type {
                     t,
                     Type::Array(..)
                         | Type::ConstArray(_)
-                        | Type::Accessory(Accessory::List | Accessory::NonEmptyArray)
+                        | Type::Accessory(
+                            Accessory::List | Accessory::NonEmptyArray | Accessory::OversizedArray
+                        )
                 ))
             },
         )
@@ -308,6 +310,27 @@ impl Type {
         self.query_c(&|t| match t {
             Type::ConstArray(_) => Tri::Yes,
             Type::Array(..)
+            | Type::Accessory(
+                Accessory::List
+                | Accessory::NonEmptyArray
+                | Accessory::OversizedArray
+                | Accessory::HasOffsetValue(..),
+            ) => Tri::Maybe,
+            _ => Tri::No,
+        })
+    }
+
+    // PHPStan's Type::isOversizedArray(): only OversizedArrayType answers yes,
+    // a constant array or a non-array answers no, any other array maybe.
+    // query() answers maybe for mixed, as MixedType does. MixedType's no for a
+    // subtracted type that covers oversized arrays is left out, since no caller
+    // asks a mixed: two ask an intersection, and is_super_type_of() sends a
+    // compound type such as mixed to is_sub_type_of() before accessory_super().
+    pub(super) fn is_oversized_array(&self) -> Tri {
+        self.query_c(&|t| match t {
+            Type::Accessory(Accessory::OversizedArray) => Tri::Yes,
+            Type::Array(..)
+            | Type::Iterable(..)
             | Type::Accessory(
                 Accessory::List | Accessory::NonEmptyArray | Accessory::HasOffsetValue(..),
             ) => Tri::Maybe,
@@ -382,9 +405,9 @@ impl Type {
             Type::Array(key, _) if is_super_type_of(&Type::int_range(Some(0), None), key).no() => {
                 Tri::No
             }
-            Type::Array(..) | Type::Accessory(Accessory::NonEmptyArray) | Type::Iterable(..) => {
-                Tri::Maybe
-            }
+            Type::Array(..)
+            | Type::Accessory(Accessory::NonEmptyArray | Accessory::OversizedArray)
+            | Type::Iterable(..) => Tri::Maybe,
             _ => Tri::No,
         })
     }
@@ -401,7 +424,9 @@ impl Type {
                 Type::Array(..)
                 | Type::ConstArray(_)
                 | Type::Iterable(..)
-                | Type::Accessory(Accessory::List | Accessory::NonEmptyArray) => Tri::Yes,
+                | Type::Accessory(
+                    Accessory::List | Accessory::NonEmptyArray | Accessory::OversizedArray,
+                ) => Tri::Yes,
                 Type::Object(class, _, _) | Type::Static(class, _) | Type::This(class) => {
                     is_instance_of(class, "Traversable")
                 }
@@ -461,9 +486,9 @@ impl Type {
                     Type::Accessory(Accessory::NonEmptyArray | Accessory::HasOffsetValue(..)) => {
                         Tri::Yes
                     }
-                    Type::Array(..) | Type::Iterable(..) | Type::Accessory(Accessory::List) => {
-                        Tri::Maybe
-                    }
+                    Type::Array(..)
+                    | Type::Iterable(..)
+                    | Type::Accessory(Accessory::List | Accessory::OversizedArray) => Tri::Maybe,
                     Type::Object(..)
                     | Type::Static(..)
                     | Type::This(_)

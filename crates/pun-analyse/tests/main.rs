@@ -171,6 +171,7 @@ mod nullsafe_scopes;
 mod object_intersections;
 mod offset_read_declaration_effects;
 mod offset_unset_declaration_effects;
+mod oversized_arrays;
 mod parameter_conditions;
 mod parameter_native_clamp;
 mod params_branch_contracts;

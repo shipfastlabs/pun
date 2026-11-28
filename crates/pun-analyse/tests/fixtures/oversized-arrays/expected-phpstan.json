@@ -1,0 +1,68 @@
+{
+  "totals": {
+    "errors": 0,
+    "file_errors": 9
+  },
+  "files": {
+    "oversized.php": {
+      "errors": 9,
+      "messages": [
+        {
+          "message": "PHPDoc tag @var for constant Oversized::ROWS with type list<list<int>> is incompatible with value non-empty-list<non-empty-list<bool|float|int|(literal-string&non-falsy-string)|null>>.",
+          "line": 16,
+          "ignorable": true,
+          "identifier": "classConstant.phpDocType"
+        },
+        {
+          "message": "PHPDoc tag @var for constant Oversized::KEYED with type array<string, string> is incompatible with value non-empty-array<literal-string&non-falsy-string, int>.",
+          "line": 280,
+          "ignorable": true,
+          "identifier": "classConstant.phpDocType"
+        },
+        {
+          "message": "Method Oversized::spread() should return list<array<int, string>> but returns non-empty-list<non-empty-list<bool|float|int|(literal-string&non-falsy-string)|null>>.",
+          "line": 546,
+          "ignorable": true,
+          "identifier": "return.type"
+        },
+        {
+          "message": "Method Oversized::keyed() should return array<int, string> but returns array<string, int>.",
+          "line": 552,
+          "ignorable": true,
+          "identifier": "return.type"
+        },
+        {
+          "message": "PHPDoc tag @var for constant Oversized::STRINGS with type list<int> is incompatible with value non-empty-list<(literal-string&non-empty-string&numeric-string)|(literal-string&non-falsy-string)>.",
+          "line": 568,
+          "ignorable": true,
+          "identifier": "classConstant.phpDocType"
+        },
+        {
+          "message": "PHPDoc tag @var for constant Oversized::WIDE with type list<list<string>> is incompatible with value non-empty-list<non-empty-list<int>>.",
+          "line": 831,
+          "ignorable": true,
+          "identifier": "classConstant.phpDocType"
+        },
+        {
+          "message": "PHPDoc tag @var for constant Oversized::GAPS with type list<int> is incompatible with value non-empty-array<int, literal-string&non-falsy-string>.",
+          "line": 1092,
+          "ignorable": true,
+          "identifier": "classConstant.phpDocType"
+        },
+        {
+          "message": "PHPDoc tag @var for constant Oversized::OVERFLOW with type list<int> is incompatible with value non-empty-array<int, literal-string>.",
+          "line": 1353,
+          "ignorable": true,
+          "identifier": "classConstant.phpDocType"
+        },
+        {
+          "message": "Method Oversized::spreadParam() should return int but returns array<int|string, float|int|string>.",
+          "line": 1666,
+          "ignorable": true,
+          "identifier": "return.type"
+        }
+      ]
+    }
+  },
+  "errors": []
+}

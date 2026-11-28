@@ -50,7 +50,7 @@ pub fn cast_is_error(t: &Type, cast: Cast, sm: StrictMixed) -> bool {
         T::Static(..) | T::This(_) => cast != C::String || object(t, cast),
         T::Array(..)
         | T::ConstArray(_)
-        | T::Accessory(Accessory::List | Accessory::NonEmptyArray) => {
+        | T::Accessory(Accessory::List | Accessory::NonEmptyArray | Accessory::OversizedArray) => {
             matches!(cast, C::String | C::Number | C::BitwiseNot)
         }
         T::Accessory(Accessory::HasMethod(n)) => {

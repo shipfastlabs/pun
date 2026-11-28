@@ -19,8 +19,8 @@ use mago_codex::ttype::union::TUnion;
 use mago_span::{HasSpan, Span};
 use mago_syntax::cst::{Access, ArrayElement, Expression, TokenSeparatedSequence};
 use pun_phpstan::types::{
-    Accessory, ConstArray, NeverKind, Param, ShapeBuilder, Signature, Template, Tri, Type,
-    intersect, mixed, union,
+    ARRAY_COUNT_LIMIT, Accessory, ConstArray, NeverKind, Param, ShapeBuilder, Signature, Template,
+    Tri, Type, intersect, mixed, oversized_array, union,
 };
 
 use super::super::{Checker, arrays, declared, infer};
@@ -877,14 +877,38 @@ impl Checker<'_, '_> {
         scope: ConversionScope,
     ) -> Option<Type> {
         let elements = literal_elements(e)?;
-        if elements.len() > 256 {
-            return None;
-        }
         let convert = |e: &Expression| {
             types
                 .get(&e.span())
                 .map(|t| self.phpstan_type_from_with(e, t, types, scope))
         };
+        // InitializerExprTypeResolver::getArrayType
+        if elements.len() > ARRAY_COUNT_LIMIT {
+            let mut entries = Vec::with_capacity(elements.len());
+            for element in elements {
+                let value = convert(element.get_value()?)?;
+                match element {
+                    ArrayElement::KeyValue(kv) => entries.push((Some(convert(kv.key)?), value)),
+                    ArrayElement::Variadic(_) => match value {
+                        // PHPStan: OversizedArrayBuilder::build() expands every key of an
+                        // unpacked constant array, optional or not.
+                        Type::ConstArray(a) => {
+                            entries.extend(a.keys.into_iter().zip(a.values).map(|(key, value)| {
+                                ((!key.is_string().no()).then_some(key), value)
+                            }));
+                        }
+                        value => {
+                            entries.push((
+                                Some(value.iterable_key_type()),
+                                value.iterable_value_type(),
+                            ));
+                        }
+                    },
+                    _ => entries.push((None, value)),
+                }
+            }
+            return Some(oversized_array(entries));
+        }
         let mut builder = ShapeBuilder::new();
         for element in elements {
             let value = convert(element.get_value()?)?;
@@ -1471,6 +1495,19 @@ impl Checker<'_, '_> {
     fn array(&self, a: &TArray) -> Type {
         match a {
             TArray::List(l) => {
+                if l.element_type.is_never()
+                    && let Some(known) = &l.known_elements
+                    && known.len() > ARRAY_COUNT_LIMIT
+                {
+                    // PHPStan: an oversized array is built from a literal
+                    // (OversizedArrayBuilder::build()), whose items are never
+                    // optional, so the optional flag is dropped.
+                    return oversized_array(
+                        known.iter().map(|(i, (_, v))| {
+                            (Some(Type::ConstInt(*i as i64)), self.to_phpstan(v))
+                        }),
+                    );
+                }
                 if l.element_type.is_never() && l.known_elements.is_some() {
                     let mut shape = ConstArray::empty();
                     for (i, (optional, v)) in l.known_elements.iter().flat_map(|k| k.iter()) {
@@ -1544,6 +1581,20 @@ impl Checker<'_, '_> {
                             }),
                     );
                     intersect(parts)
+                }
+                None if k
+                    .known_items
+                    .as_ref()
+                    .is_some_and(|i| i.len() > ARRAY_COUNT_LIMIT) =>
+                {
+                    // PHPStan: as for lists above, an oversized array comes from a
+                    // literal, whose items are never optional.
+                    oversized_array(
+                        k.known_items
+                            .iter()
+                            .flat_map(|i| i.iter())
+                            .map(|(key, (_, v))| (Some(self.key(key)), self.to_phpstan(v))),
+                    )
                 }
                 parameters => {
                     let mut shape = ConstArray::empty();

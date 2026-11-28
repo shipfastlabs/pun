@@ -11,6 +11,7 @@ mod method_accessories;
 mod mixed_subtraction;
 mod neon;
 mod nonexistent_parent;
+mod oversized_arrays;
 mod php;
 mod phpdoc;
 mod schema;

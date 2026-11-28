@@ -31,7 +31,7 @@ mod verbosity;
 pub use accepts::{StrictMixed, accepts, accepts_with};
 pub use casts::{Cast, cast_is_error};
 pub use classes::ancestor_args;
-pub use const_array::ShapeBuilder;
+pub use const_array::{ARRAY_COUNT_LIMIT, ShapeBuilder, oversized_array};
 pub use decide::decide_type;
 pub use describe::float_to_string;
 pub use intersect::intersect;
@@ -161,6 +161,7 @@ pub enum Accessory {
     DecimalIntString { inverse: bool },
     List,
     NonEmptyArray,
+    OversizedArray,
     HasMethod(String),
     HasOffsetValue(Box<Type>, Box<Type>),
     ModelProperty(Box<Type>),

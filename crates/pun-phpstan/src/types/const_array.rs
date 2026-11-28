@@ -400,6 +400,40 @@ impl ConstArray {
         array
     }
 
+    // ConstantArrayType::generalize() with GeneralizePrecision::moreSpecific().
+    pub(super) fn generalize_more_specific(&self) -> Type {
+        if self.keys.is_empty() && !self.is_unsealed().yes() {
+            return Type::ConstArray(Box::new(self.clone()));
+        }
+        let mut array = Type::array(
+            self.iterable_key_type().generalize_more_specific(),
+            self.iterable_value_type().generalize_more_specific(),
+        );
+        let mut accessories = Vec::new();
+        if self.keys.len() - self.optional.len() < 32 {
+            for (i, key) in self.keys.iter().enumerate() {
+                if !self.is_optional_key(i) {
+                    accessories.push(Type::Accessory(Accessory::HasOffsetValue(
+                        Box::new(key.clone()),
+                        Box::new(self.values[i].generalize_more_specific()),
+                    )));
+                }
+            }
+        } else {
+            // PHPStan also checks isIterableAtLeastOnce() here, which 32
+            // required keys always pass.
+            accessories.push(Type::Accessory(Accessory::NonEmptyArray));
+        }
+        if self.is_list.yes() {
+            array = intersect(vec![array, Type::Accessory(Accessory::List)]);
+        }
+        if !accessories.is_empty() {
+            accessories.insert(0, array);
+            return intersect(accessories);
+        }
+        array
+    }
+
     pub(super) fn make_list(&self) -> ConstArray {
         let mut a = self.clone();
         if !a.is_list.no() {
@@ -435,6 +469,68 @@ pub(super) fn is_valid_identifier(s: &[u8]) -> bool {
         any = true;
     }
     any
+}
+
+/// `ConstantArrayTypeBuilder::ARRAY_COUNT_LIMIT`: a constant array literal with
+/// more items is built by `oversized_array`.
+pub const ARRAY_COUNT_LIMIT: usize = 256;
+
+/// PHPStan's `OversizedArrayBuilder::build()`, after unpacked items are
+/// expanded: each item is a key type (`None` for an implicit key) and a value
+/// type. Keys and values are generalized and deduplicated by their precise
+/// description, so the result stays small however many items there are.
+pub fn oversized_array(entries: impl IntoIterator<Item = (Option<Type>, Type)>) -> Type {
+    fn add(seen: &mut Vec<(Vec<u8>, Type)>, t: Type) {
+        let description = t.describe_bytes(Level::Precise);
+        if !seen.iter().any(|(d, _)| *d == description) {
+            seen.push((description, t));
+        }
+    }
+    let mut is_list = true;
+    let mut next_auto_index = Some(0_i64);
+    let (mut keys, mut values) = (Vec::new(), Vec::new());
+    for (key, value) in entries {
+        let key = match key {
+            Some(key) => {
+                match key {
+                    Type::ConstInt(i) if Some(i) == next_auto_index => {
+                        next_auto_index = i.checked_add(1);
+                    }
+                    Type::ConstInt(i) => {
+                        is_list = false;
+                        next_auto_index = i.checked_add(1);
+                    }
+                    _ => is_list = false,
+                }
+                key
+            }
+            None => match next_auto_index {
+                Some(i) => {
+                    next_auto_index = i.checked_add(1);
+                    Type::ConstInt(i)
+                }
+                None => {
+                    is_list = false;
+                    Type::Int
+                }
+            },
+        };
+        add(&mut keys, key.generalize_more_specific());
+        add(&mut values, value.generalize_more_specific());
+    }
+    let array = Type::array(
+        union(keys.into_iter().map(|(_, t)| t).collect()),
+        union(values.into_iter().map(|(_, t)| t).collect()),
+    );
+    let mut types = vec![
+        array,
+        Type::Accessory(Accessory::NonEmptyArray),
+        Type::Accessory(Accessory::OversizedArray),
+    ];
+    if is_list {
+        types.push(Type::Accessory(Accessory::List));
+    }
+    intersect(types)
 }
 
 pub struct ShapeBuilder {

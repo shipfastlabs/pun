@@ -571,6 +571,7 @@ fn accessory_super(acc: &Accessory, b: &Type) -> Tri {
         Accessory::DecimalIntString { inverse } => decimal_int_super(*inverse, b),
         Accessory::List => b.is_list(),
         Accessory::NonEmptyArray => b.is_array().and(b.is_iterable_at_least_once()),
+        Accessory::OversizedArray => b.is_array().and(b.is_oversized_array()),
         Accessory::HasMethod(name) => b.has_method(name),
         Accessory::HasOffsetValue(key, value) => offset_value_relation(key, value, b, false),
         Accessory::ModelProperty(t) => larastan::model_property_super(t, b),
@@ -845,7 +846,14 @@ fn is_sub_type_of(a: &Type, b: &Type) -> Tri {
         T::Union(types) | T::Benevolent(types) => {
             Tri::extreme_identity(types.iter().map(|t| is_super_type_of(b, t)))
         }
-        T::Intersection(types) => Tri::max_min(types.iter().map(|t| is_super_type_of(b, t))),
+        T::Intersection(types) => {
+            let result = Tri::max_min(types.iter().map(|t| is_super_type_of(b, t)));
+            // IntersectionType::isSubTypeOf
+            if !result.no() && a.is_oversized_array().yes() && !b.is_iterable_at_least_once().no() {
+                return Tri::Yes;
+            }
+            result
+        }
         T::IntRange(min, max) => match b {
             T::Int | T::ConstInt(_) | T::IntRange(..) | T::Intersection(_) => {
                 is_super_type_of(b, a)
@@ -928,6 +936,7 @@ fn is_sub_type_of(a: &Type, b: &Type) -> Tri {
                         Accessory::DecimalIntString { inverse } => decimal_int_super(*inverse, b),
                         Accessory::NonEmptyArray => b.is_array().and(b.is_iterable_at_least_once()),
                         Accessory::List => b.is_list(),
+                        Accessory::OversizedArray => b.is_array().and(b.is_oversized_array()),
                         Accessory::HasMethod(name) => b.has_method(name),
                         Accessory::HasOffsetValue(key, value) => {
                             return offset_value_relation(key, value, b, true);
