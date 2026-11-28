@@ -2146,6 +2146,13 @@ fn serialize(t: &Type) -> String {
 }
 
 pub(super) fn with_classes<R>(c: &Checker, f: impl FnOnce() -> R) -> R {
+    let declared = |name: &str| {
+        (c.codebase.get_class_like(name.as_bytes())).is_some_and(|k| k.flags.is_user_defined())
+    };
+    symbols::with_declared_classes(&declared, || with_class_providers(c, f))
+}
+
+fn with_class_providers<R>(c: &Checker, f: impl FnOnce() -> R) -> R {
     let classes = Classes::new(c);
     let functions = |name: &str| c.codebase.get_function(name.as_bytes()).is_some();
     let properties = |t: &Type, name: &str| c.object_property(t, name);

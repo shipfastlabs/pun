@@ -468,12 +468,33 @@ pub fn with_classes<R>(provider: &dyn Fn(&str) -> Option<Arc<Class>>, f: impl Fn
     PROVIDER.with(|p| p.set(provider, f))
 }
 
+struct Declared;
+impl Family for Declared {
+    type Of<'a> = dyn Fn(&str) -> bool + 'a;
+}
+
+thread_local! {
+    static DECLARED: Scoped<Declared> = Scoped::new();
+}
+
+/// Runs `f` with `declared` telling whether the analysed code declares a class: PHPStan finds such a class in the
+/// analysed files before the stubs, so it shadows a built-in class of the same name that PHP lacks at runtime
+/// (com_dotnet's `VARIANT` on Linux).
+pub fn with_declared_classes<R>(declared: &dyn Fn(&str) -> bool, f: impl FnOnce() -> R) -> R {
+    DECLARED.with(|d| d.set(declared, f))
+}
+
 pub fn lookup(name: &str) -> Option<ClassRef> {
-    if let Some(c) = class(name) {
+    let name = name.trim_start_matches('\\');
+    if let Some(c) = class(name)
+        && !DECLARED
+            .with(|d| d.get(|declared| declared(name)))
+            .unwrap_or(false)
+    {
         return Some(ClassRef::Builtin(c));
     }
     PROVIDER
-        .with(|p| p.get(|provider| provider(name.trim_start_matches('\\'))))
+        .with(|p| p.get(|provider| provider(name)))
         .flatten()
         .map(ClassRef::User)
 }

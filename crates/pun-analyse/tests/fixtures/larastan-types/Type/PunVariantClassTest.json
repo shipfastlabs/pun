@@ -1,0 +1,19 @@
+{
+    "test": "Type/PunVariantClassTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-variant-class.php",
+            "declares": [
+                "punvariantproduct",
+                "variant"
+            ],
+            "asserts": [
+                18
+            ],
+            "errors": []
+        }
+    ]
+}
