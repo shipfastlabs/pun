@@ -1,0 +1,30 @@
+{
+ "phpstan": "2.3.5",
+ "level": 7,
+ "errors": [
+  {
+   "file": "timezone.php",
+   "line": 23,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: DateTimeZone"
+  },
+  {
+   "file": "timezone.php",
+   "line": 24,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: DateTimeZone"
+  },
+  {
+   "file": "timezone.php",
+   "line": 25,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: DateTimeZone"
+  },
+  {
+   "file": "timezone.php",
+   "line": 26,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: DateTime|false"
+  }
+ ]
+}

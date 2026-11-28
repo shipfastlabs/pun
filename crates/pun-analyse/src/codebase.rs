@@ -318,6 +318,7 @@ fn build_prelude(php_version: u32) -> (CodebaseMetadata, SymbolReferences) {
         };
         let plain = |a: &TAtomic| match a {
             TAtomic::Null => true,
+            TAtomic::Scalar(TScalar::Bool(b)) => b.is_false(),
             TAtomic::Object(mago_codex::ttype::atomic::object::TObject::Named(n)) => {
                 n.type_parameters.is_none() && !n.is_static && n.intersection_types.is_none()
             }
@@ -338,6 +339,7 @@ fn build_prelude(php_version: u32) -> (CodebaseMetadata, SymbolReferences) {
             .split(" | ")
             .map(|part| match part {
                 "null" => Some(TAtomic::Null),
+                "false" => get_false().types.first().cloned(),
                 p if is_name(p) => get_named_object(mago_word::word(p), None)
                     .types
                     .first()
