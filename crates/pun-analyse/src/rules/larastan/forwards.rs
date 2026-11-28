@@ -326,6 +326,22 @@ impl ModelForwards {
                 .iter()
                 .filter(|o| codebase.is_instance_of(o.name.as_bytes(), MODEL))
         };
+        // The builder's model keeps the rest of the receiver's intersection: `$model::query()` on `Model&Publishable`
+        // is `Builder<Model&Publishable>`
+        let intersected = |m: &TNamedObject, model: TNamedObject| {
+            let rest: Vec<TAtomic> = (objects.iter())
+                .filter(|o| o.name != m.name)
+                .map(|o| TAtomic::Object(TObject::Named(o.clone())))
+                .collect();
+            if rest.is_empty() {
+                model
+            } else {
+                TNamedObject {
+                    intersection_types: Some(Box::new(rest)),
+                    ..model
+                }
+            }
+        };
         let static_class = self.static_class(invocation, method);
         if static_class.is_none() {
             if !new_query || !codebase.is_instance_of(class, MODEL) {
@@ -338,7 +354,7 @@ impl ModelForwards {
                         .map_or(m.name, |k| k.original_name);
                     TAtomic::Object(TObject::Named(builder_of(
                         codebase,
-                        &TNamedObject::new(name),
+                        &intersected(m, TNamedObject::new(name)),
                     )))
                 })
                 .collect();
@@ -391,6 +407,11 @@ impl ModelForwards {
                     .with_is_static(true)
                 } else {
                     TNamedObject::new(name)
+                };
+                let model = if is_parent {
+                    model
+                } else {
+                    intersected(m, model)
                 };
                 TAtomic::Object(TObject::Named(builder_of(codebase, &model)))
             })
@@ -822,17 +843,35 @@ fn own_collection(
             || codebase.is_instance_of(receiver_class, parent)
     };
     if is(BUILDER) && codebase.method_exists(BUILDER, method) {
-        let models = models(template(BUILDER, "TModel"));
+        let model = template(BUILDER, "TModel");
+        let models = models(model.clone());
         let ty = returned()?;
         if models.is_empty() || !crate::laravel::references_collection(&ty) {
             return None;
         }
+        // A model that is an intersection (`Builder<Model&Publishable>`) stays whole in its collection
+        let intersected = model.filter(|m| {
+            matches!(m.types.as_ref(), [TAtomic::Object(TObject::Named(n))] if n.intersection_types.is_some())
+        });
+        let whole = |t: TAtomic| match (t, &intersected) {
+            (TAtomic::Object(TObject::Named(mut c)), Some(model)) => {
+                if let Some(value) = c.type_parameters.as_mut().and_then(|p| p.last_mut())
+                    && matches!(value.types.as_ref(), [TAtomic::Object(TObject::Named(v))] if v.name.as_bytes().eq_ignore_ascii_case(models[0].as_bytes()))
+                {
+                    *value = model.clone();
+                }
+                TAtomic::Object(TObject::Named(c))
+            }
+            (t, _) => t,
+        };
         if name.starts_with("find") {
-            return Some(crate::laravel::replace_collections(codebase, &ty));
+            let ty = crate::laravel::replace_collections(codebase, &ty);
+            return Some(TUnion::from_vec(
+                ty.types.iter().cloned().map(whole).collect(),
+            ));
         }
-        return Some(TUnion::from_atomic(crate::laravel::collection_class(
-            codebase,
-            models[0].as_bytes(),
+        return Some(TUnion::from_atomic(whole(
+            crate::laravel::collection_class(codebase, models[0].as_bytes()),
         )));
     }
     if is(RELATION) {
@@ -855,10 +894,23 @@ fn own_collection(
         if ty.types.iter().any(|t| matches!(t, TAtomic::Object(TObject::Named(n)) if n.name.as_bytes().eq_ignore_ascii_case(BUILDER))) {
             return None;
         }
-        return Some(TUnion::from_atomic(crate::laravel::collection_class(
-            codebase,
-            receiver_class,
-        )));
+        let collection = crate::laravel::collection_class(codebase, receiver_class);
+        // `$class::all()` on `class-string<Model&Publishable>` collects `Model&Publishable`
+        let collection = match collection {
+            TAtomic::Object(TObject::Named(mut c)) if receiver.intersection_types.is_some() => {
+                if let Some(value) = c.type_parameters.as_mut().and_then(|p| p.last_mut()) {
+                    let whole = TNamedObject {
+                        is_static: false,
+                        is_this: false,
+                        ..receiver.clone()
+                    };
+                    *value = TUnion::from_atomic(TAtomic::Object(TObject::Named(whole)));
+                }
+                TAtomic::Object(TObject::Named(c))
+            }
+            c => c,
+        };
+        return Some(TUnion::from_atomic(collection));
     }
     None
 }

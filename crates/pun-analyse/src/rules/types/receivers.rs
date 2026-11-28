@@ -935,15 +935,27 @@ pub(in super::super) fn check_static<'arena>(
     let Some(method) = method else { return };
     let declaring = method.declaring_display(c);
     let declared = method.name();
-    let forwarded = c.class_reflection_extensions().any(|e| {
-        t.object_class_names().iter().all(|n| {
+    let forwards =
+        |n: &String, e: &dyn super::super::class_reflection::ClassReflectionExtension| {
             (c.class_like(n).found())
                 .is_some_and(|k| e.static_forward(c, k, &method.declaring_name()).is_some())
-        })
+        };
+    // IntersectionType::getMethod(): one member of an intersection (the model of `Model&Publishable`) finds it
+    let names = t.object_class_names();
+    let forwarded = c.class_reflection_extensions().any(|e| {
+        if matches!(t, Type::Intersection(_)) {
+            names.iter().any(|n| forwards(n, e))
+        } else {
+            names.iter().all(|n| forwards(n, e))
+        }
     });
+    let forwarding: Vec<&String> = names
+        .iter()
+        .filter(|n| c.class_reflection_extensions().any(|e| forwards(n, e)))
+        .collect();
     if forwarded
         && let Some(call) = call
-        && let [model] = t.object_class_names().as_slice()
+        && let [model] = forwarding.as_slice()
         && let Some(k) = c.class_like(model).found()
     {
         forwarded_static_call(c, k, name, call);

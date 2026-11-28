@@ -1,0 +1,24 @@
+{
+    "test": "Type/PunIntersectedModelsTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-intersected-models.php",
+            "declares": [
+                "punintersectedmodels\\publishable",
+                "punintersectedmodels\\types"
+            ],
+            "asserts": [
+                24,
+                25,
+                26,
+                27,
+                28,
+                29
+            ],
+            "errors": []
+        }
+    ]
+}
