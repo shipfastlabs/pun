@@ -111,6 +111,8 @@
 //! Type/PunIntersectedModelsTest.json (static calls on `class-string<Model&Publishable>` and `$record::query()` on a
 //! `Model&Publishable`, their builders and collections keeping the intersection) has its assertions from PHPStan 2.3.7
 //! with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
+//! Type/PunAttributeMakeTest.json (`Attribute::make()`, whose stub's `Attribute<TMakeGet, TMakeSet>` PHPStan drops for
+//! the native `static`) has its assertions from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};

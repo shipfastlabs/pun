@@ -1430,3 +1430,14 @@ PHPDoc, so its values are `mixed`, not `DatePeriod`'s `DateTimeInterface` (shipf
 `getIterator()` keeps the template, which is what PHPStan reads through the inherited
 `@return Traversable<TKey, TValue>`. `crates/pun-analyse/tests/aggregate_iterators.rs` covers it against PHPStan
 2.3.5.
+
+## A stub's PHPDoc return over a native `static`
+
+`metadata/function_like.rs` `patch_return_type()`: a stub's PHPDoc return type does not replace the original's native
+`static` (or `$this`) return unless it is itself `static`, as
+[`TypehintHelper::decideType()`](https://github.com/phpstan/phpstan-src/blob/95d9e8b0578ebf75439a3744a845ef25417028fa/src/Type/TypehintHelper.php)
+keeps the native type when the PHPDoc type is not a subtype of it. Larastan's stub gives `Attribute::make()` the
+return `Attribute<TMakeGet, TMakeSet>`, which PHPStan drops for the native `static`, so `Attribute::make(get: ...,
+set: ...)` is the plain `Attribute` and accepted as any declared `Attribute<...>` (shipfastlabs/pun#152).
+`crates/pun-analyse/tests/fixtures/larastan-types/Type/PunAttributeMakeTest.json` covers it against PHPStan 2.3.7 with
+Larastan 3.15.0.

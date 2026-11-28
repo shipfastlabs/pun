@@ -1,0 +1,19 @@
+{
+    "test": "Type/PunAttributeMakeTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-attribute-make.php",
+            "declares": [
+                "punattributemake\\setting"
+            ],
+            "asserts": [
+                21,
+                22
+            ],
+            "errors": []
+        }
+    ]
+}

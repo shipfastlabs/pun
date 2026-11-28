@@ -20,6 +20,8 @@ use crate::metadata::patch::PATCHABLE_FUNCTION_DOCBLOCK_FLAGS;
 use crate::metadata::patch::merge_explicit_docblock_flags;
 use crate::metadata::ttype::TypeMetadata;
 use crate::metadata::version_constraint::VersionConstraint;
+use crate::ttype::atomic::TAtomic;
+use crate::ttype::atomic::object::TObject;
 use crate::ttype::resolution::TypeResolutionContext;
 use crate::ttype::template::GenericTemplate;
 use crate::visibility::Visibility;
@@ -490,7 +492,16 @@ impl FunctionLikeMetadata {
     /// Refines the return type when the patch's docblock specifies it. A stub's native type is not read: PHPStan
     /// takes only the PHPDoc from a stub and the native signature from the original.
     fn patch_return_type(&mut self, patch: &FunctionLikeMetadata) {
-        if let Some(ty) = patch.return_type_metadata.as_ref().filter(|t| t.from_docblock) {
+        // TypehintHelper::decideType(): a stub's PHPDoc type that is not a subtype of the native `static` (Larastan's
+        // `Attribute<TMakeGet, TMakeSet>` on `Attribute::make(): static`) leaves the native type
+        let is_static = |t: &TAtomic| matches!(t, TAtomic::Object(TObject::Named(n)) if n.is_static || n.is_this);
+        let native_static = self
+            .return_type_declaration_metadata
+            .as_ref()
+            .is_some_and(|t| t.type_union.types.iter().all(is_static) && !t.type_union.types.is_empty());
+        if let Some(ty) = patch.return_type_metadata.as_ref().filter(|t| t.from_docblock)
+            && (!native_static || ty.type_union.types.iter().all(is_static))
+        {
             self.return_type_metadata = Some(ty.clone());
         }
     }
