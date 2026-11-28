@@ -1,0 +1,18 @@
+{
+    "test": "Type/PunFeatureMacrosTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-feature-macros.php",
+            "declares": [
+                "punfeaturemacros\\page"
+            ],
+            "asserts": [
+                13
+            ],
+            "errors": []
+        }
+    ]
+}

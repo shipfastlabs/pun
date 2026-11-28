@@ -130,8 +130,9 @@ impl Macros {
         let mut seen = HashSet::new();
         let mut read_files = Reader::default();
         read_files.read_all(files, &mut seen);
-        // A class a provider instantiates may register the macros (laravel/head's `(new HeadRouteMacros)->register()`
-        // in its service provider); it sits where Composer's PSR-4 autoloading finds it.
+        // A class a provider instantiates or names may register the macros (laravel/head's `(new
+        // HeadRouteMacros)->register()` in its service provider, Livewire's feature classes); it sits where Composer's
+        // PSR-4 autoloading finds it.
         let helpers: Vec<PathBuf> = (autoloaded.iter())
             .filter(|a| {
                 !read_files
@@ -465,7 +466,7 @@ struct Reader {
     mixin_methods: HashMap<String, Vec<(String, Option<TUnion>)>>,
     /// Each method that returns a closure (lowercased class and method): the closure's native return type.
     returned: HashMap<(String, String), Option<TUnion>>,
-    /// The classes `new` names in the files read.
+    /// The classes `new` or a `::class` constant names in the files read.
     instantiated: HashSet<String>,
 }
 
@@ -857,6 +858,25 @@ impl<'ast, 'arena> MutWalker<'ast, 'arena, ()> for Walker<'_, '_, 'arena> {
 
     fn walk_in_instantiation(&mut self, new: &'ast Instantiation<'arena>, (): &mut ()) {
         if let Expression::Identifier(class) = new.class {
+            let class = self
+                .name(class)
+                .trim_start_matches('\\')
+                .to_ascii_lowercase();
+            self.reader.instantiated.insert(class);
+        }
+    }
+
+    /// Livewire's provider names its feature classes (`SupportPageComponents::class`, whose `provide()` registers the
+    /// View macros) for the component hook registry to boot.
+    fn walk_in_class_constant_access(
+        &mut self,
+        access: &'ast ClassConstantAccess<'arena>,
+        (): &mut (),
+    ) {
+        if let (Expression::Identifier(class), ClassLikeConstantSelector::Identifier(constant)) =
+            (access.class, &access.constant)
+            && constant.value.eq_ignore_ascii_case(b"class")
+        {
             let class = self
                 .name(class)
                 .trim_start_matches('\\')

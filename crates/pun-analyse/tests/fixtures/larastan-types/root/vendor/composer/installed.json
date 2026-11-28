@@ -9451,6 +9451,25 @@
                     ]
                 }
             }
+        },
+        {
+            "name": "pun/vendor-view-features",
+            "version": "1.0.0",
+            "version_normalized": "1.0.0.0",
+            "type": "library",
+            "install-path": "../pun/vendor-view-features",
+            "autoload": {
+                "psr-4": {
+                    "PunVendorViewFeatures\\": "src/"
+                }
+            },
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "PunVendorViewFeatures\\FeaturesServiceProvider"
+                    ]
+                }
+            }
         }
     ],
     "dev": true,

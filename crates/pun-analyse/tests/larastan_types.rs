@@ -113,6 +113,9 @@
 //! with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
 //! Type/PunAttributeMakeTest.json (`Attribute::make()`, whose stub's `Attribute<TMakeGet, TMakeSet>` PHPStan drops for
 //! the native `static`) has its assertions from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
+//! Type/PunFeatureMacrosTest.json (a View macro registered by a feature class the provider of
+//! root/vendor/pun/vendor-view-features names with `::class`, as Livewire's does) has its assertion from PHPStan 2.3.7
+//! with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
