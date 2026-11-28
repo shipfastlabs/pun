@@ -11,7 +11,7 @@ In the [`lint-recommended`](/docs/rules/presets/lint-recommended) preset and eve
 
 ## What it does
 
-Remove Reflection::setAccessible() calls
+Remove no-op `setAccessible()` calls on `ReflectionProperty` and `ReflectionMethod`, including local variables inferred from `ReflectionClass` accessors.
 
 ## Configuration
 

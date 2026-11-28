@@ -31,7 +31,7 @@ Not in any preset. Safe fix. Runs only when `[php] version` is 8.1 or later.
 </Card>
 <Card title="no-reflection-set-accessible" href="/docs/rules/lint/php-8-1/no-reflection-set-accessible">
 
-Remove Reflection::setAccessible() calls
+Remove no-op `setAccessible()` calls on `ReflectionProperty` and `ReflectionMethod`, including local variables inferred from `ReflectionClass` accessors.
 
 In the `lint-recommended` preset and every stricter one. In Rector's `rector/php81` set. Safe fix. Runs only when `[php] version` is 8.1 or later.
 
