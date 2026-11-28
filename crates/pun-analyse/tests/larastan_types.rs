@@ -129,6 +129,8 @@
 //! PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
 //! Type/PunInvariantMixedArraysTest.json (`Collection<K, array>` returned as `Collection<K, array<mixed>>`, an
 //! invariant template) has its errors from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
+//! Type/PunCollectionFilterOffsetsTest.json (`filter()` callbacks that check an offset of an array shape) has its
+//! assertions from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};

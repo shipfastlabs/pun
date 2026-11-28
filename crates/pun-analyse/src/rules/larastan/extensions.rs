@@ -604,6 +604,29 @@ fn narrow(
     use mago_codex::ttype::comparator::{ComparisonResult, atomic_comparator};
     let codebase = context.codebase();
     let is_var = |e: &Expression<'_>| matches!(e.unparenthesized(), Expression::Variable(Variable::Direct(d)) if d.name == name);
+    // the offsets of `$name['a']['b']` (`['a', 'b']`), none for `$name` itself: PHPStan's TypeSpecifier narrows an
+    // array shape's offset as it narrows a variable
+    let target = |e: &Expression<'_>| -> Option<Vec<ArrayKey>> {
+        let mut path = Vec::new();
+        let mut e = e.unparenthesized();
+        loop {
+            match e {
+                Expression::Variable(Variable::Direct(d)) if d.name == name => {
+                    path.reverse();
+                    return Some(path);
+                }
+                Expression::ArrayAccess(access) => {
+                    let index = context.get_expression_type(access.index)?;
+                    path.push(match index.get_single_literal_string_value() {
+                        Some(s) => ArrayKey::String(mago_word::word(s)),
+                        None => ArrayKey::Integer(index.get_single_literal_int_value()?),
+                    });
+                    e = access.array.unparenthesized();
+                }
+                _ => return None,
+            }
+        }
+    };
     let contained = |a: &TAtomic, b: &TAtomic| {
         atomic_comparator::is_contained_by(codebase, a, b, true, &mut ComparisonResult::default())
     };
@@ -728,10 +751,10 @@ fn narrow(
                 }
             }
             BinaryOperator::Identical(_) | BinaryOperator::NotIdentical(_) => {
-                let other = if is_var(binary.lhs) {
-                    binary.rhs
-                } else if is_var(binary.rhs) {
-                    binary.lhs
+                let (path, other) = if let Some(path) = target(binary.lhs) {
+                    (path, binary.rhs)
+                } else if let Some(path) = target(binary.rhs) {
+                    (path, binary.lhs)
                 } else {
                     return ty;
                 };
@@ -750,11 +773,14 @@ fn narrow(
                 if !single {
                     return ty;
                 }
-                if matches!(binary.operator, BinaryOperator::Identical(_)) == truthy {
-                    intersect(ty, &literal)
-                } else {
-                    remove(ty, &literal)
-                }
+                let identical = matches!(binary.operator, BinaryOperator::Identical(_)) == truthy;
+                at_offsets(ty, &path, &|ty| {
+                    if identical {
+                        intersect(ty, &literal)
+                    } else {
+                        remove(ty, &literal)
+                    }
+                })
             }
             _ => ty,
         },
@@ -799,21 +825,26 @@ fn narrow(
                 _ => return ty,
             };
             match call.argument_list.arguments.as_slice() {
-                [argument] if is_var(argument.value()) => {
-                    if truthy {
-                        let mut kept = checked
-                            .iter()
-                            .map(|checked| intersect(ty.clone(), checked))
-                            .filter(|t| !t.is_never());
-                        match kept.next() {
-                            Some(first) => kept.fold(first, |acc, t| {
-                                add_union_type(acc, &t, codebase, CombinerOptions::default())
-                            }),
-                            None => mago_codex::ttype::get_never(),
+                [argument] => {
+                    let Some(path) = target(argument.value()) else {
+                        return ty;
+                    };
+                    at_offsets(ty, &path, &|ty| {
+                        if truthy {
+                            let mut kept = checked
+                                .iter()
+                                .map(|checked| intersect(ty.clone(), checked))
+                                .filter(|t| !t.is_never());
+                            match kept.next() {
+                                Some(first) => kept.fold(first, |acc, t| {
+                                    add_union_type(acc, &t, codebase, CombinerOptions::default())
+                                }),
+                                None => mago_codex::ttype::get_never(),
+                            }
+                        } else {
+                            checked.iter().fold(ty, remove)
                         }
-                    } else {
-                        checked.iter().fold(ty, remove)
-                    }
+                    })
                 }
                 _ => ty,
             }
@@ -841,8 +872,46 @@ fn narrow(
             }
             ty
         }
-        e if truthy && is_var(e) => remove_falsey(&ty),
+        e if truthy => match target(e) {
+            Some(path) => at_offsets(ty, &path, &|ty| remove_falsey(&ty)),
+            None => ty,
+        },
         _ => ty,
+    }
+}
+
+/// `ty` with `f` applied to the value at `path` in each of its array shapes; a shape whose value becomes `never` is
+/// dropped. An empty `path` applies `f` to `ty`.
+fn at_offsets(ty: TUnion, path: &[ArrayKey], f: &dyn Fn(TUnion) -> TUnion) -> TUnion {
+    use mago_codex::ttype::atomic::array::TArray;
+    let Some((key, rest)) = path.split_first() else {
+        return f(ty);
+    };
+    let mut kept = Vec::with_capacity(ty.types.len());
+    for atomic in ty.types.iter() {
+        let TAtomic::Array(TArray::Keyed(keyed)) = atomic else {
+            kept.push(atomic.clone());
+            continue;
+        };
+        let Some((optional, value)) = keyed.known_items.as_ref().and_then(|items| items.get(key))
+        else {
+            kept.push(atomic.clone());
+            continue;
+        };
+        let value = at_offsets(value.clone(), rest, f);
+        if value.is_never() {
+            continue;
+        }
+        let mut keyed = keyed.clone();
+        if let Some(items) = keyed.known_items.as_mut() {
+            Arc::make_mut(items).insert(*key, (*optional, value));
+        }
+        kept.push(TAtomic::Array(TArray::Keyed(keyed)));
+    }
+    if kept.is_empty() {
+        mago_codex::ttype::get_never()
+    } else {
+        ty.clone_with_types(kept)
     }
 }
 

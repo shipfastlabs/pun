@@ -1,0 +1,22 @@
+{
+    "test": "Type/PunCollectionFilterOffsetsTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-collection-filter-offsets.php",
+            "declares": [
+                "puncollectionfilteroffsets\\countgrouped",
+                "puncollectionfilteroffsets\\countwithgroup"
+            ],
+            "asserts": [
+                14,
+                15,
+                16,
+                17
+            ],
+            "errors": []
+        }
+    ]
+}
