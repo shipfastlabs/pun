@@ -57,12 +57,13 @@ impl Rule for NoEmptyMethod {
                 if !method.attribute_lists.is_empty() {
                     continue;
                 }
-                // Rector 2.9.2: an anonymous class can't be extended, and a child class can call
-                // parent::__construct(), so a non-private constructor stays in an extendable class.
+                // A child class can call parent::__construct(), so a non-private constructor stays
+                // in a named class that isn't final (Rector 2.9.2). An anonymous class keeps its
+                // empty public methods, as in Rector 2.8.4: a Laravel migration's empty down() is
+                // the framework's convention (shipfastlabs/pun#189).
                 let constructor = method.name.value.eq_ignore_ascii_case(b"__construct");
                 if !class.is_final
-                    && !class.is_anonymous
-                    && (!is_magic(method.name.value) || constructor)
+                    && (!is_magic(method.name.value) || (constructor && !class.is_anonymous))
                     && !is_private(method)
                 {
                     continue;
