@@ -764,6 +764,15 @@ fn late_of(
         });
         found.get() || super::declared::has_template(t)
     }
+    // a model from a receiver's call-site variance (`Builder<covariant Model>`) is the model itself: a type projection
+    // gives its type to the template it resolves (GenericObjectType::getTypeArgument())
+    let args: Vec<Type> = (args.iter())
+        .map(|t| match t {
+            Type::Projection(_, inner) => (**inner).clone(),
+            t => t.clone(),
+        })
+        .collect();
+    let args = args.as_slice();
     if args.iter().any(late) {
         return Type::Object(name.into(), args.to_vec(), false);
     }

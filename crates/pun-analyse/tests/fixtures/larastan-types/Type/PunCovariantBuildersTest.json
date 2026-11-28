@@ -1,0 +1,17 @@
+{
+    "test": "Type/PunCovariantBuildersTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-covariant-builders.php",
+            "declares": [
+                "puncovariantbuilders\\wherehascomments",
+                "puncovariantbuilders\\withcomments"
+            ],
+            "asserts": [],
+            "errors": []
+        }
+    ]
+}
