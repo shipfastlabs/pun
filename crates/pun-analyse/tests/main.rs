@@ -202,6 +202,7 @@ mod sprintf_literal_strings;
 mod statements;
 mod static_of_fewer_templates;
 mod str_containing;
+mod str_containing_false;
 mod str_repeat;
 mod strict_mixed;
 mod string_casing;

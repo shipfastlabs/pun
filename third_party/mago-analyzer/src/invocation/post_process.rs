@@ -1725,6 +1725,9 @@ where
                     false,
                     false,
                 ),
+                Assertion::InArray(union) => {
+                    !can_expression_types_be_identical(context.codebase, union, right, false, false)
+                }
                 _ => false,
             })
         {

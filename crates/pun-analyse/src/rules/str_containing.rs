@@ -10,6 +10,7 @@ use mago_codex::assertion::Assertion;
 use mago_codex::ttype::atomic::TAtomic;
 use mago_codex::ttype::atomic::scalar::TScalar;
 use mago_codex::ttype::atomic::scalar::string::{TString, TStringCasing};
+use mago_codex::ttype::union::TUnion;
 
 static META: ProviderMeta = ProviderMeta::new(
     "pun-str-containing",
@@ -90,10 +91,12 @@ impl FunctionAssertionProvider for StrContaining {
         let asserted =
             TString::general_with_props(false, truthy, true, false, TStringCasing::Unspecified);
         let mut assertions = InvocationAssertions::new();
+        // TypeSpecifier narrows only the true context: `InArray`, unlike `IsType`, is not negated in the false branch,
+        // where the haystack stays a `string`.
         assertions.add_if_true(
             mago_word::word(haystack_parameter),
-            vec![Assertion::IsType(TAtomic::Scalar(TScalar::String(
-                asserted,
+            vec![Assertion::InArray(TUnion::from_atomic(TAtomic::Scalar(
+                TScalar::String(asserted),
             )))],
         );
         Some(assertions)

@@ -4587,3 +4587,10 @@ from a receiver that may be null. IssetabilityResolution::isSet() finds no prope
 link is maybe set whatever the property's own type, and `$inner->key ?? $fallback` is `string|null`, not `string`
 (shipfastlabs/pun#145, shipfastlabs/pun#174). `crates/pun-analyse/tests/coalesce_nullable_receiver.rs` covers it against
 PHPStan 2.3.5.
+## Plugin assertions through a null coalesce accept `InArray`
+
+`invocation/post_process.rs` `resolve_invocation_assertion()`: the coalesce rule above also moves an `InArray`
+assertion to `$a` when `$b` can never be one of its types. Pun's port of StrContainingTypeSpecifyingExtension asserts
+`InArray`, which the false branch does not negate, as PHPStan narrows the haystack only in a true context
+(shipfastlabs/pun#147, shipfastlabs/pun#188). `crates/pun-analyse/tests/str_containing.rs` and
+`crates/pun-analyse/tests/str_containing_false.rs` cover it against PHPStan 2.3.5.

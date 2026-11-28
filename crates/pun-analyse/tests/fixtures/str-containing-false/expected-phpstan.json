@@ -1,0 +1,36 @@
+{
+ "phpstan": "2.3.5",
+ "level": 10,
+ "errors": [
+  {
+   "line": 15,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string"
+  },
+  {
+   "line": 23,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-falsy-string"
+  },
+  {
+   "line": 34,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: string"
+  },
+  {
+   "line": 36,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-falsy-string"
+  },
+  {
+   "line": 46,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-falsy-string"
+  },
+  {
+   "line": 79,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: non-falsy-string"
+  }
+ ]
+}
