@@ -102,9 +102,13 @@ impl Fixer for PsrAutoloadingFixer {
                     return;
                 }
                 let start = tokens.next_meaningful(index);
-                let end = tokens
-                    .get_next_token_of_kind(start, &[";".into()], true)
-                    .unwrap();
+                // A braced namespace (`namespace A { ... }`) with no `;` after it: PHP-CS-Fixer's
+                // getNextTokenOfKind() returns null and generatePartialCode($start, null - 1) is '', so the
+                // namespace is empty. The end index is then never read: an empty namespace changes no casing.
+                let Some(end) = tokens.get_next_token_of_kind(start, &[";".into()], true) else {
+                    namespace = Some((String::new(), start, start));
+                    continue;
+                };
                 let code = tokens.generate_partial_code(start, end - 1);
                 let name = String::from_utf8_lossy(&code)
                     .trim_matches(TRIM)
@@ -264,6 +268,22 @@ mod tests {
             fix(&dir, "<?php\n\nfinal class PreventStraySaloonSends\n{\n    public function x() { $this->PreventStraySaloonSends(); }\n}\n"),
             "<?php\n\nfinal class Pest\n{\n    public function x() { $this->PreventStraySaloonSends(); }\n}\n"
         );
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn braced_namespace_without_a_semicolon() {
+        let dir =
+            std::env::temp_dir().join(format!("pun-psr-autoloading-ns-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        // Pint 1.32.1's output: no `;` follows the namespace name, so the namespace is empty and the class is renamed.
+        assert_eq!(
+            fix(&dir, "<?php\n\nnamespace A {\n    final class B {}\n}\n"),
+            "<?php\n\nnamespace A {\n    final class Pest {}\n}\n"
+        );
+        // Pint 1.32.1 leaves a file with two namespaces alone.
+        let two = "<?php\n\nnamespace Livewire\\Attributes {\n    #[\\Attribute]\n    final class Computed {}\n}\n\nnamespace Livewire {\n    abstract class Component {}\n}\n";
+        assert_eq!(fix(&dir, two), two);
         std::fs::remove_dir_all(&dir).unwrap();
     }
 }
