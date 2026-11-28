@@ -1392,7 +1392,26 @@ impl Checker<'_, '_> {
                         .map_or(0, |i| i + 1);
                     args.truncate(written);
                 }
-                let t = if n.is_this {
+                // TypeNodeResolver: `Foo<Item>` on an iterable class with more templates is `Foo&iterable<Item>`
+                let value_only = !n.is_this
+                    && !n.is_static
+                    && args.len() == 1
+                    && self
+                        .codebase
+                        .get_class_like(n.name.as_bytes())
+                        .is_some_and(|k| k.template_types.len() > 1)
+                    && self
+                        .codebase
+                        .is_instance_of(n.name.as_bytes(), b"Traversable");
+                let t = if value_only {
+                    intersect(vec![
+                        Type::Object(name, vec![], false),
+                        Type::Iterable(
+                            Box::new(Type::Mixed { explicit: true }),
+                            Box::new(args.pop().expect("one argument")),
+                        ),
+                    ])
+                } else if n.is_this {
                     Type::This(name)
                 } else if n.is_static {
                     Type::Static(name, args)

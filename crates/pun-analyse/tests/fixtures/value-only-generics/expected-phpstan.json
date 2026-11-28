@@ -1,0 +1,42 @@
+{
+ "phpstan": "2.3.5",
+ "level": 8,
+ "errors": [
+  {
+   "file": "items.php",
+   "line": 19,
+   "identifier": "missingType.generics",
+   "message": "Method ValueOnlyGenerics\\Items::getIterator() return type with generic class ArrayIterator does not specify its types: TKey, TValue"
+  },
+  {
+   "file": "items.php",
+   "line": 37,
+   "identifier": "missingType.generics",
+   "message": "Function ValueOnlyGenerics\\items() return type with generic class ValueOnlyGenerics\\Items does not specify its types: TKey, TValue"
+  },
+  {
+   "file": "items.php",
+   "line": 57,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: ValueOnlyGenerics\\Box<ValueOnlyGenerics\\Item>"
+  },
+  {
+   "file": "items.php",
+   "line": 60,
+   "identifier": "function.resultUnused",
+   "message": "Call to function ValueOnlyGenerics\\countItems() on a separate line has no effect."
+  },
+  {
+   "file": "items.php",
+   "line": 61,
+   "identifier": "function.resultUnused",
+   "message": "Call to function ValueOnlyGenerics\\countOthers() on a separate line has no effect."
+  },
+  {
+   "file": "items.php",
+   "line": 62,
+   "identifier": "phpstan.dumpType",
+   "message": "Dumped type: iterable<ValueOnlyGenerics\\Item>&ValueOnlyGenerics\\Items"
+  }
+ ]
+}
