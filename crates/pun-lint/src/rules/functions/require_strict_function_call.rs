@@ -59,8 +59,10 @@ impl Rule for RequireStrictFunctionCall {
         }
         let problem = match slots.iter().find(|(slot, _)| slot == position) {
             None => "set",
-            Some((_, value)) if is_true(ctx, value) => return,
-            Some(_) => "true",
+            Some((_, value)) => match is_true(ctx, value) {
+                Some(false) => "true",
+                Some(true) | None => return,
+            },
         };
         out.push(Report {
             span: node_span(call),
@@ -74,10 +76,14 @@ impl Rule for RequireStrictFunctionCall {
     }
 }
 
-fn is_true(ctx: &Context<'_>, value: &Expression<'_>) -> bool {
-    facts(ctx).native_type(node_span(value)).is_some_and(|t| {
+/// Whether the strict flag is `true`, or `None` when the analysis has no type for it: it doesn't type code it never
+/// reaches, so the flag can't be told wrong there. PHPStan runs no rule on that code.
+fn is_true(ctx: &Context<'_>, value: &Expression<'_>) -> Option<bool> {
+    let facts = facts(ctx);
+    let t = facts.native_type(node_span(value))?;
+    Some(
         t.types
             .iter()
-            .all(|a| matches!(a, TAtomic::Scalar(TScalar::Bool(b)) if b.is_true()))
-    })
+            .all(|a| matches!(a, TAtomic::Scalar(TScalar::Bool(b)) if b.is_true())),
+    )
 }
