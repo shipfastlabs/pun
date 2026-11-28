@@ -1,0 +1,24 @@
+{
+    "test": "Type/PunInvariantMixedArraysTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-invariant-mixed-arrays.php",
+            "declares": [
+                "puninvariantmixedarrays\\items",
+                "puninvariantmixedarrays\\strings"
+            ],
+            "asserts": [],
+            "errors": [
+                {
+                    "line": 24,
+                    "identifier": "return.type",
+                    "message": "Function PunInvariantMixedArrays\\strings() should return Illuminate\\Support\\Collection<int, array<string>> but returns Illuminate\\Support\\Collection<int, array>.",
+                    "tip": null
+                }
+            ]
+        }
+    ]
+}

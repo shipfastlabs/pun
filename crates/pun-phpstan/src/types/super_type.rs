@@ -780,7 +780,20 @@ pub(super) fn valid_variance(a: &Type, b: &Type, declared: &str, strict: bool) -
         (Type::Benevolent(_), _) if !is_super_type_of(a, b).no() => Tri::Yes,
         (_, Type::Benevolent(_)) if !is_super_type_of(b, a).no() => Tri::Maybe,
         (_, Type::Mixed { .. } | Type::SubtractedMixed { .. }) => Tri::Maybe,
-        _ => Tri::from(a == b),
+        _ => Tri::from(a == b || implicit_mixed(a) == implicit_mixed(b)),
+    }
+}
+
+/// For PHPStan's `Type::equals()`: MixedType::equals() ignores whether a `mixed` is explicit, so `array` equals
+/// `array<mixed>`.
+fn implicit_mixed(t: &Type) -> Type {
+    match t {
+        Type::Mixed { .. } => Type::Mixed { explicit: false },
+        Type::SubtractedMixed { excluded, .. } => Type::SubtractedMixed {
+            explicit: false,
+            excluded: Box::new(implicit_mixed(excluded)),
+        },
+        t => t.traverse(&implicit_mixed),
     }
 }
 
