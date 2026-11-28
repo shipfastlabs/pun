@@ -186,7 +186,7 @@ pub struct Filters {
     ignore_cooldown: Vec<Ignore>,
 }
 
-fn duration(v: Option<&Value>) -> Result<Option<i64>> {
+pub(crate) fn duration(v: Option<&Value>) -> Result<Option<i64>> {
     let text = match v {
         None | Some(Value::Null) => return Ok(None),
         Some(Value::Number(n)) => n.to_string(),

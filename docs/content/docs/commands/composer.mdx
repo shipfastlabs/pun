@@ -3,7 +3,7 @@ title: pun composer
 description: Run other Composer commands.
 ---
 
-Run Composer commands that have no `pun` command of their own: `dump-autoload`, `run-script` and `exec`.
+Run Composer commands that have no `pun` command of their own: `dump-autoload`, `run-script`, `exec` and `config`.
 
 ## Usage
 
@@ -20,6 +20,10 @@ pun composer test
 pun composer run --list
 pun composer exec phpstan -- analyse --memory-limit=1G
 pun composer exec --list
+pun composer config process-timeout 600
+pun composer config --no-plugins allow-plugins.pestphp/pest-plugin true
+pun composer config --global github-oauth.github.com <token>
+pun composer config --list --source
 ```
 
 ## Options
@@ -61,6 +65,22 @@ For `exec`:
 | `--ansi`, `--no-ansi` | Colour the list and the error line, or don't; `--ansi` wins when both are given. By default each of stdout and stderr is coloured on a terminal. |
 | `--no-plugins`, `--no-scripts`, `--no-cache` | Taken, as in Composer. They change nothing here. |
 
+For `config`:
+
+| Option | Description |
+| --- | --- |
+| `<setting-key> [setting-value]...` | Without a value, show the setting; with one or more, write it. |
+| `-g`, `--global` | Use the global `config.json` (and `auth.json`) in `COMPOSER_HOME`. |
+| `-f`, `--file=<file>` | Use another `composer.json` or `config.json`. |
+| `-l`, `--list` | List every setting, with the raw value first where it differs. |
+| `--source` | Show where each value comes from. |
+| `--absolute` | Show `*-dir` settings as absolute paths. |
+| `--unset` | Remove the setting. |
+| `-j`, `--json` | Read the value as JSON (`extra.*`, `policy.*.ignore`, `audit.ignore`, repositories). |
+| `-m`, `--merge` | Merge the JSON value with the current one. |
+| `--append` | Add a repository last, not first. |
+| `--no-plugins` | Taken, as in Composer. This command runs no plugins. |
+
 For every command, before or after its name:
 
 | Option | Description |
@@ -97,17 +117,25 @@ A script also runs as `pun composer <script>`, or by a name from `scripts-aliase
 - Without a binary, in a terminal, asks which binary to run; otherwise, and with `--list`, lists the files of the bin dir (without a `.bat` beside its binary) and composer.json's `bin`, marked `(local)`.
 - Exits with the binary's exit code, after Composer's line about it when it isn't 0.
 
+`config`:
+
+- Reads a setting as Composer does: from composer.json, the global `config.json` and `auth.json`, `COMPOSER_AUTH` and the `COMPOSER_*` variables, then Composer's defaults; `--list` shows them all.
+- Writes config settings (each with Composer's check of its value), root properties (`name`, `description`, `minimum-stability`, `keywords`, `license`, …), `extra.*`, `suggest.*`, `scripts.*`, repositories, policies and credentials (`github-oauth`, `gitlab-token`, `http-basic`, `bearer`, …, into `auth.json`, readable by its owner only).
+- Edits the file as Composer's `JsonManipulator` does, keeping its indentation and layout, byte for byte; where it can't, it rewrites the file as Composer does.
+
 ## Limitations
 
-- Only `dump-autoload`, `run-script` and `exec` exist. Any other command exits 2.
+- Only `dump-autoload`, `run-script`, `exec` and `config` exist. Any other command exits 2.
 - `exec` doesn't take Composer's `--help`, `--version` or `--profile` after the binary: put them before `exec`, or after `--` for the binary.
 - `run-script` without a script name outside a terminal exits 2.
+- `config` doesn't open an editor (`--editor`) and exits 2.
+- `config` doesn't check the file it wrote against Composer's schema, as Composer does (which puts the old file back when it doesn't hold); for a value that isn't JSON, it gives only the first line of Composer's message.
 
 ## Exit codes
 
 | Code | Meaning |
 | --- | --- |
-| 0 | Written, or the script or binary succeeded. |
+| 0 | Written, the setting shown or written, or the script or binary succeeded. |
 | 1 | Written, but a package is missing from `vendor/`. |
 | 2 | Unknown command or script, or another error. |
 | other | `run-script` and `exec`: the failed script's or binary's exit code, as in Composer. |

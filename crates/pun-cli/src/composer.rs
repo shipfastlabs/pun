@@ -42,6 +42,8 @@ enum ComposerCmd {
     RunScript(RunArgs),
     /// Run a binary of the bin dir or of composer.json's `bin`, as `composer exec` does.
     Exec(crate::exec::ExecArgs),
+    /// Read or write a setting of composer.json, or of the global config.json, as `composer config` does.
+    Config(crate::composer_config::ConfigArgs),
     #[command(external_subcommand)]
     Other(Vec<String>),
 }
@@ -173,6 +175,7 @@ pub(crate) fn run(a: ComposerArgs) -> Result<Exit> {
             run_script(&project, &r, &globals, true)
         }
         ComposerCmd::Exec(e) => crate::exec::run(&e, &globals),
+        ComposerCmd::Config(c) => crate::composer_config::run_config(&c, &globals),
         ComposerCmd::Other(args) => {
             let name = args.first().map_or("", String::as_str);
             let parsed = ScriptCommand::read(&args);

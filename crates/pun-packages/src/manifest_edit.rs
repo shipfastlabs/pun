@@ -77,7 +77,7 @@ fn restored(path: &[String]) -> bool {
 
 /// What Composer writes when it can't edit in place: the file as `JsonFile::read` decodes it (objects become PHP
 /// arrays), after `restoreEmptyObjects`, through `JsonFile::write` with the file's indent, then a newline.
-fn write_json(m: Map<String, Value>, indent: &str) -> String {
+pub(crate) fn write_json(m: Map<String, Value>, indent: &str) -> String {
     fn put(out: &mut String, v: &Value, path: &mut Vec<String>, indent: &str) {
         let items: Vec<(Option<&String>, &Value)> = match v {
             Value::Array(items) => items.iter().map(|v| (None, v)).collect(),
@@ -169,8 +169,100 @@ fn is_match(re: &str, s: &str) -> bool {
     Regex::new(re).is_ok_and(|r| r.is_match(s.as_bytes()).unwrap_or(false))
 }
 
-/// Composer's `JsonManipulator`: edits composer.json's text in place, keeping its layout.
-struct Manipulator {
+/// A value as Composer's PHP holds it: a scalar, an array (an ordered map, a list when its keys are 0, 1, … in
+/// order), or a `stdClass` object. `json_decode($json, true)` gives arrays, `json_decode($json)` objects.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Php {
+    Scalar(Value),
+    Array(Vec<(String, Php)>),
+    Object(Vec<(String, Php)>),
+}
+
+impl Php {
+    /// `json_decode($json, true)`: JSON objects as arrays.
+    pub fn assoc(v: &Value) -> Php {
+        match v {
+            Value::Array(items) => Php::Array(
+                (items.iter().enumerate())
+                    .map(|(i, v)| (i.to_string(), Php::assoc(v)))
+                    .collect(),
+            ),
+            Value::Object(m) => {
+                Php::Array(m.iter().map(|(k, v)| (k.clone(), Php::assoc(v))).collect())
+            }
+            scalar => Php::Scalar(scalar.clone()),
+        }
+    }
+
+    /// `json_decode($json)`: JSON objects as `stdClass`.
+    pub fn object(v: &Value) -> Php {
+        match v {
+            Value::Array(items) => Php::Array(
+                (items.iter().enumerate())
+                    .map(|(i, v)| (i.to_string(), Php::object(v)))
+                    .collect(),
+            ),
+            Value::Object(m) => {
+                Php::Object(m.iter().map(|(k, v)| (k.clone(), Php::object(v))).collect())
+            }
+            scalar => Php::Scalar(scalar.clone()),
+        }
+    }
+
+    fn entries(&self) -> Option<&Vec<(String, Php)>> {
+        match self {
+            Php::Array(e) | Php::Object(e) => Some(e),
+            Php::Scalar(_) => None,
+        }
+    }
+
+    /// `array_key_exists` (or a property of an object).
+    pub fn get(&self, key: &str) -> Option<&Php> {
+        self.entries()?
+            .iter()
+            .find(|(k, _)| k == key)
+            .map(|(_, v)| v)
+    }
+
+    /// `$x[$key] = $value` (or `$x->{$key}`): in place when it is there, else last.
+    pub fn set(&mut self, key: &str, value: Php) {
+        if let Php::Array(e) | Php::Object(e) = self {
+            match e.iter_mut().find(|(k, _)| k == key) {
+                Some((_, v)) => *v = value,
+                None => e.push((key.to_string(), value)),
+            }
+        }
+    }
+
+    /// `array_is_list`.
+    fn is_list(entries: &[(String, Php)]) -> bool {
+        entries
+            .iter()
+            .enumerate()
+            .all(|(i, (k, _))| *k == i.to_string())
+    }
+
+    /// The value as JSON: a list as an array, any other array or object as an object.
+    pub fn to_value(&self) -> Value {
+        match self {
+            Php::Scalar(v) => v.clone(),
+            Php::Array(e) if Php::is_list(e) => {
+                Value::Array(e.iter().map(|(_, v)| v.to_value()).collect())
+            }
+            Php::Array(e) | Php::Object(e) => {
+                Value::Object(e.iter().map(|(k, v)| (k.clone(), v.to_value())).collect())
+            }
+        }
+    }
+}
+
+/// PHP's `is_numeric` for an array key.
+pub(crate) fn is_numeric(s: &str) -> bool {
+    is_match(r"^\s*[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?\s*$", s)
+}
+
+/// Composer's `JsonManipulator`: edits a JSON file's text in place, keeping its layout.
+pub struct Manipulator {
     contents: String,
     newline: &'static str,
     indent: String,
@@ -178,7 +270,7 @@ struct Manipulator {
 
 impl Manipulator {
     /// For text that parses as an object, so it is `{...}` once trimmed, as Composer's constructor requires.
-    fn new(text: &str) -> Manipulator {
+    pub fn new(text: &str) -> Manipulator {
         let contents = text.trim();
         let contents = if contents.is_empty() { "{}" } else { contents };
         let newline = if contents.contains("\r\n") {
@@ -210,37 +302,53 @@ impl Manipulator {
         parse_json(&self.contents).unwrap_or_default()
     }
 
-    fn text(&self) -> String {
+    /// `getContents`: the text, with a newline.
+    pub fn text(&self) -> String {
         format!("{}{}", self.contents, self.newline)
     }
 
-    /// `format`: an array or object laid out at `depth`, the way Composer writes a node it adds.
+    /// `format` of a decoded array: laid out at `depth`, the way Composer writes a node it adds.
     fn format(&self, v: &Value, depth: usize) -> String {
-        match v {
-            Value::Array(items) => {
-                let items: Vec<String> = items.iter().map(|i| self.format(i, depth + 1)).collect();
-                format!("[{}]", items.join(", "))
-            }
-            Value::Object(m) if is_list(m) => {
-                let items: Vec<String> = m.values().map(|i| self.format(i, depth + 1)).collect();
-                format!("[{}]", items.join(", "))
-            }
-            Value::Object(m) => {
-                let pad = self.indent.repeat(depth + 2);
-                let elems: Vec<String> = (m.iter())
-                    .map(|(k, v)| format!("{pad}{}: {}", encode(k), self.format(v, depth + 1)))
-                    .collect();
-                let sep = format!(",{}", self.newline);
-                format!(
-                    "{{{}{}{}{}}}",
-                    self.newline,
-                    elems.join(&sep),
-                    self.newline,
-                    self.indent.repeat(depth + 1)
-                )
-            }
-            scalar => crate::php::json_pretty(scalar),
+        self.format_php(&Php::assoc(v), depth, false)
+    }
+
+    /// `format`: an array or object laid out at `depth`; an empty object (or array, when `was_object`) as `{` and
+    /// `}` on lines of their own, an empty array as `[]`, a list on one line.
+    fn format_php(&self, v: &Php, depth: usize, was_object: bool) -> String {
+        let (entries, was_object) = match v {
+            Php::Object(e) => (e, true),
+            Php::Array(e) => (e, was_object),
+            Php::Scalar(s) => return crate::php::json_pretty(s),
+        };
+        let nl = self.newline;
+        if entries.is_empty() {
+            return if was_object {
+                format!("{{{nl}{}}}", self.indent.repeat(depth + 1))
+            } else {
+                "[]".to_string()
+            };
         }
+        if !was_object && Php::is_list(entries) {
+            let items: Vec<String> = (entries.iter())
+                .map(|(_, v)| self.format_php(v, depth + 1, false))
+                .collect();
+            return format!("[{}]", items.join(", "));
+        }
+        let pad = self.indent.repeat(depth + 2);
+        let elems: Vec<String> = (entries.iter())
+            .map(|(k, v)| {
+                format!(
+                    "{pad}{}: {}",
+                    encode(k),
+                    self.format_php(v, depth + 1, false)
+                )
+            })
+            .collect();
+        format!(
+            "{{{nl}{}{nl}{}}}",
+            elems.join(&format!(",{nl}")),
+            self.indent.repeat(depth + 1)
+        )
     }
 
     /// `addLink`.
@@ -248,7 +356,7 @@ impl Manipulator {
         if self.decoded().get(kind).is_none_or(Value::is_null) {
             let mut content = Map::new();
             content.insert(package.into(), constraint.into());
-            return self.add_main_key(kind, &Value::Object(content));
+            return self.add_main_key(kind, &Php::assoc(&Value::Object(content)));
         }
         let re = pattern(
             &format!(
@@ -327,49 +435,31 @@ impl Manipulator {
     /// `removeLink`: the entry, then the section when it is left empty.
     fn remove_link(&mut self, kind: &str, package: &str) -> bool {
         let before = self.contents.clone();
-        if !self.remove_sub_node(kind, package) {
-            return false;
-        }
-        if before != self.contents {
-            self.remove_main_key_if_empty(kind);
-        }
-        true
+        self.remove_sub_node(kind, package)
+            && (before == self.contents || self.remove_main_key_if_empty(kind))
     }
 
-    /// `removeSubNode` for a link section.
-    fn remove_sub_node(&mut self, main: &str, name: &str) -> bool {
-        let decoded = self.decoded();
-        let node = decoded.get(main);
-        // PHP's `empty()`.
-        let empty = match node {
-            None | Some(Value::Null) => true,
-            Some(Value::Bool(b)) => !b,
-            Some(Value::Number(n)) => n.as_f64() == Some(0.0),
-            Some(Value::String(s)) => s.is_empty() || s == "0",
-            Some(Value::Array(a)) => a.is_empty(),
-            Some(Value::Object(o)) => o.is_empty(),
-        };
-        if empty {
-            return true;
-        }
+    /// The node `main` of the text, an object: what comes before its value, the value, and what comes after.
+    fn node(&self, main: &str, kind: &str) -> Option<(String, String, String)> {
         let re = pattern(
             &format!(
-                r"^(?P<start> \s* \{{ \s* (?: (?&string) \s* : (?&json) \s* , \s* )*?{}\s*:\s*)(?P<content>(?&object))(?P<end>.*)",
+                r"^(?P<start> \s* \{{ \s* (?: (?&string) \s* : (?&json) \s* , \s* )*?{}\s*:\s*)(?P<content>(?&{kind}))(?P<end>.*)",
                 quote(&encode(main))
             ),
             true,
             false,
         );
-        let Ok(Some(m)) = re.captures(self.contents.as_bytes()) else {
-            return false;
-        };
-        let (start, children, end) = (group(&m, "start"), group(&m, "content"), group(&m, "end"));
-        if !node
-            .and_then(Value::as_object)
-            .is_some_and(|o| o.contains_key(name))
-        {
-            return true;
-        }
+        let m = re.captures(self.contents.as_bytes()).ok().flatten()?;
+        Some((
+            group(&m, "start").into(),
+            group(&m, "content").into(),
+            group(&m, "end").into(),
+        ))
+    }
+
+    /// `matchChild`: the member `name` of the object `children`, as (the text before its value, the members before
+    /// it, its value, the comma after it, the length of the whole match).
+    fn match_child(name: &str, children: &str) -> Option<(String, String, String, String, usize)> {
         let key = quote_name(&encode(name));
         let child = pattern(
             &format!(
@@ -378,45 +468,324 @@ impl Manipulator {
             false,
             false,
         );
-        let Ok(Some(c)) = child.captures(children.as_bytes()) else {
+        let c = child.captures(children.as_bytes()).ok().flatten()?;
+        Some((
+            group(&c, "start").into(),
+            group(&c, "prefix").into(),
+            group(&c, "content").into(),
+            group(&c, "end").into(),
+            c.get(0).expect("the match").end(),
+        ))
+    }
+
+    /// The main node `main` and `name` in it, split at its first dot for `config`, `extra` and `scripts`.
+    fn sub_name(main: &str, name: &str) -> (String, Option<String>) {
+        match name.split_once('.') {
+            Some((name, sub)) if matches!(main, "config" | "extra" | "scripts") => {
+                (name.into(), Some(sub.into()))
+            }
+            _ => (name.into(), None),
+        }
+    }
+
+    /// `addSubNode`.
+    pub fn add_sub_node(&mut self, main: &str, name: &str, value: &Php, append: bool) -> bool {
+        let decoded = Php::assoc(&Value::Object(self.decoded()));
+        let (name, sub) = Self::sub_name(main, name);
+        let wrap = |value: &Php| match &sub {
+            Some(sub) => Php::Array(vec![(sub.clone(), value.clone())]),
+            None => value.clone(),
+        };
+        if decoded
+            .get(main)
+            .is_none_or(|v| *v == Php::Scalar(Value::Null))
+        {
+            return self.add_main_key(main, &Php::Array(vec![(name, wrap(value))]));
+        }
+        let Some((start, mut children, end)) = self.node(main, "object") else {
             return false;
         };
-        let (prefix, tail) = (group(&c, "prefix"), group(&c, "end"));
-        let rest = &children[c.get(0).expect("the match").end() - tail.len()..];
-        let clean = if is_match(r",\s*$", prefix) {
-            let p = Regex::new(r",\s*$").expect("valid pattern");
-            let cut = p
+        let nl = self.newline;
+        let pad = self.indent.repeat(2);
+        if decoded.get(main).and_then(|m| m.get(&name)).is_some() {
+            let Some((child_start, _, content, child_end, whole)) =
+                Self::match_child(&name, &children)
+            else {
+                return false;
+            };
+            let value = match &sub {
+                Some(sub) => {
+                    let current: Value = serde_json::from_str(&content).unwrap_or(Value::Null);
+                    let mut current = match Php::object(&current) {
+                        object @ Php::Object(_) => object,
+                        array @ Php::Array(_) => array,
+                        Php::Scalar(_) => Php::Array(vec![]),
+                    };
+                    current.set(sub, value.clone());
+                    current
+                }
+                None => value.clone(),
+            };
+            children = format!(
+                "{child_start}{}{child_end}{}",
+                self.format_php(&value, 1, false),
+                &children[whole..]
+            );
+        } else {
+            let re = Regex::new(
+                r"(?s)^\{(?P<leadingspace>\s*?)(?P<content>\S+.*?)?(?P<trailingspace>\s*)\}$",
+            )
+            .expect("valid pattern");
+            let Ok(Some(c)) = re.captures(children.as_bytes()) else {
+                return false;
+            };
+            let (leading, trailing) = (group(&c, "leadingspace"), group(&c, "trailingspace"));
+            let entry = format!(
+                "{}: {}",
+                encode(&name),
+                self.format_php(&wrap(value), 1, false)
+            );
+            children = if c.name("content").is_some() {
+                if append {
+                    format!(
+                        "{},{nl}{pad}{entry}{trailing}}}",
+                        &children[..children.len() - trailing.len() - 1]
+                    )
+                } else {
+                    format!(
+                        "{{{leading}{entry},{nl}{pad}{}",
+                        &children[1 + leading.len()..]
+                    )
+                }
+            } else {
+                format!("{{{nl}{pad}{entry}{trailing}}}")
+            };
+        }
+        self.contents = format!("{start}{children}{end}");
+        true
+    }
+
+    /// `removeSubNode`.
+    pub fn remove_sub_node(&mut self, main: &str, name: &str) -> bool {
+        let decoded = Php::assoc(&Value::Object(self.decoded()));
+        // PHP's `empty()`.
+        let empty = match decoded.get(main) {
+            None => true,
+            Some(Php::Scalar(v)) => match v {
+                Value::Null => true,
+                Value::Bool(b) => !b,
+                Value::Number(n) => n.as_f64() == Some(0.0),
+                Value::String(s) => s.is_empty() || s == "0",
+                _ => false,
+            },
+            Some(Php::Array(e) | Php::Object(e)) => e.is_empty(),
+        };
+        if empty {
+            return true;
+        }
+        let Some((start, children, end)) = self.node(main, "object") else {
+            return false;
+        };
+        let (name, sub) = Self::sub_name(main, name);
+        let node = decoded.get(main).expect("not empty");
+        let present = matches!(node, Php::Array(_))
+            && match node.get(&name) {
+                None => false,
+                Some(value) => match &sub {
+                    Some(sub) => matches!(value, Php::Array(_)) && value.get(sub).is_some(),
+                    None => true,
+                },
+            };
+        if !present {
+            return true;
+        }
+        let Some((_, prefix, _, tail, whole)) = Self::match_child(&name, &children) else {
+            return false;
+        };
+        let rest = &children[whole - tail.len()..];
+        let clean = if is_match(r",\s*$", &prefix) {
+            let cut = Regex::new(r",\s*$")
+                .expect("valid pattern")
                 .find(prefix.as_bytes())
                 .ok()
-                .flatten()
-                .map_or(prefix.len(), |m| m.start());
-            format!("{}{rest}", &prefix[..cut])
+                .flatten();
+            format!(
+                "{}{rest}",
+                &prefix[..cut.map_or(prefix.len(), |m| m.start())]
+            )
         } else {
-            let lead = Regex::new(r"^\s*,?\s*").expect("valid pattern");
-            let cut = lead
+            let cut = Regex::new(r"^\s*,?\s*")
+                .expect("valid pattern")
                 .find(rest.as_bytes())
                 .ok()
-                .flatten()
-                .map_or(0, |m| m.end());
-            format!("{prefix}{}", &rest[cut..])
+                .flatten();
+            format!("{prefix}{}", &rest[cut.map_or(0, |m| m.end())..])
         };
+        // `removeKey`: an object without the member, an array without the item (re-indexed).
+        let without = |value: &Php, key: &str| match value {
+            Php::Object(e) => Php::Object(e.iter().filter(|(k, _)| k != key).cloned().collect()),
+            Php::Array(e) => Php::Array(
+                (e.iter().filter(|(k, _)| k != key).enumerate())
+                    .map(|(i, (_, v))| (i.to_string(), v.clone()))
+                    .collect(),
+            ),
+            scalar @ Php::Scalar(_) => scalar.clone(),
+        };
+        let current =
+            || Php::object(&serde_json::from_str::<Value>(&children).unwrap_or(Value::Null));
         let nothing_left = Regex::new(r"(?s)^\{\s*?(?P<content>\S+.*?)?(?P<trailingspace>\s*)\}$")
             .expect("valid pattern")
             .captures(clean.as_bytes())
             .ok()
             .flatten()
             .is_some_and(|c| c.name("content").is_none());
-        self.contents = if nothing_left {
-            format!("{start}{{{}{}}}{end}", self.newline, self.indent)
-        } else {
-            format!("{start}{clean}{end}")
+        if nothing_left {
+            self.contents = format!("{start}{{{}{}}}{end}", self.newline, self.indent);
+            if let Some(sub) = &sub {
+                let value = without(current().get(&name).expect("the member"), sub);
+                self.add_sub_node(main, &name, &value, true);
+            }
+            return true;
+        }
+        let children = match &sub {
+            Some(sub) => {
+                let mut whole = current();
+                let value = without(whole.get(&name).expect("the member"), sub);
+                whole.set(&name, value);
+                self.format_php(&whole, 0, false)
+            }
+            None => clean,
         };
+        self.contents = format!("{start}{children}{end}");
+        true
+    }
+
+    /// `addListItem`.
+    pub fn add_list_item(&mut self, main: &str, value: &Php, append: bool) -> bool {
+        if self.decoded().get(main).is_none_or(Value::is_null)
+            && !self.add_main_key(main, &Php::Array(vec![]))
+        {
+            return false;
+        }
+        let Some((start, children, end)) = self.node(main, "array") else {
+            return false;
+        };
+        let re = Regex::new(
+            r"(?s)^\[(?P<leadingspace>\s*?)(?P<content>\S+.*?)?(?P<trailingspace>\s*)\]$",
+        )
+        .expect("valid pattern");
+        let Ok(Some(c)) = re.captures(children.as_bytes()) else {
+            return false;
+        };
+        let (leading, trailing) = (group(&c, "leadingspace"), group(&c, "trailingspace"));
+        let nl = self.newline;
+        let (lead_item, trail_item, depth) = if trailing.contains(nl) {
+            (
+                format!("{nl}{}", self.indent.repeat(2)),
+                trailing.to_string(),
+                1,
+            )
+        } else {
+            (leading.to_string(), leading.to_string(), 0)
+        };
+        let item = self.format_php(value, depth, false);
+        let children = if c.name("content").is_some() {
+            if append {
+                format!(
+                    "{},{lead_item}{item}{trail_item}]",
+                    &children[..children.len() - trailing.len() - 1]
+                )
+            } else {
+                format!(
+                    "[{leading}{item},{lead_item}{}",
+                    &children[1 + leading.len()..]
+                )
+            }
+        } else {
+            format!("[{lead_item}{item}{trail_item}]")
+        };
+        self.contents = format!("{start}{children}{end}");
+        true
+    }
+
+    /// `removeListItem`.
+    fn remove_list_item(&mut self, main: &str, index: usize) -> bool {
+        let decoded = Php::assoc(&Value::Object(self.decoded()));
+        if matches!(decoded.get(main), Some(Php::Array(e)) if e.is_empty()) {
+            return true;
+        }
+        let Some((start, children, end)) = self.node(main, "array") else {
+            return false;
+        };
+        if decoded
+            .get(main)
+            .and_then(|m| m.get(&index.to_string()))
+            .is_none()
+        {
+            return true;
+        }
+        let (before, content, after) = match index {
+            0 => (
+                r"\s*+",
+                r"(?&json)\s*+,?\s*+",
+                r"(?:((?&json)\s*+,\s*+)*(?:\s*+(?&json))?)\s*+",
+            ),
+            1 => (
+                r"(?&json)\s*+",
+                r"\s*+,?\s*+(?&json)",
+                r"(?:(\s*+,\s*+(?&json))*(?:\s*+(?&json))?)\s*+",
+            ),
+            _ => (
+                "",
+                r"\s*+,?\s*+(?&json)",
+                r"(?:(\s*+,\s*+(?&json))*(?:\s*+(?&json))?)\s*+",
+            ),
+        };
+        let before = if index > 1 {
+            format!(r"(?&json)\s*+(?:,(?&json)\s*+){{{}}}", index - 1)
+        } else {
+            before.to_string()
+        };
+        let re = pattern(
+            &format!(r"(?P<start>\[{before})(?P<content>{content})(?P<end>{after}\])"),
+            true,
+            false,
+        );
+        let Ok(Some(c)) = re.captures(children.as_bytes()) else {
+            return false;
+        };
+        self.contents = format!("{start}{}{}{end}", group(&c, "start"), group(&c, "end"));
+        true
+    }
+
+    /// `changeEmptyMainKeyFromAssocToList`.
+    fn change_empty_main_key_to_list(&mut self, key: &str) -> bool {
+        if !self.decoded().contains_key(key) {
+            return true;
+        }
+        let re = pattern(
+            &format!(
+                r"^(?P<start>\s*\{{\s*(?:(?&string)\s*:\s*(?&json)\s*,\s*)*?{}\s*:\s*)(?P<removal>\{{(?P<removal_space>\s*+)\}})(?P<end>\s*,?\s*.*)",
+                quote(&encode(key))
+            ),
+            true,
+            false,
+        );
+        let Ok(Some(m)) = re.captures(self.contents.as_bytes()) else {
+            return false;
+        };
+        self.contents = format!(
+            "{}[{}]{}",
+            group(&m, "start"),
+            group(&m, "removal_space"),
+            group(&m, "end")
+        );
         true
     }
 
     /// `addMainKey`.
-    fn add_main_key(&mut self, key: &str, content: &Value) -> bool {
-        let content = self.format(content, 0);
+    fn add_main_key(&mut self, key: &str, content: &Php) -> bool {
+        let content = self.format_php(content, 0, false);
         let re = pattern(
             &format!(
                 r"^(?P<start>{BEFORE})(?P<key>{}\s*:\s*(?&json))(?P<end>.*)",
@@ -454,15 +823,20 @@ impl Manipulator {
         true
     }
 
-    /// `removeMainKeyIfEmpty`, called only after `removeSubNode` edited the key, so its value is an object.
-    fn remove_main_key_if_empty(&mut self, key: &str) {
-        if matches!(self.decoded().get(key), Some(Value::Object(o)) if o.is_empty()) {
-            self.remove_main_key(key);
+    /// `removeMainKeyIfEmpty`.
+    fn remove_main_key_if_empty(&mut self, key: &str) -> bool {
+        match self.decoded().get(key) {
+            Some(Value::Object(o)) if o.is_empty() => self.remove_main_key(key),
+            Some(Value::Array(a)) if a.is_empty() => self.remove_main_key(key),
+            _ => true,
         }
     }
 
-    /// `removeMainKey` for a key `removeSubNode` just matched with a stricter pattern, so this one matches too.
-    fn remove_main_key(&mut self, key: &str) {
+    /// `removeMainKey`.
+    pub fn remove_main_key(&mut self, key: &str) -> bool {
+        if !self.decoded().contains_key(key) {
+            return true;
+        }
         let re = pattern(
             &format!(
                 r"^(?P<start>{BEFORE})(?P<removal>{}\s*:\s*(?&json))\s*,?\s*(?P<end>.*)",
@@ -471,8 +845,9 @@ impl Manipulator {
             true,
             false,
         );
-        let m = (re.captures(self.contents.as_bytes()).ok().flatten())
-            .expect("removeSubNode matched the key");
+        let Ok(Some(m)) = re.captures(self.contents.as_bytes()) else {
+            return false;
+        };
         let (mut start, end) = (group(&m, "start").to_string(), group(&m, "end"));
         if is_match(r",\s*$", &start) && end == "}" {
             let comma = start.rfind(',').expect("a comma");
@@ -484,6 +859,171 @@ impl Manipulator {
         if is_match(r"^\{\s*\}\s*$", &self.contents) {
             self.contents = "{\n}".into();
         }
+        true
+    }
+
+    /// `addProperty`: a member of `suggest`, `extra` or `scripts`, else a main key.
+    pub fn add_property(&mut self, name: &str, value: &Php) -> bool {
+        for main in ["suggest", "extra", "scripts"] {
+            if let Some(rest) = name.strip_prefix(&format!("{main}.")) {
+                return self.add_sub_node(main, rest, value, true);
+            }
+        }
+        self.add_main_key(name, value)
+    }
+
+    /// `removeProperty`: a member of `suggest`, `extra`, `scripts`, `autoload` or `autoload-dev`, else a main key.
+    pub fn remove_property(&mut self, name: &str) -> bool {
+        for main in ["suggest", "extra", "scripts", "autoload", "autoload-dev"] {
+            if let Some(rest) = name.strip_prefix(&format!("{main}.")) {
+                return self.remove_sub_node(main, rest);
+            }
+        }
+        self.remove_main_key(name)
+    }
+
+    /// The list `policy.<list>` of `config`, as an array (empty when it isn't one).
+    fn policy_list(&self, list: &str) -> Php {
+        let decoded = Php::assoc(&Value::Object(self.decoded()));
+        match decoded
+            .get("config")
+            .and_then(|c| c.get("policy"))
+            .and_then(|p| p.get(list))
+        {
+            Some(array @ Php::Array(_)) => array.clone(),
+            _ => Php::Array(vec![]),
+        }
+    }
+
+    /// `addConfigSetting`: a `config` member; a field of a `policy` list replaces that list.
+    pub fn add_config_setting(&mut self, name: &str, value: &Php) -> bool {
+        if let Some(rest) = name.strip_prefix("policy.")
+            && let Some((list, field)) = rest.split_once('.')
+        {
+            if field.contains('.') {
+                return false;
+            }
+            let mut block = self.policy_list(list);
+            block.set(field, value.clone());
+            return self.add_sub_node("config", &format!("policy.{list}"), &block, true);
+        }
+        self.add_sub_node("config", name, value, true)
+    }
+
+    /// `removeConfigSetting`.
+    pub fn remove_config_setting(&mut self, name: &str) -> bool {
+        if let Some(rest) = name.strip_prefix("policy.")
+            && let Some((list, field)) = rest.split_once('.')
+        {
+            if field.contains('.') {
+                return false;
+            }
+            let block = self.policy_list(list);
+            let Some(entries) = block
+                .entries()
+                .filter(|e| e.iter().any(|(k, _)| k == field))
+            else {
+                return true;
+            };
+            let left: Vec<(String, Php)> = entries
+                .iter()
+                .filter(|(k, _)| k != field)
+                .cloned()
+                .collect();
+            if left.is_empty() {
+                return self.remove_config_setting(&format!("policy.{list}"));
+            }
+            return self.add_sub_node("config", &format!("policy.{list}"), &Php::Array(left), true);
+        }
+        self.remove_sub_node("config", name)
+    }
+
+    /// `doConvertRepositoriesFromAssocToList`: `repositories` as an object becomes a list, a named entry with its
+    /// name as `name`.
+    fn repositories_to_list(&mut self) -> bool {
+        let decoded = Php::object(&Value::Object(self.decoded()));
+        let Some(Php::Object(repositories)) = decoded.get("repositories").cloned() else {
+            return true;
+        };
+        for (key, _) in repositories.iter().rev() {
+            if !self.remove_sub_node("repositories", key) {
+                return false;
+            }
+        }
+        self.change_empty_main_key_to_list("repositories");
+        for (name, repository) in repositories {
+            let item = match repository {
+                Php::Object(fields) if !is_numeric(&name) => {
+                    let mut item = vec![("name".to_string(), Php::Scalar(name.into()))];
+                    item.extend(fields.into_iter().filter(|(k, _)| k != "name"));
+                    Php::Array(item)
+                }
+                object @ Php::Object(_) => object,
+                other => Php::Array(vec![(name, other)]),
+            };
+            if !self.add_list_item("repositories", &item, true) {
+                return false;
+            }
+        }
+        true
+    }
+
+    /// `doRemoveRepository`.
+    fn remove_repository_entry(&mut self, name: &str) -> bool {
+        let decoded = Php::object(&Value::Object(self.decoded()));
+        let (assoc, repositories) = match decoded.get("repositories") {
+            Some(Php::Object(e)) => (true, e.clone()),
+            Some(Php::Array(e)) => (false, e.clone()),
+            _ => (false, vec![]),
+        };
+        for (i, (key, repository)) in repositories.iter().enumerate() {
+            if assoc && key == name {
+                return self.remove_sub_node("repositories", key);
+            }
+            if repository.get("name") == Some(&Php::Scalar(name.into())) {
+                return if assoc {
+                    self.remove_sub_node("repositories", key)
+                } else {
+                    self.remove_list_item("repositories", i)
+                };
+            }
+            if !assoc
+                && let Php::Object(fields) = repository
+                && fields.len() == 1
+                && fields[0] == (name.to_string(), Php::Scalar(Value::Bool(false)))
+            {
+                return self.remove_list_item("repositories", i);
+            }
+        }
+        true
+    }
+
+    /// `addRepository`: without an entry of that name, as a list, with the repository (named, or `{name: false}`
+    /// for one turned off) first, or last when `append`.
+    pub fn add_repository(&mut self, name: &str, config: &Php, append: bool) -> bool {
+        if !name.is_empty() && !self.remove_repository_entry(name) {
+            return false;
+        }
+        if !self.repositories_to_list() {
+            return false;
+        }
+        let item = match config {
+            Php::Array(fields) | Php::Object(fields) if !is_numeric(name) && !name.is_empty() => {
+                let mut item = vec![("name".to_string(), Php::Scalar(name.into()))];
+                item.extend(fields.iter().filter(|(k, _)| k != "name").cloned());
+                Php::Array(item)
+            }
+            Php::Scalar(Value::Bool(false)) => Php::Array(vec![(name.to_string(), config.clone())]),
+            other => other.clone(),
+        };
+        self.add_list_item("repositories", &item, append)
+    }
+
+    /// `removeRepository`.
+    pub fn remove_repository(&mut self, name: &str) -> bool {
+        let before = self.contents.clone();
+        self.remove_repository_entry(name)
+            && (before == self.contents || self.remove_main_key_if_empty("repositories"))
     }
 }
 
@@ -738,6 +1278,31 @@ mod tests {
             let mut m = Manipulator::new(&text);
             assert_eq!(m.remove_sub_node("require-dev", "a/b"), ok, "{value}");
             assert_eq!(m.text(), format!("{text}\n"));
+        }
+    }
+
+    /// What Composer 2.11.2's manipulator leaves of a section emptied or already empty: `removeLink` on an empty list
+    /// changes nothing, so the section stays; removing the last repository leaves an empty list, which
+    /// `removeMainKeyIfEmpty` takes out with its key.
+    #[test]
+    fn removes_emptied_sections_as_composer() {
+        type Edit = fn(&mut Manipulator) -> bool;
+        let cases: [(&str, Edit, &str); 2] = [
+            (
+                "{\n    \"name\": \"a/b\",\n    \"require\": [],\n    \"require-dev\": {\n        \"x/y\": \"*\"\n    }\n}\n",
+                |m| m.remove_link("require", "acme/x"),
+                "{\n    \"name\": \"a/b\",\n    \"require\": [],\n    \"require-dev\": {\n        \"x/y\": \"*\"\n    }\n}\n",
+            ),
+            (
+                "{\n    \"name\": \"a/b\",\n    \"repositories\": [\n        {\n            \"name\": \"foo\",\n            \"type\": \"vcs\",\n            \"url\": \"https://example.org/foo\"\n        }\n    ]\n}\n",
+                |m| m.remove_repository("foo"),
+                "{\n    \"name\": \"a/b\"\n}\n",
+            ),
+        ];
+        for (text, edit, expected) in cases {
+            let mut m = Manipulator::new(text);
+            assert!(edit(&mut m), "{text}");
+            assert_eq!(m.text(), expected, "{text}");
         }
     }
 

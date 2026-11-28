@@ -10,6 +10,7 @@ mod analyse_report;
 mod baseline;
 mod cache;
 mod composer;
+mod composer_config;
 mod console;
 mod exec;
 mod extensions;

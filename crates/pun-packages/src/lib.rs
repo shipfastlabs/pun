@@ -1,6 +1,7 @@
 pub mod autoload;
 pub mod bins;
 pub mod classmap;
+pub mod composer_config;
 pub mod constraint;
 pub mod error;
 pub mod fetch;

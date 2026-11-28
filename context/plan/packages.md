@@ -19,7 +19,7 @@ The everyday commands are top-level, with Composer's names and flags:
 | `pun update [packages]` | `composer update` | Resolves again, writes composer.lock, installs |
 | `pun require <pkg[:constraint]>` | `composer require` | Adds to composer.json, then a partial update |
 | `pun remove <pkg>` | `composer remove` | Removes from composer.json, then a partial update |
-| `pun composer <command>` | `composer <command>` | Every other Composer command. Built: `dump-autoload`, `run-script`, `exec`. Not built: `show`, `outdated`, `why`, `why-not`, `audit`, `validate`, `licenses`, `check-platform-reqs`, `config`, ... |
+| `pun composer <command>` | `composer <command>` | Every other Composer command. Built: `dump-autoload`, `run-script`, `exec`, `config`. Not built: `show`, `outdated`, `why`, `why-not`, `audit`, `validate`, `licenses`, `check-platform-reqs`, ... |
 
 `pun composer install` and `pun install` are the same command. A `pun composer` command Pun has not built yet is a
 run error (exit 2) that names it; Pun does not shell out to the Composer CLI.
@@ -137,7 +137,8 @@ teammates run, and it needs no resolver.
    repositories, and the root `filter.summary-url`.
 10. **The long tail of `pun composer`:** `show`, `outdated`, `why`, `why-not`, `audit`, `licenses`, `check-platform-reqs`,
     `config`, `init`, `create-project`, `global`, `status`, `reinstall`, `bump`, in that order, each with its machine
-    format matched. Not built.
+    format matched. Built: `config`, matching Composer 2.11.2 on the cases of
+    `crates/pun-cli/tests/fixtures/config.json`. The rest is not built.
 11. **Docs.** A docs section for the package manager (commands, compatibility, plugins, what is not supported).
     *Today:* command pages under docs/content/docs/commands/ and a workspaces guide exist. No benchmark figures are
     published (PLAN.md §2, 2026-11-23).
