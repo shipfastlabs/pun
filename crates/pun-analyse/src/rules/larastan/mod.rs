@@ -776,7 +776,15 @@ fn late_of(
     if args.iter().any(late) {
         return Type::Object(name.into(), args.to_vec(), false);
     }
-    resolve_late(codebase, name, args).unwrap_or(Type::Never(NeverKind::Implicit))
+    resolve_late(codebase, name, args).unwrap_or_else(|| match name {
+        // RelationOfType::getResult(): no relation found (a collection of `mixed`) is `Relation<mixed, mixed, mixed>`
+        "relation-of" => Type::Object(
+            "Illuminate\\Database\\Eloquent\\Relations\\Relation".into(),
+            vec![pun_phpstan::types::mixed(); 3],
+            false,
+        ),
+        _ => Type::Never(NeverKind::Implicit),
+    })
 }
 
 /// BuilderOfType::getResult() of a template: the builder of the template's bound, generic in the template itself.

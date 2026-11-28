@@ -125,6 +125,8 @@
 //! included) has its errors from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
 //! Type/PunNestedEagerLoadTest.json (the closure of a nested eager-load key next to its first relation's key, then
 //! `when()`) has its assertion from PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
+//! Type/PunHigherOrderRelationsTest.json (a relation read through the higher-order `flatMap`) has its assertion from
+//! PHPStan 2.3.7 with Larastan 3.15.0 at level 8 in a Laravel 13.44.1 app.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};

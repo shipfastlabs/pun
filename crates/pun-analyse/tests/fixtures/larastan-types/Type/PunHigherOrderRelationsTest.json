@@ -1,0 +1,20 @@
+{
+    "test": "Type/PunHigherOrderRelationsTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-higher-order-relations.php",
+            "declares": [
+                "punhigherorderrelations\\answer",
+                "punhigherorderrelations\\loadanswermedia",
+                "punhigherorderrelations\\report"
+            ],
+            "asserts": [
+                29
+            ],
+            "errors": []
+        }
+    ]
+}
