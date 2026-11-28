@@ -1,0 +1,16 @@
+{
+    "test": "Type/PunPivotOverrideTest",
+    "configs": [
+        "tests/Type/data/config-with-migrations.neon"
+    ],
+    "cases": [
+        {
+            "file": "tests/Type/data/pun-pivot-override.php",
+            "declares": [
+                "punpivotoverride\\membership"
+            ],
+            "asserts": [],
+            "errors": []
+        }
+    ]
+}

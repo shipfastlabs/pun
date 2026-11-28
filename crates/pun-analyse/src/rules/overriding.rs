@@ -1421,9 +1421,13 @@ fn method_signature<'a>(
             }
             Found::Builtin { .. } => (Vec::new(), None),
         };
-        let returned = decide_type(
-            method.ret.clone(),
-            own_return.as_ref().map(Type::resolve_to_bounds),
+        // PhpDocsResolver::transformStaticType() moves `static` in the method's own types to the class too
+        let returned = transform_static(
+            &decide_type(
+                method.ret.clone(),
+                own_return.as_ref().map(Type::resolve_to_bounds),
+            ),
+            k,
         );
         let original_parent = decide_type(
             facts.ret.clone(),
@@ -1455,7 +1459,10 @@ fn method_signature<'a>(
             own_params.iter().zip(&facts.params).enumerate()
         {
             let parent_doc = parent_docs.get(i).cloned().flatten();
-            let own = decide_type(native.clone(), phpdoc.as_ref().map(Type::resolve_to_bounds));
+            let own = transform_static(
+                &decide_type(native.clone(), phpdoc.as_ref().map(Type::resolve_to_bounds)),
+                k,
+            );
             let original_parent = decide_type(
                 parent_param.native.clone(),
                 parent_doc.as_ref().map(Type::resolve_to_bounds),
