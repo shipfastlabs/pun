@@ -688,3 +688,26 @@ fn rule_meta_ported(id: &str) -> bool {
         .and_then(toml::Value::as_bool)
         == Some(true)
 }
+
+#[test]
+fn a_rector_rule_deprecated_upstream_still_migrates_to_its_pun_rule() {
+    // Rector 2.9.2 deprecates both; a rector.php written for 2.8 still names them (PLAN.md §2, 2026-11-28).
+    let root = dir(&[]);
+    let config = RectorConfig {
+        rules: strings(&[
+            "Rector\\CodingStyle\\Rector\\Stmt\\NewlineAfterStatementRector",
+            "Rector\\Transform\\Rector\\ClassMethod\\WrapReturnRector",
+        ]),
+        ..RectorConfig::default()
+    };
+    let r = from_rector(&root, &config);
+    let want: Vec<&str> = r.want.iter().map(|(a, _)| a.as_str()).collect();
+    assert_eq!(
+        want,
+        [
+            "lint/style/require-statement-padding",
+            "lint/refactor/wrap-return"
+        ]
+    );
+    assert!(r.unsupported.is_empty(), "{:?}", r.unsupported);
+}

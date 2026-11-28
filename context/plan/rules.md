@@ -175,7 +175,9 @@ strict_comparison = { pun = "lint/types/no-loose-comparison", risky = true, opti
 - **Pinned upstream versions** are in `[meta] upstream`: PHP-CS-Fixer 3.95.25, Pint 1.32.1, Rector 2.9.2 (with
   rector-phpunit dev-main@d0b6caa bundled), rector-laravel 2.7.3, pest-plugin-rector 5.x-dev@8c1b780, PHPStan 2.3.5,
   strict-rules 2.0.12, deprecation-rules 2.0.5, Larastan 3.14.0, Mago 1.61.0. reference/oracle.md says how to fetch
-  each.
+  each. Lint rules follow Rector 2.9.2 and do not track later releases (PLAN.md §2, 2026-11-28).
+- **Rector names are append-only:** `rules/rector-classes.txt` lists every Rector class with an entry, and the checker
+  fails when one loses it. Add new classes there after an inventory bump; never remove one.
 
 **The checker** (`scripts/check-rule-mapping.py`; its docstring lists every check) enforces §3's naming, the group
 list, references, exactly one of pun / drop / unsupported per upstream entry, and conflicts. Against the upstream

@@ -502,6 +502,7 @@ def translation(tool: str) -> str:
 | Some of the Rector rules of one Pun rule, such as `ForeachToArrayFindRector` without the other `ForeachToArray*Rector` rules | The Pun rule with its option that limits it to those rewrites, such as `functions = [\"array-find\"]` |
 | `->withPaths()`, path skips | `[lint] exclude` and `[[lint.overrides]]`. Rector matches a skip against the absolute path, so `*/tests/*` becomes `["tests/*", "*/tests/*"]` |
 | Closures, null values, custom rules, excluded sets | Reported and skipped |
+| A rule name from any Rector 2.x version, including rules Rector has since deprecated | The same Pun rule |
 | `->withImportNames()`, `->withTreatClassesAsFinal()`, `->withPhpVersion()`, `->withFileExtensions()`, `->withIndent()`, `->withFluentCallNewLine()`, `->withTypeGuardedClasses()` | Reported under "Not migrated": pun.toml has no project-wide equivalent. Lint fixes write class names fully qualified |
 
 Layout-only Rector rules map to format rules. The migration reports any that `[format]` does not run.

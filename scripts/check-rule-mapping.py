@@ -13,8 +13,10 @@ one lint preset, or one analyse preset would enable.
 
 Against the pinned upstream inventories in crates/pun-config/rules/upstream/*.json (context/plan/rules.md §5) it also
 fails on: an in-scope Rector, rector-laravel, rector-phpunit or Pest rule, or an in-scope PHPStan, strict-rules,
-deprecation-rules or Larastan rule class, that has no entry or maps to no Pun rule; an entry that maps a deprecated or
-out-of-scope upstream rule (old Laravel upgrade set, no set, outside the in-scope sets) to a Pun rule (Rector's PHP
+deprecation-rules or Larastan rule class, that has no entry or maps to no Pun rule; a Rector class in
+rules/rector-classes.txt that lost its entry (Rector names are append-only); an entry that maps an out-of-scope
+upstream rule (old Laravel upgrade set, no set, outside the in-scope sets) to a Pun rule (a Rector rule deprecated
+after Pun ported it may keep its Pun rule, PLAN.md §2 2026-11-28; Rector's PHP
 upgrade rules below php82, its php-polyfills rules, the PHPUnit upgrade rules below phpunit110, rector-laravel's
 upgrade rules below laravel-12, its package upgrade rules below the current majors, its legacy-factories and Lumen rules
 and the rules in no set or only in sets outside the eight prepared sets may map to one, and need not); a lint or
@@ -279,15 +281,25 @@ def in_scope(r):
 
 
 def may_port(r):
+    # A rule Rector deprecates after Pun ported it stays a Pun rule, and its Rector name still migrates to it
+    # (PLAN.md §2, 2026-11-28).
     reason = r.get("out_of_scope_reason") or ""
-    return in_scope(r) or (not r["deprecated"]
-                           and (reason in OLD_PHP or reason == OLD_PHPUNIT or reason.startswith(NO_SET + OLD_LARAVEL)))
+    return (in_scope(r) or r["deprecated"]
+            or reason in OLD_PHP or reason == OLD_PHPUNIT or reason.startswith(NO_SET + OLD_LARAVEL))
 
 
 def why_out(r):
     if r["deprecated"]:
         return "deprecated upstream"
     return r.get("out_of_scope_reason") or "out of scope (rules.md §2 O9)"
+
+
+def check_names(data, names):
+    """Rector names are append-only (PLAN.md §2, 2026-11-28): every class in rector-classes.txt keeps an entry, so a
+    rector.php from any Rector 2.x version still migrates after an inventory bump."""
+    have = {u.get("class", k) for t in RECTOR_TOOLS for k, u in data["upstream"].get(t, {}).items()}
+    return [f"{c}: listed in rector-classes.txt but has no [upstream.*] entry (Rector names are never removed)"
+            for c in names if c not in have]
 
 
 def check_upstream(data, inv):
@@ -598,7 +610,14 @@ def selftest_upstream():
     old_php["rules"]["lint"]["phpunit/prefer-baz"] = {}
     old_php["upstream"]["rector"]["PhpUnit90"] = {"class": "R\\PhpUnit90Rector", "pun": "lint/phpunit/prefer-baz"}
     assert check_upstream(old_php, inv) == [], check_upstream(old_php, inv)
-    bad(lambda d: d["upstream"]["rector"]["Gone"].update(pun="lint/style/no-foo"), "deprecated upstream")
+    gone = copy.deepcopy(good)
+    gone["upstream"]["rector"]["Gone"] = {"class": "R\\GoneRector", "pun": "lint/style/no-foo"}
+    gone["upstream"]["mago-linter"].pop("n")
+    assert not [e for e in check_upstream(gone, inv) if "deprecated" in e], check_upstream(gone, inv)
+    assert check_names(good, ["R\\FooRector", "R\\GoneRector"]) == []
+    d = copy.deepcopy(good)
+    d["upstream"]["rector"].pop("Gone")
+    assert check_names(d, ["R\\GoneRector"]) and not check_names(d, ["R\\FooRector"])
     bad(lambda d: d["upstream"]["rector"]["Foo"].pop("pun"), "in scope upstream but maps to no Pun rule")
     bad(lambda d: d["upstream"]["rector"].pop("Foo"), "has no [upstream.*] entry")
     bad(lambda d: d["upstream"]["rector"].update(Post={"class": "R\\PostRector", "pun": "lint/style/no-foo"}),
@@ -639,6 +658,7 @@ if __name__ == "__main__":
         sys.exit(1)
     data = tomllib.loads(text)
     errors = check(data) + check_upstream(data, inventory(path.parent / "upstream"))
+    errors += check_names(data, (path.parent / "rector-classes.txt").read_text().split())
     errors += check_emitted(data, emitted())
     for e in errors:
         print(e)

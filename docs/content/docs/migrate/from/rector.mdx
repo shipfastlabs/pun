@@ -22,6 +22,7 @@ Run `pun migrate --from rector` after `composer install`. It reads `rector.php` 
 | Some of the Rector rules of one Pun rule, such as `ForeachToArrayFindRector` without the other `ForeachToArray*Rector` rules | The Pun rule with its option that limits it to those rewrites, such as `functions = ["array-find"]` |
 | `->withPaths()`, path skips | `[lint] exclude` and `[[lint.overrides]]`. Rector matches a skip against the absolute path, so `*/tests/*` becomes `["tests/*", "*/tests/*"]` |
 | Closures, null values, custom rules, excluded sets | Reported and skipped |
+| A rule name from any Rector 2.x version, including rules Rector has since deprecated | The same Pun rule |
 | `->withImportNames()`, `->withTreatClassesAsFinal()`, `->withPhpVersion()`, `->withFileExtensions()`, `->withIndent()`, `->withFluentCallNewLine()`, `->withTypeGuardedClasses()` | Reported under "Not migrated": pun.toml has no project-wide equivalent. Lint fixes write class names fully qualified |
 
 Layout-only Rector rules map to format rules. The migration reports any that `[format]` does not run.
@@ -67,10 +68,6 @@ Layout-only Rector rules map to format rules. The migration reports any that `[f
 ### deprecated upstream (2.7.0 (removed), main (removed))
 
 [`RenameDeprecatedMethodCall`](https://getrector.com/find-rule), [`UtilsJsonStaticCallNamedArg`](https://getrector.com/find-rule).
-
-### deprecated upstream (2.9.2, main)
-
-[`AttributeKeyToClassConstFetch`](https://getrector.com/find-rule), [`FuncCallToConstFetch`](https://getrector.com/find-rule), [`NewlineAfterStatement`](https://getrector.com/find-rule), [`RenameString`](https://getrector.com/find-rule), [`StaticCallToNew`](https://getrector.com/find-rule), [`WrapReturn`](https://getrector.com/find-rule).
 
 ### deprecated upstream (removed in 2.9.0)
 
@@ -139,9 +136,3 @@ Layout-only Rector rules map to format rules. The migration reports any that `[f
 ## Pun-only rules
 
 - [`lint/comments/no-unused-ignore`](/docs/rules/lint/comments/no-unused-ignore)
-- [`lint/refactor/replace-attribute-value-with-constant`](/docs/rules/lint/refactor/replace-attribute-value-with-constant)
-- [`lint/refactor/replace-function-with-constant`](/docs/rules/lint/refactor/replace-function-with-constant)
-- [`lint/refactor/rename-string`](/docs/rules/lint/refactor/rename-string)
-- [`lint/refactor/replace-static-with-new`](/docs/rules/lint/refactor/replace-static-with-new)
-- [`lint/refactor/wrap-return`](/docs/rules/lint/refactor/wrap-return)
-- [`lint/style/require-statement-padding`](/docs/rules/lint/style/require-statement-padding)

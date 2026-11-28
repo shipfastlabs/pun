@@ -17560,8 +17560,14 @@
       "enabled": [],
       "fix": "unsafe",
       "ecosystem": "core",
-      "tools": [],
-      "upstream": [],
+      "tools": [
+        "rector"
+      ],
+      "upstream": [
+        "Rector\\Renaming\\Rector\\String_\\RenameStringRector",
+        "RenameString",
+        "RenameStringRector"
+      ],
       "ported": true
     },
     {
@@ -17572,8 +17578,14 @@
       "enabled": [],
       "fix": "unsafe",
       "ecosystem": "core",
-      "tools": [],
-      "upstream": [],
+      "tools": [
+        "rector"
+      ],
+      "upstream": [
+        "AttributeKeyToClassConstFetch",
+        "AttributeKeyToClassConstFetchRector",
+        "Rector\\Transform\\Rector\\Attribute\\AttributeKeyToClassConstFetchRector"
+      ],
       "ported": true
     },
     {
@@ -17622,8 +17634,14 @@
       "enabled": [],
       "fix": "unsafe",
       "ecosystem": "core",
-      "tools": [],
-      "upstream": [],
+      "tools": [
+        "rector"
+      ],
+      "upstream": [
+        "FuncCallToConstFetch",
+        "FuncCallToConstFetchRector",
+        "Rector\\Transform\\Rector\\FuncCall\\FuncCallToConstFetchRector"
+      ],
       "ported": true
     },
     {
@@ -17745,8 +17763,14 @@
       "enabled": [],
       "fix": "unsafe",
       "ecosystem": "core",
-      "tools": [],
-      "upstream": [],
+      "tools": [
+        "rector"
+      ],
+      "upstream": [
+        "Rector\\Transform\\Rector\\StaticCall\\StaticCallToNewRector",
+        "StaticCallToNew",
+        "StaticCallToNewRector"
+      ],
       "ported": true
     },
     {
@@ -17757,8 +17781,14 @@
       "enabled": [],
       "fix": "unsafe",
       "ecosystem": "core",
-      "tools": [],
-      "upstream": [],
+      "tools": [
+        "rector"
+      ],
+      "upstream": [
+        "Rector\\Transform\\Rector\\ClassMethod\\WrapReturnRector",
+        "WrapReturn",
+        "WrapReturnRector"
+      ],
       "ported": true
     },
     {
@@ -19967,8 +19997,14 @@
       ],
       "fix": "safe",
       "ecosystem": "core",
-      "tools": [],
-      "upstream": [],
+      "tools": [
+        "rector"
+      ],
+      "upstream": [
+        "NewlineAfterStatement",
+        "NewlineAfterStatementRector",
+        "Rector\\CodingStyle\\Rector\\Stmt\\NewlineAfterStatementRector"
+      ],
       "ported": true
     },
     {

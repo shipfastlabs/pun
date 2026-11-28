@@ -18,7 +18,7 @@ The latest release is v0.3.2.
 - **Priorities, in order:** (1) release tags reach Packagist (§3 Step 5); (2) finish analyse level 0 and levels 1-10;
   (3) the 17 new lint rules; (4) `pun check` in one pass; (5) perf rounds.
 - **Waiting on Pushpak:** the `needs Pushpak` rows in §3 (audit 26, the Packagist hook, `[phpstan-parameters]`,
-  Laravel attributes batch 8, the six rules Rector 2.9.2 deprecates, and the others marked so).
+  Laravel attributes batch 8, and the others marked so).
 
 ## 1. This folder
 
@@ -166,6 +166,15 @@ All from Pushpak unless marked "assistant's call"; dated 2026-10-17 unless given
   and the Pest plugin is ported, except the ones upstream deprecates and Rector's post-processors (not rules). Rules
   outside the eight sets join the groups their upstream set names; Symfony and Doctrine rules run only when
   `[extensions]` turns that ecosystem on, and the downgrade rules only when you name their group (they undo modernize).
+- **Lint rules are Pun's own, based on Rector 2.9.2** (Pushpak, 2026-11-28; narrows "One-to-one with upstream" and
+  "All of Rector but its deprecated rules" for lint): a lint rule changes only in a Pun release, with a changelog
+  entry, not when Rector releases. A Rector bump is optional: read its changelog and take a change one rule at a time
+  when it fixes a real bug; skip changes that hurt Laravel (Rector 2.9.2's removal of an anonymous class's empty
+  methods, which deletes a migration's `down()`, shipfastlabs/pun#189). `rector/*` sets are frozen the same way, and
+  only `pun migrate` writes them. Rector names are append-only: `rules/rector-classes.txt` lists every Rector class
+  mapping.toml has ever had and `check-rule-mapping.py` fails when one loses its entry, so a rector.php from any Rector
+  2.x version migrates. A rule Rector deprecates after Pun ported it stays a Pun rule, and its Rector name still maps
+  to it (the six Rector 2.9.2 deprecates).
 - **All lint rules are 1.0** (2026-10-26): the PHPUnit and Pest lint rules and the lint rules in no set are part of the
   1.0 bar. mapping.toml has no `later` flag.
 - **Analyse without Pest or PHPUnit support for 1.0** (2026-10-18): test files are analysed like any other PHP code,
@@ -473,7 +482,6 @@ Left for 1.0: the rule docs content (below), name checks, signing and publishing
 
 | Work | Status |
 | --- | --- |
-| Rector 2.9.2 deprecates six rules Pun ports (their refactor() throws): `NewlineAfterStatementRector` (`lint/style/require-statement-padding`, lint-strict preset; also out of Rector's coding-style set), `FuncCallToConstFetchRector` (`lint/refactor/replace-function-with-constant`, out of coding-style too), `RenameStringRector`, `StaticCallToNewRector`, `WrapReturnRector` and `AttributeKeyToClassConstFetchRector` (`lint/refactor/rename-string`, `replace-static-with-new`, `wrap-return`, `replace-attribute-value-with-constant`). §2 "One-to-one with upstream" says a rule upstream deprecates is not supported. Kept for now as `pun_only` rules, with the Rector entries `unsupported`. The other option: delete the six rules (a pun.toml naming one becomes a config error) | needs Pushpak |
 | tests: crates/pun-phpstan/tests/php.rs `php_helpers` fails on macOS on two error offsets (`/a)/` gives 2, PHP 1; `/(?<1a>x)/` gives 4, PHP 3); the linked pcre2 likely differs from PHP's PCRE2 | todo |
 | CI: CLI polish item 7 (`script` check in CI, skip message in tests/migrate.rs) | todo (stopped by Pushpak) |
 | harness: lint and analyse modes (plan/foundations.md §2 Build 2-3; pun-harness has only `format`) | todo |

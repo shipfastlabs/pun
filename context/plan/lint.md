@@ -92,7 +92,8 @@ its bytes would mean porting that printer and its quirks. Pun does what Ruff, Bi
 - `pun format` (or `pun check --fix`) then fixes the layout of what was inserted.
 
 The result is the same code change as Rector's, but whitespace inside an inserted node can differ until format runs.
-Parity is `format(pun lint --fix)` equal to `format(rector process)`, on Rector's own fixtures and the corpus.
+Parity is `format(pun lint --fix)` equal to `format(rector process)` of Rector 2.9.2, on Rector's own fixtures and the
+corpus, except where Pun deliberately differs (PLAN.md §2, 2026-11-28). A later Rector release does not move it.
 
 `pun analyse` uses the same Mago syntax tree, so `pun check` can parse each file once for lint and analyse.
 Type-aware rules (`add-return-type` and others) ask pun-analyse for types, as Rector asks PHPStan.

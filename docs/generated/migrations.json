@@ -6624,9 +6624,11 @@
         "name": "AttributeKeyToClassConstFetch",
         "tool": "rector",
         "url": "https://getrector.com/find-rule",
-        "rules": [],
-        "note": "deprecated upstream (2.9.2, main)",
-        "unsupported": true
+        "rules": [
+          "lint/refactor/replace-attribute-value-with-constant"
+        ],
+        "note": "Same. Options: configurable: options carry 1:1 (same keys, kebab-cased).",
+        "unsupported": false
       },
       {
         "name": "BinaryOpBetweenNumberAndString",
@@ -7546,9 +7548,11 @@
         "name": "FuncCallToConstFetch",
         "tool": "rector",
         "url": "https://getrector.com/find-rule",
-        "rules": [],
-        "note": "deprecated upstream (2.9.2, main)",
-        "unsupported": true
+        "rules": [
+          "lint/refactor/replace-function-with-constant"
+        ],
+        "note": "Same. Options: configurable: options carry 1:1 (same keys, kebab-cased).",
+        "unsupported": false
       },
       {
         "name": "FuncCallToMethodCall",
@@ -8178,9 +8182,11 @@
         "name": "NewlineAfterStatement",
         "tool": "rector",
         "url": "https://getrector.com/find-rule",
-        "rules": [],
-        "note": "deprecated upstream (2.9.2, main)",
-        "unsupported": true
+        "rules": [
+          "lint/style/require-statement-padding"
+        ],
+        "note": "Same.",
+        "unsupported": false
       },
       {
         "name": "NewlineBeforeNewAssignSet",
@@ -9518,9 +9524,11 @@
         "name": "RenameString",
         "tool": "rector",
         "url": "https://getrector.com/find-rule",
-        "rules": [],
-        "note": "deprecated upstream (2.9.2, main)",
-        "unsupported": true
+        "rules": [
+          "lint/refactor/rename-string"
+        ],
+        "note": "Same. Options: configurable: options carry 1:1 (same keys, kebab-cased).",
+        "unsupported": false
       },
       {
         "name": "RenameVariableToMatchMethodCallReturnType",
@@ -10298,9 +10306,11 @@
         "name": "StaticCallToNew",
         "tool": "rector",
         "url": "https://getrector.com/find-rule",
-        "rules": [],
-        "note": "deprecated upstream (2.9.2, main)",
-        "unsupported": true
+        "rules": [
+          "lint/refactor/replace-static-with-new"
+        ],
+        "note": "Same. Options: configurable: options carry 1:1 (same keys, kebab-cased).",
+        "unsupported": false
       },
       {
         "name": "StaticClosure",
@@ -10886,9 +10896,11 @@
         "name": "WrapReturn",
         "tool": "rector",
         "url": "https://getrector.com/find-rule",
-        "rules": [],
-        "note": "deprecated upstream (2.9.2, main)",
-        "unsupported": true
+        "rules": [
+          "lint/refactor/wrap-return"
+        ],
+        "note": "Same. Options: configurable: options carry 1:1 (same keys, kebab-cased).",
+        "unsupported": false
       },
       {
         "name": "WrapVariableVariableNameInCurlyBraces",
