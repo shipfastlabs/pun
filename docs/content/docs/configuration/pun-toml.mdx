@@ -150,7 +150,7 @@ Laravel, Pest, and PHPUnit rules also need their [extension](#extensions). PHP u
 | `baseline` | The baseline file, written by `pun analyse --generate-baseline`. A path outside the project is a config error |
 | `stubs` | Stub files whose PHPDoc refines vendor symbols, as in PHPStan's `stubFiles` |
 | `scan` | Files and folders Pun reads for their classes, functions, and constants but doesn't analyse, as in PHPStan's `scanFiles` and `scanDirectories` |
-| `bootstrap` | PHPStan's `bootstrapFiles`. Pun doesn't run them: it reads their symbols as `scan` does, and Larastan reads their macros |
+| `bootstrap` | PHPStan's `bootstrapFiles`. Pun doesn't run them: it reads their symbols as `scan` does, and Larastan reads their macros. It also reads the files they `require` or `include` when the path is fixed, such as `__DIR__ . '/helpers.php'` or `'lib/helpers.php'` |
 | `bleeding-edge` | `true` infers types as PHPStan's `bleedingEdge.neon` does, except sealed and unsealed array shapes. Default `false` |
 | `union-types`, `nullables`, `explicit-mixed`, `implicit-mixed` | `true` or `false` turns one type switch on or off: PHPStan's level 7, 8, 9, or 10 check. Default: on in the presets that cover that level (`strict` for the first two, `max` for all four, and each `phpstan/level_<n>` from its level) |
 | `report-unmatched` | `false` reports no unmatched `@phpstan-ignore` comment and is the default of each `[[analyse.ignore]]` entry, as PHPStan's `reportUnmatchedIgnoredErrors`. Default `true` |

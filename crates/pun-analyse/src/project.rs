@@ -349,9 +349,14 @@ impl Project {
             }
         }
         // PHPStan runs the bootstrap files, so their symbols exist; Pun reads them like the scanned files
-        for name in ["scanFiles", "bootstrapFiles"] {
-            scanned.extend(strings(params, name).into_iter().map(PathBuf::from));
-        }
+        scanned.extend(strings(params, "scanFiles").into_iter().map(PathBuf::from));
+        scanned.extend(bootstrap_files(
+            root,
+            strings(params, "bootstrapFiles")
+                .into_iter()
+                .map(PathBuf::from)
+                .collect(),
+        ));
         for dir in strings(params, "scanDirectories") {
             scanned.extend(php_files(Path::new(dir), &extensions));
         }
@@ -796,7 +801,7 @@ fn composer_files(root: &Path, extensions: &[String]) -> (Vec<PathBuf>, Vec<Auto
             Source::Classmap(p) if p.is_dir() => (php_files(&p, extensions), Vec::new()),
             Source::File(p) => {
                 let mut files = vec![p];
-                required_files(0, &mut files);
+                required_files(root, 0, &mut files);
                 (files, Vec::new())
             }
             Source::Classmap(p) => (vec![p], Vec::new()),
@@ -817,11 +822,26 @@ fn composer_files(root: &Path, extensions: &[String]) -> (Vec<PathBuf>, Vec<Auto
     (out, autoloaded)
 }
 
+/// PHPStan runs its bootstrap files, so the files they `require` or `include` define their symbols too.
+fn bootstrap_files(root: &Path, bootstrap: Vec<PathBuf>) -> Vec<PathBuf> {
+    let mut files = Vec::new();
+    for file in bootstrap {
+        if files.contains(&file) {
+            continue;
+        }
+        files.push(file);
+        required_files(root, files.len() - 1, &mut files);
+    }
+    files
+}
+
 /// Composer's `files` autoloads run when PHPStan boots, so a file one of them `require`s or `include`s defines its
-/// functions too. Follows the paths PHP resolves without running anything: `__DIR__ . '/functions.php'`, and
-/// `__DIR__ . "/{$file}"` for each `.php` string literal in the file, as pest-plugin-laravel's Autoload.php requires a
-/// literal list of files in a loop. `files[at]` is the file read; each file it loads is appended and followed in turn.
-fn required_files(at: usize, files: &mut Vec<PathBuf>) {
+/// functions too. Follows the paths PHP resolves without running anything: a lone string literal
+/// (`'lib/helpers.php'`, looked up in the project root and then the file's directory), `__DIR__ . '/functions.php'`,
+/// and `__DIR__ . "/{$file}"` for each `.php` string literal in the file, as pest-plugin-laravel's Autoload.php
+/// requires a literal list of files in a loop. `files[at]` is the file read; each file it loads is appended and
+/// followed in turn.
+fn required_files(root: &Path, at: usize, files: &mut Vec<PathBuf>) {
     use pun_tokens::kind::Kind::{
         T_COMMENT, T_CONSTANT_ENCAPSED_STRING, T_CURLY_OPEN, T_DIR, T_DOC_COMMENT,
         T_ENCAPSED_AND_WHITESPACE, T_INCLUDE, T_INCLUDE_ONCE, T_REQUIRE, T_REQUIRE_ONCE,
@@ -857,6 +877,23 @@ fn required_files(at: usize, files: &mut Vec<PathBuf>) {
         let mut rest = tokens[i + 1..]
             .iter()
             .skip_while(|t| t.kind.is_none() && t.text == b"(");
+        // `require 'lib/helpers.php';`: PHP looks for a relative path in the include path, `.`, and then in the
+        // including file's directory
+        let mut alone = rest.clone();
+        if let Some(path) = alone.next().and_then(literal)
+            && alone
+                .next()
+                .is_some_and(|t| t.kind.is_none() && matches!(t.text, b";" | b")"))
+        {
+            let path = Path::new(&path);
+            found.extend(
+                [root.join(path), dir.join(path)]
+                    .into_iter()
+                    .find(|p| p.is_file())
+                    .map(|p| p.display().to_string()),
+            );
+            continue;
+        }
         if rest.next().is_none_or(|t| t.kind != Some(T_DIR))
             || rest.next().is_none_or(|t| t.text != b".")
         {
@@ -894,7 +931,7 @@ fn required_files(at: usize, files: &mut Vec<PathBuf>) {
     for file in found.into_iter().map(PathBuf::from) {
         if file.is_file() && !files.contains(&file) {
             files.push(file);
-            required_files(files.len() - 1, files);
+            required_files(root, files.len() - 1, files);
         }
     }
 }

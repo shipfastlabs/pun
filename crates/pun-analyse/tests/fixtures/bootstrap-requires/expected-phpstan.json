@@ -1,0 +1,14 @@
+[
+    {
+        "file": "src/Welcome.php",
+        "line": 14,
+        "identifier": "argument.type",
+        "message": "Parameter #1 $name of function greet expects string, int given."
+    },
+    {
+        "file": "src/Welcome.php",
+        "line": 19,
+        "identifier": "function.notFound",
+        "message": "Function undefined_helper not found."
+    }
+]
